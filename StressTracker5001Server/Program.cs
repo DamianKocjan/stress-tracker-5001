@@ -1,4 +1,4 @@
-using StressTracker5001Server;
+using StressTracker5001Server.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 

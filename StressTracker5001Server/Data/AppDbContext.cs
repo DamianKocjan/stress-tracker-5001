@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 
-namespace StressTracker5001Server
+namespace StressTracker5001Server.Data
 {
 
     public class AppDbContext : DbContext
