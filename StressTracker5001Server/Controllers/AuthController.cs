@@ -21,8 +21,11 @@ namespace StressTracker5001Server.Controllers
             }
 
             var token = tokenService.GenerateToken(user.Id, user.Email, user.Username);
+            var refreshToken = tokenService.GenerateRefreshToken();
 
-            return Ok(new { token });
+            await userService.SaveRefreshTokenAsync(user.Id, refreshToken);
+
+            return Ok(new { token, refreshToken });
         }
 
         [HttpPost("register")]
@@ -44,14 +47,37 @@ namespace StressTracker5001Server.Controllers
             {
                 return BadRequest(new { message = "User registration failed" });
             }
-            return Ok(new
+            return Ok();
+        }
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto, [FromServices] ITokenService tokenService, [FromServices] IUserService userService)
+        {
+            if (string.IsNullOrEmpty(dto.RefreshToken))
             {
-                user.Id,
-                user.Email,
-                user.Username,
-                user.CreatedAt,
-                user.UpdatedAt,
-            });
+                return BadRequest(new { message = "Refresh token is required" });
+            }
+
+            var refreshToken = await tokenService.GetRefreshTokenAsync(dto.RefreshToken);
+            if (refreshToken == null)
+            {
+                return Unauthorized();
+            }
+
+            var user = await userService.GetUserByIdAsync(refreshToken.UserId);
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+
+            await tokenService.RevokeRefreshTokenAsync(dto.RefreshToken);
+
+            var newToken = tokenService.GenerateToken(user.Id, user.Email, user.Username);
+            var newRefreshToken = tokenService.GenerateRefreshToken();
+
+            await userService.SaveRefreshTokenAsync(user.Id, newRefreshToken);
+
+            return Ok(new { token = newToken, refreshToken = newRefreshToken.Token });
         }
 
         [Authorize]

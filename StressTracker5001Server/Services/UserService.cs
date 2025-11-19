@@ -2,6 +2,7 @@
 using StressTracker5001Server.DTOs.User;
 using StressTracker5001Server.Data;
 using BCrypt.Net;
+using Microsoft.EntityFrameworkCore;
 
 namespace StressTracker5001Server.Services
 {
@@ -14,6 +15,7 @@ namespace StressTracker5001Server.Services
         Task<User?> CreateUserAsync(CreateUserDto dto);
         Task<User?> UpdateUserAsync(int id, UpdateUserDto dto);
         Task<bool> DeleteUserAsync(int id);
+        Task SaveRefreshTokenAsync(int userId, RefreshToken refreshToken);
     }
 
     public class UserService : IUserService
@@ -106,6 +108,23 @@ namespace StressTracker5001Server.Services
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task SaveRefreshTokenAsync(int userId, RefreshToken refreshToken)
+        {
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null)
+            {
+                throw new ArgumentException("User not found", nameof(userId));
+            }
+
+            refreshToken.UserId = userId;
+            refreshToken.CreatedAt = DateTime.UtcNow;
+            refreshToken.UpdatedAt = DateTime.UtcNow;
+            refreshToken.ExpiresAt = DateTime.UtcNow.AddDays(7);
+
+            _context.RefreshTokens.Add(refreshToken);
+            await _context.SaveChangesAsync();
         }
     }
 }

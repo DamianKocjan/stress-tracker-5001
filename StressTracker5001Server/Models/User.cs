@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace StressTracker5001Server.Models
 {
@@ -22,6 +23,9 @@ namespace StressTracker5001Server.Models
         [RegularExpression(@"^[a-zA-Z0-9_-\s]+$",
             ErrorMessage = "Username can only contain letters, numbers, spaces, underscores, and hyphens")]
         public required string Username { get; set; }
+
+        [JsonIgnore]
+        public List<RefreshToken> RefreshTokens { get; set; }
 
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }

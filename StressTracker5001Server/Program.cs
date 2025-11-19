@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 // JWT Configuration
 var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!);
@@ -34,7 +35,8 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins(builder.Configuration["WebApplicationUrl"]!)
             .AllowAnyMethod()
-            .AllowAnyHeader();
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
