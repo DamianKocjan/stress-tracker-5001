@@ -132,9 +132,21 @@ namespace StressTracker5001Server.Services
 
         public async Task<RefreshToken?> GetRefreshTokenAsync(string refreshToken)
         {
-            return await _context.RefreshTokens
-                .Where(rt => rt.Token == refreshToken && rt.ExpiresAt > DateTime.UtcNow && rt.RevokedAt == null)
+            var token = await _context.RefreshTokens
+                .Where(rt => rt.Token == refreshToken && rt.RevokedAt == null)
                 .FirstOrDefaultAsync();
+
+            if (token == null)
+            {
+                return null;
+            }
+
+            if (token.ExpiresAt <= DateTime.UtcNow)
+            {
+                return null;
+            }
+
+            return token;
         }
 
         public async Task<bool> RevokeRefreshTokenAsync(string refreshToken)
