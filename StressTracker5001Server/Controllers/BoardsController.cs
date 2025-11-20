@@ -74,7 +74,7 @@ namespace StressTracker5001Server.Controllers
         }
 
         [Authorize]
-        [HttpPost("{boardId:int}")]
+        [HttpGet("{boardId:int}")]
         public async Task<IActionResult> GetBoard([FromRoute] int boardId, [FromServices] IBoardService boardService)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
