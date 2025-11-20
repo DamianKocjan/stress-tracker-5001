@@ -13,7 +13,11 @@ builder.Services.AddScoped<IUserService, UserService>();
 // JWT Configuration
 var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!);
 builder.Services
-    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -25,6 +29,21 @@ builder.Services
             ValidateAudience = true,
             ValidAudience = builder.Configuration["Jwt:Audience"],
             ValidateLifetime = true,
+        };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var token = context.Request.Cookies[builder.Configuration["Jwt:AuthTokenCookieName"]!];
+                if (!string.IsNullOrEmpty(token))
+                {
+                    context.Token = token;
+                }
+                Console.WriteLine($"Received token: {context.Token}");
+                context.Request.Cookies.ToList().ForEach(c =>
+                    Console.WriteLine($"Cookie: {c.Key} = {c.Value}"));
+                return Task.CompletedTask;
+            }
         };
     });
 

@@ -23,19 +23,16 @@ namespace StressTracker5001Server.Controllers
             var token = tokenService.GenerateToken(user.Id, user.Email, user.Username);
             var refreshToken = tokenService.GenerateRefreshToken();
 
-            await userService.SaveRefreshTokenAsync(user.Id, refreshToken);
+            await tokenService.SaveRefreshTokenAsync(user.Id, refreshToken);
 
-            return Ok(new { token, refreshToken });
+            tokenService.ApplyTokensToResponse(Response, token, refreshToken.Token);
+
+            return Ok();
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto, [FromServices] IUserService userService)
         {
-            if (dto.Password != dto.ConfirmPassword)
-            {
-                return BadRequest(new { message = "Passwords do not match" });
-            }
-
             var user = await userService.CreateUserAsync(new CreateUserDto
             {
                 Email = dto.Email,
@@ -50,15 +47,48 @@ namespace StressTracker5001Server.Controllers
             return Ok();
         }
 
-        [HttpPost("refresh-token")]
-        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto dto, [FromServices] ITokenService tokenService, [FromServices] IUserService userService)
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout([FromServices] ITokenService tokenService)
         {
-            if (string.IsNullOrEmpty(dto.RefreshToken))
+            var refreshTokenCookie = tokenService.GetRefreshTokenFromRequest(Request);
+            if (!string.IsNullOrEmpty(refreshTokenCookie))
+            {
+                await tokenService.RevokeRefreshTokenAsync(refreshTokenCookie);
+            }
+
+            tokenService.RemoveTokensFromResponse(Response);
+
+            return Ok();
+        }
+
+        [HttpPost("validate-token")]
+        public async Task<IActionResult> ValidateToken([FromServices] ITokenService tokenService)
+        {
+            var token = tokenService.GetTokenFromRequest(Request);
+            if (string.IsNullOrEmpty(token))
+            {
+                return Unauthorized();
+            }
+
+            var isValid = tokenService.ValidateToken(token);
+            if (!isValid)
+            {
+                return Unauthorized();
+            }
+
+            return Ok();
+        }
+
+        [HttpPost("refresh-token")]
+        public async Task<IActionResult> RefreshToken([FromServices] ITokenService tokenService, [FromServices] IUserService userService)
+        {
+            var refreshTokenCookie = tokenService.GetRefreshTokenFromRequest(Request);
+            if (string.IsNullOrEmpty(refreshTokenCookie))
             {
                 return BadRequest(new { message = "Refresh token is required" });
             }
 
-            var refreshToken = await tokenService.GetRefreshTokenAsync(dto.RefreshToken);
+            var refreshToken = await tokenService.GetRefreshTokenAsync(refreshTokenCookie);
             if (refreshToken == null)
             {
                 return Unauthorized();
@@ -70,21 +100,28 @@ namespace StressTracker5001Server.Controllers
                 return Unauthorized();
             }
 
-            await tokenService.RevokeRefreshTokenAsync(dto.RefreshToken);
+            await tokenService.RevokeRefreshTokenAsync(refreshToken.Token);
 
             var newToken = tokenService.GenerateToken(user.Id, user.Email, user.Username);
             var newRefreshToken = tokenService.GenerateRefreshToken();
 
-            await userService.SaveRefreshTokenAsync(user.Id, newRefreshToken);
+            await tokenService.SaveRefreshTokenAsync(user.Id, newRefreshToken);
 
-            return Ok(new { token = newToken, refreshToken = newRefreshToken.Token });
+            tokenService.ApplyTokensToResponse(Response, newToken, newRefreshToken.Token);
+
+            return Ok();
         }
 
         [Authorize]
         [HttpGet("profile")]
         public async Task<IActionResult> Profile([FromServices] IUserService userService)
         {
-            var userId = int.Parse(ClaimTypes.NameIdentifier);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return Unauthorized();
+            }
+
             var user = await userService.GetUserByIdAsync(userId);
             if (user == null)
             {
@@ -104,7 +141,12 @@ namespace StressTracker5001Server.Controllers
         [HttpPost("profile/update")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserDto dto, [FromServices] IUserService userService)
         {
-            var userId = int.Parse(ClaimTypes.NameIdentifier);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return Unauthorized();
+            }
+
             var updatedUser = await userService.UpdateUserAsync(userId, dto);
             if (updatedUser == null)
             {
@@ -124,7 +166,12 @@ namespace StressTracker5001Server.Controllers
         [HttpPost("profile/update-password")]
         public async Task<IActionResult> UpdatePassword([FromBody] UpdatePasswordDto dto, [FromServices] IUserService userService)
         {
-            var userId = int.Parse(ClaimTypes.NameIdentifier);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return Unauthorized();
+            }
+
             var user = await userService.GetUserByIdAsync(userId);
             if (user == null || !userService.VerifyPassword(user, dto.CurrentPassword))
             {
