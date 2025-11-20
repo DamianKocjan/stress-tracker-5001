@@ -8,6 +8,7 @@ namespace StressTracker5001Server.Data
     {
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<Board> Boards { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
             => options.UseSqlite("Data Source=db.sqlite");
@@ -22,6 +23,14 @@ namespace StressTracker5001Server.Data
                 .HasMany(u => u.RefreshTokens)
                 .WithOne(rt => rt.User)
                 .HasForeignKey(rt => rt.UserId);
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Boards)
+                .WithOne(b => b.Owner)
+                .HasForeignKey(b => b.OwnerId);
+
+            modelBuilder.Entity<Board>()
+                .HasIndex(b => b.OwnerId);
         }
     }
 }
