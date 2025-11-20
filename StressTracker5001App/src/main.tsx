@@ -7,6 +7,7 @@ import {
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { AuthProvider, useAuth } from "./providers/auth";
 import { routeTree } from "./routeTree.gen";
 
 export const queryClient = new QueryClient();
@@ -34,13 +35,23 @@ declare module "@tanstack/react-router" {
 
 // eslint-disable-next-line react-refresh/only-export-components
 function App() {
-  return <RouterProvider router={router} defaultPreload="intent" />;
+  const auth = useAuth();
+
+  return (
+    <RouterProvider
+      router={router}
+      defaultPreload="intent"
+      context={{ auth }}
+    />
+  );
 }
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <AuthProvider>
+        <App />
+      </AuthProvider>
     </QueryClientProvider>
   </StrictMode>
 );
