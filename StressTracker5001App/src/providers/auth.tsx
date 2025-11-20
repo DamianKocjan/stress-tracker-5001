@@ -124,6 +124,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     onError() {
       setIsAuthenticated(false);
     },
+    onSuccess() {
+      setIsAuthenticated(true);
+      profileQuery.refetch();
+    },
   });
 
   const profileQuery = useQuery({
@@ -166,6 +170,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         },
         14 * 60 * 1000
       ); // Refresh every 14 minutes
+    } else {
+      // If not authenticated, try to refresh token once
+      refreshTokenMutation.mutate();
     }
     return () => {
       if (interval) clearInterval(interval);
