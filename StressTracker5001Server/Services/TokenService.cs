@@ -26,7 +26,7 @@ namespace StressTracker5001Server.Services
     {
         private readonly IConfiguration _configuration;
         private readonly AppDbContext _context;
-        private System.Security.Cryptography.RandomNumberGenerator _randomNumberGenerator;
+        private readonly System.Security.Cryptography.RandomNumberGenerator _randomNumberGenerator;
 
         public TokenService(IConfiguration configuration, AppDbContext context)
         {
@@ -38,7 +38,7 @@ namespace StressTracker5001Server.Services
         public string GenerateToken(int userId, string email, string username)
         {
             var key = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]!));
+                Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]!));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var claims = new[]
@@ -107,7 +107,7 @@ namespace StressTracker5001Server.Services
         public bool ValidateToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]!);
+            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]!);
 
             try
             {

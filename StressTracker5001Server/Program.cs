@@ -39,9 +39,6 @@ builder.Services
                 {
                     context.Token = token;
                 }
-                Console.WriteLine($"Received token: {context.Token}");
-                context.Request.Cookies.ToList().ForEach(c =>
-                    Console.WriteLine($"Cookie: {c.Key} = {c.Value}"));
                 return Task.CompletedTask;
             }
         };

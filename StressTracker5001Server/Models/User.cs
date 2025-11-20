@@ -25,7 +25,7 @@ namespace StressTracker5001Server.Models
         public required string Username { get; set; }
 
         [JsonIgnore]
-        public List<RefreshToken> RefreshTokens { get; set; }
+        public List<RefreshToken> RefreshTokens { get; set; } = new();
 
         public DateTimeOffset CreatedAt { get; set; }
         public DateTimeOffset UpdatedAt { get; set; }
