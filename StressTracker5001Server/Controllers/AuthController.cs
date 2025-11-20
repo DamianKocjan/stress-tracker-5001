@@ -127,13 +127,13 @@ namespace StressTracker5001Server.Controllers
             {
                 return NotFound();
             }
-            return Ok(new
+            return Ok(new UserDto
             {
-                user.Id,
-                user.Email,
-                user.Username,
-                user.CreatedAt,
-                user.UpdatedAt,
+                Id = user.Id,
+                Email = user.Email,
+                Username = user.Username,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt,
             });
         }
 
@@ -152,13 +152,13 @@ namespace StressTracker5001Server.Controllers
             {
                 return NotFound();
             }
-            return Ok(new
+            return Ok(new UserDto
             {
-                updatedUser.Id,
-                updatedUser.Email,
-                updatedUser.Username,
-                updatedUser.CreatedAt,
-                updatedUser.UpdatedAt,
+                Id = updatedUser.Id,
+                Email = updatedUser.Email,
+                Username = updatedUser.Username,
+                CreatedAt = updatedUser.CreatedAt,
+                UpdatedAt = updatedUser.UpdatedAt,
             });
         }
 
@@ -188,14 +188,7 @@ namespace StressTracker5001Server.Controllers
             {
                 return NotFound();
             }
-            return Ok(new
-            {
-                updatedUser.Id,
-                updatedUser.Email,
-                updatedUser.Username,
-                updatedUser.CreatedAt,
-                updatedUser.UpdatedAt,
-            });
+            return Ok();
         }
     }
 }
