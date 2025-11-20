@@ -25,13 +25,16 @@ namespace StressTracker5001Server.Services
 
         public async Task<Board?> GetBoardByIdAsync(int boardId, int ownerId)
         {
-            return await _context.Boards.FirstAsync(b => b.Id == boardId && b.OwnerId == ownerId);
+            return await _context.Boards
+                .Include(b => b.Owner)
+                .FirstOrDefaultAsync(b => b.Id == boardId && b.OwnerId == ownerId);
         }
 
         public async Task<List<Board>> GetBoardsByOwnerIdAsync(int ownerId)
         {
             return await _context.Boards
                 .Where(b => b.OwnerId == ownerId)
+                .Include(b => b.Owner)
                 .ToListAsync();
         }
 

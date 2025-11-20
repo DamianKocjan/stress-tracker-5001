@@ -30,11 +30,11 @@ namespace StressTracker5001Server.Controllers
                 OwnerId = board.OwnerId,
                 Owner = new UserDto
                 {
-                    Id = board.Owner!.Id,
-                    Email = board.Owner!.Email,
-                    Username = board.Owner!.Username,
-                    CreatedAt = board.Owner!.CreatedAt,
-                    UpdatedAt = board.Owner!.UpdatedAt,
+                    Id = board.Owner.Id,
+                    Email = board.Owner.Email,
+                    Username = board.Owner.Username,
+                    CreatedAt = board.Owner.CreatedAt,
+                    UpdatedAt = board.Owner.UpdatedAt,
                 },
                 CreatedAt = board.CreatedAt,
                 UpdatedAt = board.UpdatedAt
@@ -60,11 +60,11 @@ namespace StressTracker5001Server.Controllers
                 OwnerId = board.OwnerId,
                 Owner = new UserDto
                 {
-                    Id = board.Owner!.Id,
-                    Email = board.Owner!.Email,
-                    Username = board.Owner!.Username,
-                    CreatedAt = board.Owner!.CreatedAt,
-                    UpdatedAt = board.Owner!.UpdatedAt,
+                    Id = board.Owner.Id,
+                    Email = board.Owner.Email,
+                    Username = board.Owner.Username,
+                    CreatedAt = board.Owner.CreatedAt,
+                    UpdatedAt = board.Owner.UpdatedAt,
                 },
                 CreatedAt = board.CreatedAt,
                 UpdatedAt = board.UpdatedAt
@@ -96,11 +96,11 @@ namespace StressTracker5001Server.Controllers
                 OwnerId = board.OwnerId,
                 Owner = new UserDto
                 {
-                    Id = board.Owner!.Id,
-                    Email = board.Owner!.Email,
-                    Username = board.Owner!.Username,
-                    CreatedAt = board.Owner!.CreatedAt,
-                    UpdatedAt = board.Owner!.UpdatedAt,
+                    Id = board.Owner.Id,
+                    Email = board.Owner.Email,
+                    Username = board.Owner.Username,
+                    CreatedAt = board.Owner.CreatedAt,
+                    UpdatedAt = board.Owner.UpdatedAt,
                 },
                 CreatedAt = board.CreatedAt,
                 UpdatedAt = board.UpdatedAt
@@ -131,11 +131,11 @@ namespace StressTracker5001Server.Controllers
                 OwnerId = board.OwnerId,
                 Owner = new UserDto
                 {
-                    Id = board.Owner!.Id,
-                    Email = board.Owner!.Email,
-                    Username = board.Owner!.Username,
-                    CreatedAt = board.Owner!.CreatedAt,
-                    UpdatedAt = board.Owner!.UpdatedAt,
+                    Id = board.Owner.Id,
+                    Email = board.Owner.Email,
+                    Username = board.Owner.Username,
+                    CreatedAt = board.Owner.CreatedAt,
+                    UpdatedAt = board.Owner.UpdatedAt,
                 },
                 CreatedAt = board.CreatedAt,
                 UpdatedAt = board.UpdatedAt
