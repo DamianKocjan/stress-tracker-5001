@@ -13,7 +13,7 @@ import React, {
 } from "react";
 
 interface User {
-  id: string;
+  id: number;
   username: string;
   email: string;
   createdAt: string;

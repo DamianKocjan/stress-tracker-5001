@@ -1,3 +1,5 @@
+import { AppFooter } from "@/components/app-footer";
+import { AppNav } from "@/components/app-nav";
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated")({
@@ -12,5 +14,13 @@ export const Route = createFileRoute("/_authenticated")({
       });
     }
   },
-  component: () => <Outlet />,
+  component: () => (
+    <div className="min-h-screen scroll-smooth">
+      <AppNav />
+      <main>
+        <Outlet />
+      </main>
+      <AppFooter />
+    </div>
+  ),
 });
