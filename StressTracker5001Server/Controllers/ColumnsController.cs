@@ -94,6 +94,11 @@ namespace StressTracker5001Server.Controllers
             await columnService.UpdateColumnAsync(columnId, dto, userId);
 
             var updatedColumn = await columnService.GetColumnByIdAsync(columnId, userId);
+            if (updatedColumn == null)
+            {
+                return NotFound();
+            }
+
             return Ok(new ColumnDto
             {
                 Id = updatedColumn.Id,

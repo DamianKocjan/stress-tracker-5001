@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Card;
+using StressTracker5001Server.DTOs.User;
 using StressTracker5001Server.Services;
 
 namespace StressTracker5001Server.Controllers
@@ -34,7 +35,7 @@ namespace StressTracker5001Server.Controllers
                 Position = card.Position,
                 DueDate = card.DueDate,
                 CreatedById = card.CreatedById,
-                CreatedBy = new DTOs.User.UserDto
+                CreatedBy = new UserDto
                 {
                     Id = card.CreatedBy.Id,
                     Email = card.CreatedBy.Email,
@@ -79,7 +80,7 @@ namespace StressTracker5001Server.Controllers
         }
 
         [Authorize]
-        [HttpPut("{id}/move")]
+        [HttpPost("{id}/move")]
         public async Task<IActionResult> MoveCard(int id, [FromBody] MoveCardDto dto, [FromServices] ICardService cardService)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -95,6 +96,11 @@ namespace StressTracker5001Server.Controllers
             }
 
             var card = await cardService.GetCardByIdAsync(id, userId);
+            if (card == null)
+            {
+                return NotFound();
+            }
+
             return Ok(new CardDto
             {
                 Id = card.Id,

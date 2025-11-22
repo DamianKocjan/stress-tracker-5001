@@ -48,24 +48,32 @@ namespace StressTracker5001Server.Services
                 .Include(c => c.Column)
                 .ThenInclude(c => c.Board)
                 .Where(c => c.ColumnId == columnId && c.Column.Board.OwnerId == ownerId)
+                .OrderBy(c => c.Position)
                 .ToListAsync();
         }
 
         public async Task<Card> CreateCardAsync(int columnId, CreateCardDto dto, int userId)
         {
+            var cardCount = _context.Cards
+                .Include(c => c.Column)
+                .ThenInclude(c => c.Board)
+                .Where(c => c.ColumnId == columnId && c.Column.Board.OwnerId == userId)
+                .Count();
+
             var card = new Card
             {
                 Title = dto.Title,
-                Description = dto.Description,
+                Description = dto.Description ?? string.Empty,
                 DueDate = dto.DueDate,
                 ColumnId = columnId,
                 CreatedById = userId,
-                Position = 0,
+                Position = cardCount,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
             };
 
             _context.Cards.Add(card);
+
             await _context.SaveChangesAsync();
             return card;
         }
@@ -79,7 +87,7 @@ namespace StressTracker5001Server.Services
             }
 
             card.Title = dto.Title;
-            card.Description = dto.Description;
+            card.Description = dto.Description ?? string.Empty;
             card.DueDate = dto.DueDate;
             card.UpdatedAt = DateTimeOffset.UtcNow;
 

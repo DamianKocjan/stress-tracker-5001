@@ -30,6 +30,7 @@ namespace StressTracker5001Server.Services
             return await _context.Columns
                 .Include(c => c.Board)
                 .Where(c => c.BoardId == boardId && c.Board.OwnerId == ownerId)
+                .OrderBy(c => c.Position)
                 .ToListAsync();
         }
 
@@ -46,6 +47,7 @@ namespace StressTracker5001Server.Services
                 .Include(c => c.Column)
                 .ThenInclude(c => c.Board)
                 .Where(c => c.ColumnId == columnId && c.Column.Board.OwnerId == ownerId)
+                .OrderBy(c => c.Position)
                 .ToListAsync();
         }
 
