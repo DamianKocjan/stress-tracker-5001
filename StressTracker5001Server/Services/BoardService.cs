@@ -35,6 +35,7 @@ namespace StressTracker5001Server.Services
             return await _context.Boards
                 .Where(b => b.OwnerId == ownerId)
                 .Include(b => b.Owner)
+                .OrderBy(b => b.UpdatedAt)
                 .ToListAsync();
         }
 
