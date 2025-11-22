@@ -10,7 +10,7 @@ namespace StressTracker5001Server.Services
         Task<List<Column>> GetColumnsByBoardIdAsync(int boardId, int ownerId);
         Task<Column?> GetColumnByIdAsync(int columnId, int ownerId);
         Task<List<Card>> GetCardsByColumnIdAsync(int columnId, int ownerId);
-        Task<Column> CreateColumnAsync(CreateColumnDto dto, int ownerId);
+        Task<Column> CreateColumnAsync(int boardId, CreateColumnDto dto, int ownerId);
         Task<Column?> UpdateColumnAsync(int columnId, UpdateColumnDto dto, int ownerId);
         Task<bool> MoveColumnAsync(int columnId, int newPosition, int ownerId);
         Task<bool> DeleteColumnAsync(int columnId, int ownerId);
@@ -28,7 +28,7 @@ namespace StressTracker5001Server.Services
         public async Task<List<Column>> GetColumnsByBoardIdAsync(int boardId, int ownerId)
         {
             return await _context.Columns
-                .Include(c => c.Cards)
+                .Include(c => c.Board)
                 .Where(c => c.BoardId == boardId && c.Board.OwnerId == ownerId)
                 .ToListAsync();
         }
@@ -36,22 +36,24 @@ namespace StressTracker5001Server.Services
         public async Task<Column?> GetColumnByIdAsync(int columnId, int ownerId)
         {
             return await _context.Columns
-                .Include(c => c.Cards)
+                .Include(c => c.Board)
                 .FirstOrDefaultAsync(c => c.Id == columnId && c.Board.OwnerId == ownerId);
         }
 
         public async Task<List<Card>> GetCardsByColumnIdAsync(int columnId, int ownerId)
         {
             return await _context.Cards
+                .Include(c => c.Column)
+                .ThenInclude(c => c.Board)
                 .Where(c => c.ColumnId == columnId && c.Column.Board.OwnerId == ownerId)
                 .ToListAsync();
         }
 
-        public async Task<Column> CreateColumnAsync(CreateColumnDto dto, int ownerId)
+        public async Task<Column> CreateColumnAsync(int boardId, CreateColumnDto dto, int ownerId)
         {
             var column = new Column
             {
-                BoardId = dto.BoardId,
+                BoardId = boardId,
                 Name = dto.Name,
                 Position = dto.Position,
                 WipLimit = dto.WipLimit,

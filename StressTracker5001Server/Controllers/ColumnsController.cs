@@ -60,8 +60,7 @@ namespace StressTracker5001Server.Controllers
                 return NotFound();
             }
 
-            dto.ColumnId = columnId;
-            var card = await cardService.CreateCardAsync(dto, userId);
+            var card = await cardService.CreateCardAsync(columnId, dto, userId);
             return Ok(new CardDto
             {
                 Id = card.Id,
@@ -77,31 +76,8 @@ namespace StressTracker5001Server.Controllers
         }
 
         [Authorize]
-        [HttpPost]
-        public async Task<IActionResult> CreateColumn([FromBody] CreateColumnDto dto, [FromServices] IColumnService columnService)
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdClaim?.Value, out var userId))
-            {
-                return Unauthorized();
-            }
-
-            var column = await columnService.CreateColumnAsync(dto, userId);
-            return Ok(new ColumnDto
-            {
-                Id = column.Id,
-                BoardId = column.BoardId,
-                Name = column.Name,
-                Position = column.Position,
-                WipLimit = column.WipLimit,
-                CreatedAt = column.CreatedAt,
-                UpdatedAt = column.UpdatedAt
-            });
-        }
-
-        [Authorize]
         [HttpPut("{columnId}")]
-        public async Task<IActionResult> UpdateColumn(int columnId, [FromBody] UpdateColumnDto dto, [FromServices] IBoardService boardService, [FromServices] IColumnService columnService)
+        public async Task<IActionResult> UpdateColumn(int columnId, [FromBody] UpdateColumnDto dto, [FromServices] IColumnService columnService)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
@@ -116,15 +92,48 @@ namespace StressTracker5001Server.Controllers
             }
 
             await columnService.UpdateColumnAsync(columnId, dto, userId);
+
+            var updatedColumn = await columnService.GetColumnByIdAsync(columnId, userId);
             return Ok(new ColumnDto
             {
-                Id = column.Id,
-                BoardId = column.BoardId,
-                Name = column.Name,
-                Position = column.Position,
-                WipLimit = column.WipLimit,
-                CreatedAt = column.CreatedAt,
-                UpdatedAt = column.UpdatedAt
+                Id = updatedColumn.Id,
+                BoardId = updatedColumn.BoardId,
+                Name = updatedColumn.Name,
+                Position = updatedColumn.Position,
+                WipLimit = updatedColumn.WipLimit,
+                CreatedAt = updatedColumn.CreatedAt,
+                UpdatedAt = updatedColumn.UpdatedAt
+            });
+        }
+
+        [Authorize]
+        [HttpPost("{columnId}/move")]
+        public async Task<IActionResult> MoveColumn(int columnId, [FromBody] MoveColumnDto dto, [FromServices] IColumnService columnService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var column = await columnService.GetColumnByIdAsync(columnId, userId);
+            if (column == null)
+            {
+                return NotFound();
+            }
+
+            await columnService.MoveColumnAsync(columnId, dto.NewPosition, userId);
+
+            var movedColumn = await columnService.GetColumnByIdAsync(columnId, userId);
+            return Ok(new ColumnDto
+            {
+                Id = movedColumn.Id,
+                BoardId = movedColumn.BoardId,
+                Name = movedColumn.Name,
+                Position = movedColumn.Position,
+                WipLimit = movedColumn.WipLimit,
+                CreatedAt = movedColumn.CreatedAt,
+                UpdatedAt = movedColumn.UpdatedAt
             });
         }
 

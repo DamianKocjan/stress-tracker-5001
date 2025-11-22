@@ -156,15 +156,7 @@ namespace StressTracker5001Server.Controllers
                 return NotFound();
             }
 
-            var columnDto = new CreateColumnDto
-            {
-                BoardId = boardId,
-                Name = dto.Name,
-                Position = dto.Position,
-                WipLimit = dto.WipLimit,
-            };
-
-            var column = await columnService.CreateColumnAsync(columnDto, userId);
+            var column = await columnService.CreateColumnAsync(boardId, dto, userId);
             return Ok(new ColumnDto
             {
                 Id = column.Id,

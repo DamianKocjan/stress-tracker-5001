@@ -10,7 +10,7 @@ namespace StressTracker5001Server.Services
         Task<Card?> GetCardByIdAsync(int cardId, int ownerId);
         Task<Card?> GetCardDetailsByIdAsync(int cardId, int ownerId);
         Task<List<Card>> GetCardsByColumnIdAsync(int columnId, int ownerId);
-        Task<Card> CreateCardAsync(CreateCardDto dto, int ownerId);
+        Task<Card> CreateCardAsync(int columnId, CreateCardDto dto, int userId);
         Task<Card?> UpdateCardAsync(int cardId, UpdateCardDto dto, int ownerId);
         Task<bool> MoveCardAsync(int cardId, int newPosition, int ownerId);
         Task<bool> DeleteCardAsync(int cardId, int ownerId);
@@ -29,6 +29,7 @@ namespace StressTracker5001Server.Services
         {
             return await _context.Cards
                 .Include(c => c.Column)
+                .ThenInclude(c => c.Board)
                 .FirstOrDefaultAsync(c => c.Id == cardId && c.Column.Board.OwnerId == ownerId);
         }
 
@@ -36,6 +37,7 @@ namespace StressTracker5001Server.Services
         {
             return await _context.Cards
                 .Include(c => c.Column)
+                .ThenInclude(c => c.Board)
                 .Include(c => c.CreatedBy)
                 .FirstOrDefaultAsync(c => c.Id == cardId && c.Column.Board.OwnerId == ownerId);
         }
@@ -43,18 +45,21 @@ namespace StressTracker5001Server.Services
         public async Task<List<Card>> GetCardsByColumnIdAsync(int columnId, int ownerId)
         {
             return await _context.Cards
+                .Include(c => c.Column)
+                .ThenInclude(c => c.Board)
                 .Where(c => c.ColumnId == columnId && c.Column.Board.OwnerId == ownerId)
                 .ToListAsync();
         }
 
-        public async Task<Card> CreateCardAsync(CreateCardDto dto, int ownerId)
+        public async Task<Card> CreateCardAsync(int columnId, CreateCardDto dto, int userId)
         {
             var card = new Card
             {
                 Title = dto.Title,
                 Description = dto.Description,
                 DueDate = dto.DueDate,
-                ColumnId = dto.ColumnId,
+                ColumnId = columnId,
+                CreatedById = userId,
                 Position = 0,
                 CreatedAt = DateTimeOffset.UtcNow,
                 UpdatedAt = DateTimeOffset.UtcNow
@@ -68,7 +73,10 @@ namespace StressTracker5001Server.Services
         public async Task<Card?> UpdateCardAsync(int cardId, UpdateCardDto dto, int ownerId)
         {
             var card = await GetCardByIdAsync(cardId, ownerId);
-            if (card == null) return null;
+            if (card == null)
+            {
+                return null;
+            }
 
             card.Title = dto.Title;
             card.Description = dto.Description;
@@ -82,7 +90,10 @@ namespace StressTracker5001Server.Services
         public async Task<bool> MoveCardAsync(int cardId, int newPosition, int ownerId)
         {
             var card = await GetCardByIdAsync(cardId, ownerId);
-            if (card == null) return false;
+            if (card == null)
+            {
+                return false;
+            }
 
             card.Position = newPosition;
             card.UpdatedAt = DateTimeOffset.UtcNow;
@@ -94,7 +105,10 @@ namespace StressTracker5001Server.Services
         public async Task<bool> DeleteCardAsync(int cardId, int ownerId)
         {
             var card = await GetCardByIdAsync(cardId, ownerId);
-            if (card == null) return false;
+            if (card == null)
+            {
+                return false;
+            }
 
             _context.Cards.Remove(card);
             await _context.SaveChangesAsync();
