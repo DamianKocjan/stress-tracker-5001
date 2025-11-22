@@ -289,4 +289,4 @@ __pycache__/
 *.xsd.cs
 
 # Sqlite database files
-StressTracker5001Server/db.sqlite
+StressTracker5001Server/db.sqlite*
