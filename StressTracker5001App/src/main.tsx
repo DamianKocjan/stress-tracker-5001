@@ -7,6 +7,7 @@ import {
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
+import { Toaster } from "./components/ui/sonner";
 import { AuthProvider, useAuth } from "./providers/auth";
 import { routeTree } from "./routeTree.gen";
 
@@ -51,6 +52,7 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <App />
+        <Toaster />
       </AuthProvider>
     </QueryClientProvider>
   </StrictMode>
