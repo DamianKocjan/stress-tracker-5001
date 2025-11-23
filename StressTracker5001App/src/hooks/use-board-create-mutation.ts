@@ -21,7 +21,7 @@ export function useBoardCreateMutation() {
     },
     onSuccess(data, variables) {
       toast.success("Board created successfully!", {
-        description: `Board "${variables.Name}" has been created.`,
+        description: `Board "${variables.name}" has been created.`,
       });
       queryClient.setQueryData(
         ["boards"],

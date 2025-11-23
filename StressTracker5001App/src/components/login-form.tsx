@@ -42,11 +42,9 @@ export function LoginForm({
     validators: {
       onSubmit: LoginFormSchema,
     },
-    async onSubmit({ value: { email, password } }) {
+    async onSubmit({ value }) {
       try {
-        console.log(
-          await login.mutateAsync({ Email: email, Password: password })
-        );
+        await login.mutateAsync(value);
         navigate({ to: redirect, search: { redirect: "" } });
         toast.success("Logged in successfully!");
       } catch (error) {

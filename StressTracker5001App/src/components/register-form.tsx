@@ -52,15 +52,9 @@ export function RegisterForm({
     validators: {
       onSubmit: RegisterFormSchema,
     },
-    async onSubmit({ value: { email, username, password } }) {
+    async onSubmit({ value }) {
       try {
-        console.log(
-          await register.mutateAsync({
-            Email: email,
-            Password: password,
-            Username: username,
-          })
-        );
+        await register.mutateAsync(value);
         navigate({ to: redirect, search: { redirect: "" } });
         toast.success("Registration successful!");
       } catch (error) {

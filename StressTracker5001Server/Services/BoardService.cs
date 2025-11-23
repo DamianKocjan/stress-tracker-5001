@@ -9,7 +9,7 @@ namespace StressTracker5001Server.Services
     {
         Task<Board?> GetBoardByIdAsync(int boardId, int ownerId);
         Task<List<Board>> GetBoardsByOwnerIdAsync(int ownerId);
-        Task<Board> CreateBoardAsync(CreateBoardDto dto, int ownerId);
+        Task<int> CreateBoardAsync(CreateBoardDto dto, int ownerId);
         Task<Board?> UpdateBoardAsync(int boardId, UpdateBoardDto dto, int ownerId);
         Task<bool> DeleteBoardAsync(int boardId, int ownerId);
     }
@@ -39,7 +39,7 @@ namespace StressTracker5001Server.Services
                 .ToListAsync();
         }
 
-        public async Task<Board> CreateBoardAsync(CreateBoardDto dto, int ownerId)
+        public async Task<int> CreateBoardAsync(CreateBoardDto dto, int ownerId)
         {
             var board = new Board
             {
@@ -53,7 +53,7 @@ namespace StressTracker5001Server.Services
             _context.Boards.Add(board);
             await _context.SaveChangesAsync();
 
-            return board;
+            return board.Id;
         }
 
         public async Task<Board?> UpdateBoardAsync(int boardId, UpdateBoardDto dto, int ownerId)

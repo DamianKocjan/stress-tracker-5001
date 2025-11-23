@@ -54,7 +54,7 @@ export function BoardList() {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {boards.map((board) => (
-        <BoardCard {...board} key={board.Id} />
+        <BoardCard {...board} key={board.id} />
       ))}
       <Button
         variant="outline"

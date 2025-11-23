@@ -1,20 +1,16 @@
+import type { UserDto } from "./user.dto";
+
 export interface BoardCreateDto {
-  Name: string;
-  Description: string;
+  name: string;
+  description: string;
 }
 
 export interface BoardDto {
-  Id: number;
-  Name: string;
-  Description: string;
-  OwnerId: number;
-  Owner: {
-    Id: number;
-    Email: string;
-    Username: string;
-    CreatedAt: string;
-    UpdatedAt: string;
-  };
-  CreatedAt: string;
-  UpdatedAt: string;
+  id: number;
+  name: string;
+  description: string;
+  ownerId: number;
+  owner: UserDto;
+  createdAt: string;
+  updatedAt: string;
 }

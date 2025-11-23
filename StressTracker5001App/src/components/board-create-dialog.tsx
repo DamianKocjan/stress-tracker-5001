@@ -100,10 +100,10 @@ function BoardForm({ className }: { className?: string }) {
     },
     async onSubmit({ value }) {
       try {
-        await boardCreateMutation.mutateAsync({
-          Name: value.name,
-          Description: value.description,
-        });
+        await boardCreateMutation.mutateAsync(value);
+
+        form.reset();
+        useBoardCreateDialogStore.getState().setIsOpen(false);
       } catch (error) {
         console.error(error);
         showErrorToast(error);

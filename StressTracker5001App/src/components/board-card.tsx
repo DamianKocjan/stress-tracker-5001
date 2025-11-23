@@ -13,28 +13,28 @@ import {
 type BoardCardProps = BoardDto;
 
 export function BoardCard({
-  Id,
-  Name,
-  Description,
-  OwnerId,
-  Owner,
-  UpdatedAt,
+  id,
+  name,
+  description,
+  ownerId,
+  owner,
+  updatedAt,
 }: BoardCardProps) {
   const { user } = useAuth();
 
   return (
     <Card className="hover:bg-muted/50 transition-colors">
       <CardHeader>
-        <CardTitle>{Name}</CardTitle>
-        <CardDescription>{Description}</CardDescription>
+        <CardTitle>{name}</CardTitle>
+        <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardFooter className="flex flex-col items-start gap-2">
         <div className="flex w-full justify-between text-xs text-muted-foreground">
-          {OwnerId !== user?.id && <span>By {Owner.Username}</span>}
-          <span>{new Date(UpdatedAt).toLocaleDateString()}</span>
+          {ownerId !== user?.id && <span>By {owner.username}</span>}
+          <span>{new Date(updatedAt).toLocaleDateString()}</span>
         </div>
         <Button variant="ghost" className="w-full justify-start p-0" asChild>
-          <Link to={`/_authenticated/dashboard/${Id}`}>View Board &rarr;</Link>
+          <Link to={`/_authenticated/dashboard/${id}`}>View Board &rarr;</Link>
         </Button>
       </CardFooter>
     </Card>

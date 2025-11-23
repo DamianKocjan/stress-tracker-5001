@@ -1,3 +1,5 @@
+import type { LoginDto, RegisterDto } from "@/dto/auth.dto";
+import type { UserDto } from "@/dto/user.dto";
 import { fetch } from "@/utils/fetch";
 import {
   useMutation,
@@ -12,36 +14,11 @@ import React, {
   useState,
 } from "react";
 
-interface User {
-  id: number;
-  username: string;
-  email: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface AuthState {
   isAuthenticated: boolean;
-  user: User | null;
-  login: UseMutationResult<
-    void,
-    Error,
-    {
-      Email: string;
-      Password: string;
-    },
-    unknown
-  >;
-  register: UseMutationResult<
-    void,
-    Error,
-    {
-      Username: string;
-      Email: string;
-      Password: string;
-    },
-    unknown
-  >;
+  user: UserDto | null;
+  login: UseMutationResult<void, Error, LoginDto, unknown>;
+  register: UseMutationResult<void, Error, RegisterDto, unknown>;
   logout: UseMutationResult<void, Error, void, unknown>;
 }
 
@@ -51,16 +28,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const loginMutation = useMutation({
-    mutationFn: async ({
-      Email,
-      Password,
-    }: {
-      Email: string;
-      Password: string;
-    }) => {
+    mutationFn: async ({ email, password }: LoginDto) => {
       const response = await fetch("/auth/login", {
         method: "POST",
-        body: JSON.stringify({ Email, Password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!response.ok) {
@@ -72,18 +43,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   });
 
   const registerMutation = useMutation({
-    mutationFn: async ({
-      Username,
-      Email,
-      Password,
-    }: {
-      Username: string;
-      Email: string;
-      Password: string;
-    }) => {
+    mutationFn: async ({ username, email, password }: RegisterDto) => {
       const response = await fetch("/auth/register", {
         method: "POST",
-        body: JSON.stringify({ Username, Email, Password }),
+        body: JSON.stringify({ username, email, password }),
       });
 
       if (!response.ok) {
@@ -139,7 +102,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error("Failed to fetch profile");
       }
 
-      return response.json() as Promise<User>;
+      return response.json() as Promise<UserDto>;
     },
     enabled: isAuthenticated,
   });
