@@ -1,10 +1,14 @@
-import { useBoardCreateMutation } from "@/hooks/use-board-create-mutation";
+import type { BoardDto } from "@/dto/board.dto";
+import { useBoardDeleteMutation } from "@/hooks/use-board-delete-mutation";
+import { useBoardUpdateMutation } from "@/hooks/use-board-update-mutation";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { BoardFormSchema } from "@/schemas/board";
-import { useBoardCreateDialogStore } from "@/stores/board-create-dialog-store";
 import { showErrorToast } from "@/utils/handle-error";
 import { useForm } from "@tanstack/react-form";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import { Loader2, Pencil, X } from "lucide-react";
+import { useState } from "react";
 import { Button } from "./ui/button";
 import {
   Dialog,
@@ -12,6 +16,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "./ui/dialog";
 import {
   Drawer,
@@ -21,6 +26,7 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
+  DrawerTrigger,
 } from "./ui/drawer";
 import {
   Field,
@@ -36,22 +42,42 @@ import {
   InputGroupText,
   InputGroupTextarea,
 } from "./ui/input-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
-export function BoardCreateDialog() {
-  const { isOpen, setIsOpen } = useBoardCreateDialogStore();
+type BoardUpdateDialogProps = {
+  defaultValues: Pick<BoardDto, "name" | "description">;
+};
+
+export function BoardUpdateDialog({ defaultValues }: BoardUpdateDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   if (isDesktop) {
     return (
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Pencil className="size-4" />
+              </Button>
+            </DialogTrigger>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Edit board details</p>
+          </TooltipContent>
+        </Tooltip>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Create Board</DialogTitle>
+            <DialogTitle>Update Board</DialogTitle>
             <DialogDescription>
-              Create a new board by filling out the details below.
+              Update the board by changing the details below.
             </DialogDescription>
           </DialogHeader>
-          <BoardForm />
+          <BoardForm
+            defaultValues={defaultValues}
+            close={() => setIsOpen(false)}
+          />
         </DialogContent>
       </Dialog>
     );
@@ -59,14 +85,30 @@ export function BoardCreateDialog() {
 
   return (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DrawerTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Pencil className="size-4" />
+            </Button>
+          </DrawerTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Edit board details</p>
+        </TooltipContent>
+      </Tooltip>
       <DrawerContent>
         <DrawerHeader className="text-left">
-          <DrawerTitle>Create Board</DrawerTitle>
+          <DrawerTitle>Update Board</DrawerTitle>
           <DrawerDescription>
-            Create a new board by filling out the details below.
+            Update the board by changing the details below.
           </DrawerDescription>
         </DrawerHeader>
-        <BoardForm className="px-4" />
+        <BoardForm
+          className="px-4"
+          defaultValues={defaultValues}
+          close={() => setIsOpen(false)}
+        />
         <DrawerFooter className="pt-2">
           <DrawerClose asChild>
             <Button variant="outline">Cancel</Button>
@@ -77,29 +119,52 @@ export function BoardCreateDialog() {
   );
 }
 
-function BoardForm({ className }: { className?: string }) {
-  const boardCreateMutation = useBoardCreateMutation();
+interface BoardFormProps {
+  className?: string;
+  defaultValues: Pick<BoardDto, "name" | "description">;
+  close: () => void;
+}
+
+function BoardForm({ className, defaultValues, close }: BoardFormProps) {
+  const { boardId } = useParams({ from: "/_authenticated/board/$boardId" });
+  const navigate = useNavigate();
+  const boardUpdateMutation = useBoardUpdateMutation(Number(boardId));
+  const boardDeleteMutation = useBoardDeleteMutation(
+    Number(boardId),
+    defaultValues.name
+  );
 
   const form = useForm({
     defaultValues: {
-      name: "",
-      description: "",
+      name: defaultValues.name,
+      description: defaultValues.description || "",
     },
     validators: {
       onSubmit: BoardFormSchema,
     },
     async onSubmit({ value }) {
       try {
-        await boardCreateMutation.mutateAsync(value);
+        await boardUpdateMutation.mutateAsync(value);
 
         form.reset();
-        useBoardCreateDialogStore.getState().setIsOpen(false);
+        close();
       } catch (error) {
         console.error(error);
         showErrorToast(error);
       }
     },
   });
+
+  async function handleDelete() {
+    try {
+      await boardDeleteMutation.mutateAsync();
+      close();
+      navigate({ to: "/dashboard" });
+    } catch (error) {
+      console.error(error);
+      showErrorToast(error);
+    }
+  }
 
   return (
     <form
@@ -169,13 +234,36 @@ function BoardForm({ className }: { className?: string }) {
         />
       </FieldGroup>
 
-      <form.Subscribe selector={(s) => !s.canSubmit && s.isSubmitting}>
-        {(isSubmitting) => (
-          <Button type="submit" disabled={isSubmitting}>
-            {boardCreateMutation.isPending ? "Creating..." : "Create Board"}
-          </Button>
-        )}
-      </form.Subscribe>
+      <div className="flex gap-2">
+        <form.Subscribe selector={(s) => !s.canSubmit && s.isSubmitting}>
+          {(isSubmitting) => (
+            <Button type="submit" className="flex-1" disabled={isSubmitting}>
+              {boardUpdateMutation.isPending ? "Updating..." : "Update Board"}
+            </Button>
+          )}
+        </form.Subscribe>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              size="icon"
+              variant="destructive"
+              disabled={boardDeleteMutation.isPending}
+              onClick={handleDelete}
+            >
+              {boardDeleteMutation.isPending ? (
+                <Loader2 className="animate-spin size-4" />
+              ) : (
+                <X className="size-4" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Delete this board</p>
+          </TooltipContent>
+        </Tooltip>
+      </div>
     </form>
   );
 }

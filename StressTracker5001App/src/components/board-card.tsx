@@ -34,7 +34,9 @@ export function BoardCard({
           <span>{new Date(updatedAt).toLocaleDateString()}</span>
         </div>
         <Button variant="ghost" className="w-full justify-start p-0" asChild>
-          <Link to={`/_authenticated/dashboard/${id}`}>View Board &rarr;</Link>
+          <Link to="/board/$boardId" params={{ boardId: id.toString() }}>
+            View Board &rarr;
+          </Link>
         </Button>
       </CardFooter>
     </Card>

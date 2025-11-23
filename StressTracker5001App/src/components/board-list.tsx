@@ -1,9 +1,9 @@
-import { useBoardQuery } from "@/hooks/use-boards-query";
+import { useBoardsQuery } from "@/hooks/use-boards-query";
 import { useBoardCreateDialogStore } from "@/stores/board-create-dialog-store";
-import { AlertCircleIcon, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { BoardCard } from "./board-card";
 import { BoardsEmptyState } from "./boards-empty-state";
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { FetchingErrorAlert } from "./fetching-error-alert";
 import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 
@@ -11,7 +11,7 @@ export function BoardList() {
   const setBoardCreateDialogOpen = useBoardCreateDialogStore(
     (state) => state.setIsOpen
   );
-  const { data: boards, status, error, refetch } = useBoardQuery();
+  const { data: boards, status, error, refetch } = useBoardsQuery();
 
   if (status === "pending") {
     return (
@@ -24,25 +24,7 @@ export function BoardList() {
   }
 
   if (status === "error") {
-    return (
-      <Alert variant="destructive" className="relative">
-        <AlertCircleIcon />
-        <AlertTitle>Failed to load boards</AlertTitle>
-        <AlertDescription>
-          {error instanceof Error
-            ? error.message
-            : "An unknown error occurred."}
-        </AlertDescription>
-
-        <Button
-          variant="outline"
-          className="absolute top-4 right-4 text-accent-foreground"
-          onClick={() => refetch()}
-        >
-          Retry
-        </Button>
-      </Alert>
-    );
+    return <FetchingErrorAlert error={error} refetch={refetch} />;
   }
 
   const hasBoards = boards.length > 0;

@@ -10,18 +10,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth";
+import { LoginFormSchema } from "@/schemas/auth";
 import { showErrorToast } from "@/utils/handle-error";
 import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { LayoutDashboard } from "lucide-react";
 import { toast } from "sonner";
-import z from "zod";
 import { PasswordInput } from "./ui/input-password";
-
-const LoginFormSchema = z.object({
-  email: z.email(),
-  password: z.string().min(8, "Password must be at least 8 characters long"),
-});
 
 export function LoginForm({
   className,
