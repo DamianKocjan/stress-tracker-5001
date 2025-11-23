@@ -1,3 +1,4 @@
+import { BoardCreateDialog } from "@/components/board-create-dialog";
 import { BoardList } from "@/components/board-list";
 import { DashboardWelcome } from "@/components/dashboard-welcome";
 import { createFileRoute } from "@tanstack/react-router";
@@ -12,6 +13,7 @@ function RouteComponent() {
       <DashboardWelcome />
 
       <BoardList />
+      <BoardCreateDialog />
     </div>
   );
 }

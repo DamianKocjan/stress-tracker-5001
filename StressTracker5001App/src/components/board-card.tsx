@@ -36,7 +36,7 @@ export function BoardCard({
   const { user } = useAuth();
 
   return (
-    <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+    <Card className="hover:bg-muted/50 transition-colors">
       <CardHeader>
         <CardTitle>{Name}</CardTitle>
         <CardDescription>{Description}</CardDescription>

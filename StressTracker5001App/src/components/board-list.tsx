@@ -1,3 +1,4 @@
+import { useBoardCreateDialogStore } from "@/stores/board-create-dialog-store";
 import { Plus } from "lucide-react";
 import { BoardCard } from "./board-card";
 import { BoardsEmptyState } from "./boards-empty-state";
@@ -24,6 +25,10 @@ const boards = [
 ];
 
 export function BoardList() {
+  const setBoardCreateDialogOpen = useBoardCreateDialogStore(
+    (state) => state.setIsOpen
+  );
+
   const hasBoards = boards.length > 0;
 
   if (!hasBoards) {
@@ -38,6 +43,7 @@ export function BoardList() {
       <Button
         variant="outline"
         className="h-auto min-h-[180px] flex-col gap-2 border-dashed hover:border-primary hover:bg-muted/50"
+        onClick={() => setBoardCreateDialogOpen(true)}
       >
         <Plus className="h-8 w-8" />
         <span>Create New Board</span>
