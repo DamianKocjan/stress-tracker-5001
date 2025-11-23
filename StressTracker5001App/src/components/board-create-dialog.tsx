@@ -1,6 +1,8 @@
+import { useBoardCreateMutation } from "@/hooks/use-board-create-mutation";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { cn } from "@/lib/utils";
 import { useBoardCreateDialogStore } from "@/stores/board-create-dialog-store";
+import { showErrorToast } from "@/utils/handle-error";
 import { useForm } from "@tanstack/react-form";
 import z from "zod";
 import { Button } from "./ui/button";
@@ -86,6 +88,8 @@ const BoardFormSchema = z.object({
 });
 
 function BoardForm({ className }: { className?: string }) {
+  const boardCreateMutation = useBoardCreateMutation();
+
   const form = useForm({
     defaultValues: {
       name: "",
@@ -94,7 +98,17 @@ function BoardForm({ className }: { className?: string }) {
     validators: {
       onSubmit: BoardFormSchema,
     },
-    async onSubmit() {},
+    async onSubmit({ value }) {
+      try {
+        await boardCreateMutation.mutateAsync({
+          Name: value.name,
+          Description: value.description,
+        });
+      } catch (error) {
+        console.error(error);
+        showErrorToast(error);
+      }
+    },
   });
 
   return (

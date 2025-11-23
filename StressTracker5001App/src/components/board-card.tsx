@@ -1,3 +1,4 @@
+import type { BoardDto } from "@/dto/board.dto";
 import { useAuth } from "@/providers/auth";
 import { Link } from "@tanstack/react-router";
 import { Button } from "./ui/button";
@@ -9,21 +10,7 @@ import {
   CardTitle,
 } from "./ui/card";
 
-interface BoardCardProps {
-  Id: number;
-  Name: string;
-  Description: string;
-  OwnerId: number;
-  Owner: {
-    Id: number;
-    Email: string;
-    Username: string;
-    CreatedAt: string;
-    UpdatedAt: string;
-  };
-  CreatedAt: string;
-  UpdatedAt: string;
-}
+type BoardCardProps = BoardDto;
 
 export function BoardCard({
   Id,

@@ -1,33 +1,49 @@
+import { useBoardQuery } from "@/hooks/use-boards-query";
 import { useBoardCreateDialogStore } from "@/stores/board-create-dialog-store";
-import { Plus } from "lucide-react";
+import { AlertCircleIcon, Plus } from "lucide-react";
 import { BoardCard } from "./board-card";
 import { BoardsEmptyState } from "./boards-empty-state";
+import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Button } from "./ui/button";
-
-// Mock data for boards - replace with actual data fetching later
-const boards = [
-  // Uncomment to test populated state
-  {
-    Id: 1,
-    Name: "Stress Tracking Board 1",
-    Description: "Track your stress levels over time.",
-    OwnerId: 1,
-    Owner: {
-      Id: 1,
-      Email: "owner@example.com",
-      Username: "owneruser",
-      CreatedAt: "2024-01-01T00:00:00Z",
-      UpdatedAt: "2024-01-02T00:00:00Z",
-    },
-    CreatedAt: "2024-01-01T00:00:00Z",
-    UpdatedAt: "2024-01-02T00:00:00Z",
-  },
-];
+import { Skeleton } from "./ui/skeleton";
 
 export function BoardList() {
   const setBoardCreateDialogOpen = useBoardCreateDialogStore(
     (state) => state.setIsOpen
   );
+  const { data: boards, status, error, refetch } = useBoardQuery();
+
+  if (status === "pending") {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, index) => (
+          <Skeleton key={index} className="h-12" />
+        ))}
+      </div>
+    );
+  }
+
+  if (status === "error") {
+    return (
+      <Alert variant="destructive" className="relative">
+        <AlertCircleIcon />
+        <AlertTitle>Failed to load boards</AlertTitle>
+        <AlertDescription>
+          {error instanceof Error
+            ? error.message
+            : "An unknown error occurred."}
+        </AlertDescription>
+
+        <Button
+          variant="outline"
+          className="absolute top-4 right-4 text-accent-foreground"
+          onClick={() => refetch()}
+        >
+          Retry
+        </Button>
+      </Alert>
+    );
+  }
 
   const hasBoards = boards.length > 0;
 
