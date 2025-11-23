@@ -51,7 +51,7 @@ export function AppNav() {
           {isAuthenticated ? (
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="sm" asChild>
-                <Link to="/">Dashboard</Link>
+                <Link to="/dashboard">Dashboard</Link>
               </Button>
               <Button
                 size="sm"

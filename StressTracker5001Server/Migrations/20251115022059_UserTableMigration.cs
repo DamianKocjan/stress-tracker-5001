@@ -20,8 +20,8 @@ namespace StressTracker5001Server.Migrations
                     Email = table.Column<string>(type: "TEXT", maxLength: 256, nullable: false),
                     Password = table.Column<string>(type: "TEXT", maxLength: 128, nullable: false),
                     Username = table.Column<string>(type: "TEXT", maxLength: 50, nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

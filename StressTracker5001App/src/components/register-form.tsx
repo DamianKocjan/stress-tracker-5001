@@ -10,26 +10,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth";
+import { RegisterFormSchema } from "@/schemas/auth";
 import { showErrorToast } from "@/utils/handle-error";
 import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { LayoutDashboard } from "lucide-react";
 import { toast } from "sonner";
-import z from "zod";
 import { PasswordInput } from "./ui/input-password";
-
-const RegisterFormSchema = z
-  .object({
-    email: z.email(),
-    username: z.string().min(3, "Username must be at least 3 characters long"),
-    password: z.string().min(8, "Password must be at least 8 characters long"),
-    confirmPassword: z
-      .string()
-      .min(8, "Confirm Password must be at least 8 characters long"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-  });
 
 export function RegisterForm({
   className,
@@ -52,15 +39,9 @@ export function RegisterForm({
     validators: {
       onSubmit: RegisterFormSchema,
     },
-    async onSubmit({ value: { email, username, password } }) {
+    async onSubmit({ value }) {
       try {
-        console.log(
-          await register.mutateAsync({
-            Email: email,
-            Password: password,
-            Username: username,
-          })
-        );
+        await register.mutateAsync(value);
         navigate({ to: redirect, search: { redirect: "" } });
         toast.success("Registration successful!");
       } catch (error) {

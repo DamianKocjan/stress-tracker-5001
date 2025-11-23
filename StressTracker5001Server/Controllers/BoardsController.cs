@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Board;
 using StressTracker5001Server.DTOs.Column;
@@ -22,7 +23,13 @@ namespace StressTracker5001Server.Controllers
                 return Unauthorized();
             }
 
-            var board = await boardService.CreateBoardAsync(dto, userId);
+            var boardId = await boardService.CreateBoardAsync(dto, userId);
+            var board = await boardService.GetBoardByIdAsync(boardId, userId);
+            if (board == null)
+            {
+                return NotFound();
+            }
+
             return Ok(new BoardDto
             {
                 Id = board.Id,

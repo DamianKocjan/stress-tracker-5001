@@ -9,7 +9,7 @@ namespace StressTracker5001Server.Services
     {
         Task<Board?> GetBoardByIdAsync(int boardId, int ownerId);
         Task<List<Board>> GetBoardsByOwnerIdAsync(int ownerId);
-        Task<Board> CreateBoardAsync(CreateBoardDto dto, int ownerId);
+        Task<int> CreateBoardAsync(CreateBoardDto dto, int ownerId);
         Task<Board?> UpdateBoardAsync(int boardId, UpdateBoardDto dto, int ownerId);
         Task<bool> DeleteBoardAsync(int boardId, int ownerId);
     }
@@ -39,21 +39,21 @@ namespace StressTracker5001Server.Services
                 .ToListAsync();
         }
 
-        public async Task<Board> CreateBoardAsync(CreateBoardDto dto, int ownerId)
+        public async Task<int> CreateBoardAsync(CreateBoardDto dto, int ownerId)
         {
             var board = new Board
             {
                 Name = dto.Name,
                 Description = dto.Description ?? string.Empty,
                 OwnerId = ownerId,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
             _context.Boards.Add(board);
             await _context.SaveChangesAsync();
 
-            return board;
+            return board.Id;
         }
 
         public async Task<Board?> UpdateBoardAsync(int boardId, UpdateBoardDto dto, int ownerId)
@@ -66,7 +66,7 @@ namespace StressTracker5001Server.Services
 
             board.Name = dto.Name;
             board.Description = dto.Description ?? string.Empty;
-            board.UpdatedAt = DateTimeOffset.UtcNow;
+            board.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
