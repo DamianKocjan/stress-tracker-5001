@@ -18,11 +18,11 @@ namespace StressTracker5001Server.Migrations
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
                     Token = table.Column<string>(type: "TEXT", nullable: false),
-                    ExpiresAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    RevokedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
+                    ExpiresAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    RevokedAt = table.Column<DateTime>(type: "TEXT", nullable: true),
                     UserId = table.Column<int>(type: "INTEGER", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "TEXT", nullable: false)
+                    CreatedAt = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UpdatedAt = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {

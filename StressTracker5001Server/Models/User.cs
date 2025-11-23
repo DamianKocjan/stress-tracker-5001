@@ -29,7 +29,7 @@ namespace StressTracker5001Server.Models
         [JsonIgnore]
         public List<Board> Boards { get; set; } = new();
 
-        public DateTimeOffset CreatedAt { get; set; }
-        public DateTimeOffset UpdatedAt { get; set; }
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
     }
 }

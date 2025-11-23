@@ -9,7 +9,7 @@ namespace StressTracker5001Server.DTOs.Board
         public required string Description { get; set; }
         public required int OwnerId { get; set; }
         public required UserDto Owner { get; set; }
-        public required DateTimeOffset CreatedAt { get; set; }
-        public required DateTimeOffset UpdatedAt { get; set; }
+        public required DateTime CreatedAt { get; set; }
+        public required DateTime UpdatedAt { get; set; }
     }
 }

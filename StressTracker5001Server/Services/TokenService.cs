@@ -201,14 +201,14 @@ namespace StressTracker5001Server.Services
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow.AddHours(authTokenCookieExpiryHours)
+                Expires = DateTime.UtcNow.AddHours(authTokenCookieExpiryHours)
             });
             response.Cookies.Append(refreshTokenCookieName, refreshToken, new CookieOptions
             {
                 HttpOnly = true,
                 Secure = true,
                 SameSite = SameSiteMode.Strict,
-                Expires = DateTimeOffset.UtcNow.AddDays(refreshTokenCookieExpiryDays)
+                Expires = DateTime.UtcNow.AddDays(refreshTokenCookieExpiryDays)
             });
         }
     }

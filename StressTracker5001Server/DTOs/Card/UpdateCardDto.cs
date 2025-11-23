@@ -4,6 +4,6 @@ namespace StressTracker5001Server.DTOs.Card
     {
         public required string Title { get; set; }
         public string? Description { get; set; }
-        public DateTimeOffset? DueDate { get; set; }
+        public DateTime? DueDate { get; set; }
     }
 }

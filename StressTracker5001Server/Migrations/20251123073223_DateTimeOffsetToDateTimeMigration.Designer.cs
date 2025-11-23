@@ -11,8 +11,8 @@ using StressTracker5001Server.Data;
 namespace StressTracker5001Server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251120175326_BoardTableMigration")]
-    partial class BoardTableMigration
+    [Migration("20251123073223_DateTimeOffsetToDateTimeMigration")]
+    partial class DateTimeOffsetToDateTimeMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -50,6 +50,82 @@ namespace StressTracker5001Server.Migrations
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Boards");
+                });
+
+            modelBuilder.Entity("StressTracker5001Server.Models.Card", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ColumnId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ColumnId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.ToTable("Cards");
+                });
+
+            modelBuilder.Entity("StressTracker5001Server.Models.Column", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("BoardId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("WipLimit")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoardId");
+
+                    b.ToTable("Columns");
                 });
 
             modelBuilder.Entity("StressTracker5001Server.Models.RefreshToken", b =>
@@ -130,6 +206,36 @@ namespace StressTracker5001Server.Migrations
                     b.Navigation("Owner");
                 });
 
+            modelBuilder.Entity("StressTracker5001Server.Models.Card", b =>
+                {
+                    b.HasOne("StressTracker5001Server.Models.Column", "Column")
+                        .WithMany("Cards")
+                        .HasForeignKey("ColumnId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("StressTracker5001Server.Models.User", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Column");
+
+                    b.Navigation("CreatedBy");
+                });
+
+            modelBuilder.Entity("StressTracker5001Server.Models.Column", b =>
+                {
+                    b.HasOne("StressTracker5001Server.Models.Board", "Board")
+                        .WithMany("Columns")
+                        .HasForeignKey("BoardId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Board");
+                });
+
             modelBuilder.Entity("StressTracker5001Server.Models.RefreshToken", b =>
                 {
                     b.HasOne("StressTracker5001Server.Models.User", "User")
@@ -139,6 +245,16 @@ namespace StressTracker5001Server.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("StressTracker5001Server.Models.Board", b =>
+                {
+                    b.Navigation("Columns");
+                });
+
+            modelBuilder.Entity("StressTracker5001Server.Models.Column", b =>
+                {
+                    b.Navigation("Cards");
                 });
 
             modelBuilder.Entity("StressTracker5001Server.Models.User", b =>

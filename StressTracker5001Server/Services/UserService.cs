@@ -49,7 +49,7 @@ namespace StressTracker5001Server.Services
             }
 
             user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
-            user.UpdatedAt = DateTimeOffset.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return user;
@@ -62,8 +62,8 @@ namespace StressTracker5001Server.Services
                 Email = dto.Email,
                 Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Username = dto.Username,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
             };
 
             _context.Users.Add(user);
@@ -89,7 +89,7 @@ namespace StressTracker5001Server.Services
                 user.Email = dto.Email;
             }
 
-            user.UpdatedAt = DateTimeOffset.UtcNow;
+            user.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return user;

@@ -68,8 +68,8 @@ namespace StressTracker5001Server.Services
                 ColumnId = columnId,
                 CreatedById = userId,
                 Position = cardCount,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
             _context.Cards.Add(card);
@@ -89,7 +89,7 @@ namespace StressTracker5001Server.Services
             card.Title = dto.Title;
             card.Description = dto.Description ?? string.Empty;
             card.DueDate = dto.DueDate;
-            card.UpdatedAt = DateTimeOffset.UtcNow;
+            card.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return card;
@@ -104,7 +104,7 @@ namespace StressTracker5001Server.Services
             }
 
             card.Position = newPosition;
-            card.UpdatedAt = DateTimeOffset.UtcNow;
+            card.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return true;

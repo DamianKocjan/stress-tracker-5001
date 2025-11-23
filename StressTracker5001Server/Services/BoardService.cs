@@ -46,8 +46,8 @@ namespace StressTracker5001Server.Services
                 Name = dto.Name,
                 Description = dto.Description ?? string.Empty,
                 OwnerId = ownerId,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
             _context.Boards.Add(board);
@@ -66,7 +66,7 @@ namespace StressTracker5001Server.Services
 
             board.Name = dto.Name;
             board.Description = dto.Description ?? string.Empty;
-            board.UpdatedAt = DateTimeOffset.UtcNow;
+            board.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 

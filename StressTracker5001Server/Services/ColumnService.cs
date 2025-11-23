@@ -59,8 +59,8 @@ namespace StressTracker5001Server.Services
                 Name = dto.Name,
                 Position = dto.Position,
                 WipLimit = dto.WipLimit,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
             };
 
             _context.Columns.Add(column);
@@ -78,7 +78,7 @@ namespace StressTracker5001Server.Services
 
             column.Name = dto.Name;
             column.WipLimit = dto.WipLimit;
-            column.UpdatedAt = DateTimeOffset.UtcNow;
+            column.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return column;
@@ -93,7 +93,7 @@ namespace StressTracker5001Server.Services
             }
 
             column.Position = newPosition;
-            column.UpdatedAt = DateTimeOffset.UtcNow;
+            column.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return true;
