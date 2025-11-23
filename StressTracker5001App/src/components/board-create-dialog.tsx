@@ -178,7 +178,14 @@ function BoardForm({ className }: { className?: string }) {
           }}
         />
       </FieldGroup>
-      <Button type="submit">Save changes</Button>
+
+      <form.Subscribe selector={(s) => !s.canSubmit && s.isSubmitting}>
+        {(isSubmitting) => (
+          <Button type="submit" disabled={isSubmitting}>
+            {boardCreateMutation.isPending ? "Creating..." : "Create Board"}
+          </Button>
+        )}
+      </form.Subscribe>
     </form>
   );
 }
