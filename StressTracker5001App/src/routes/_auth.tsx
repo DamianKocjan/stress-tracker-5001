@@ -6,6 +6,7 @@ import {
   useNavigate,
   useSearch,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 export const Route = createFileRoute("/_auth")({
   component: () => {
@@ -16,9 +17,11 @@ export const Route = createFileRoute("/_auth")({
     });
     const navigate = useNavigate();
 
-    if (isAuthenticated) {
-      navigate({ to: redirect, search: {} });
-    }
+    useEffect(() => {
+      if (isAuthenticated) {
+        navigate({ to: redirect, search: {} });
+      }
+    }, [isAuthenticated, navigate, redirect]);
 
     return <Outlet />;
   },
