@@ -2,7 +2,7 @@ import { BoardUpdateDialog } from "@/components/board-update-dialog";
 import { FetchingErrorAlert } from "@/components/fetching-error-alert";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { BoardDto } from "@/dto/board.dto";
+import type { BoardDetailsDto } from "@/dto/board.dto";
 import { useBoardQuery } from "@/hooks/use-board-query";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -47,12 +47,12 @@ function BoardSkeleton() {
 }
 
 interface BoardDetailsProps {
-  board: BoardDto;
+  board: BoardDetailsDto;
 }
 
 function BoardDetails({ board }: BoardDetailsProps) {
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-4">
       <Card>
         <CardHeader>
           <div className="flex justify-between items-center w-full">

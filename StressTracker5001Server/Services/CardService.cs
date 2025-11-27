@@ -12,7 +12,7 @@ namespace StressTracker5001Server.Services
         Task<List<Card>> GetCardsByColumnIdAsync(int columnId, int ownerId);
         Task<Card> CreateCardAsync(int columnId, CreateCardDto dto, int userId);
         Task<Card?> UpdateCardAsync(int cardId, UpdateCardDto dto, int ownerId);
-        Task<bool> MoveCardAsync(int cardId, int newPosition, int ownerId);
+        Task<bool> MoveCardAsync(int cardId, MoveCardDto dto, int ownerId);
         Task<bool> DeleteCardAsync(int cardId, int ownerId);
     }
 
@@ -95,7 +95,7 @@ namespace StressTracker5001Server.Services
             return card;
         }
 
-        public async Task<bool> MoveCardAsync(int cardId, int newPosition, int ownerId)
+        public async Task<bool> MoveCardAsync(int cardId, MoveCardDto dto, int ownerId)
         {
             var card = await GetCardByIdAsync(cardId, ownerId);
             if (card == null)
@@ -103,7 +103,8 @@ namespace StressTracker5001Server.Services
                 return false;
             }
 
-            card.Position = newPosition;
+            card.Position = dto.NewPosition;
+            card.ColumnId = dto.ColumnId;
             card.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();

@@ -1,27 +1,20 @@
 import type { BoardDto } from "@/dto/board.dto";
-import { fetch } from "@/utils/fetch";
+import { deleteBoard } from "@/utils/api";
+import { boardQueryKey, boardsQueryKey } from "@/utils/query-options";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-export function useBoardDeleteMutation(boardId: number, boardName: string) {
+export function useBoardDeleteMutation(boardName: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`/boards/${boardId}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete board");
-      }
-    },
-    onSuccess() {
+    mutationFn: deleteBoard,
+    onSuccess(_data, boardId) {
       toast.success("Board deleted successfully!", {
         description: `Board "${boardName}" has been deleted.`,
       });
       queryClient.setQueryData(
-        ["boards"],
+        boardsQueryKey,
         (oldData: BoardDto[] | undefined) => {
           if (!oldData) {
             return [];
@@ -31,7 +24,7 @@ export function useBoardDeleteMutation(boardId: number, boardName: string) {
       );
       queryClient.removeQueries({
         exact: true,
-        queryKey: ["boards", boardId],
+        queryKey: boardQueryKey(boardId),
       });
     },
   });

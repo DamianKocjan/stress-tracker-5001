@@ -89,7 +89,7 @@ namespace StressTracker5001Server.Controllers
                 return Unauthorized();
             }
 
-            var success = await cardService.MoveCardAsync(id, dto.NewPosition, userId);
+            var success = await cardService.MoveCardAsync(id, dto, userId);
             if (!success)
             {
                 return NotFound();
