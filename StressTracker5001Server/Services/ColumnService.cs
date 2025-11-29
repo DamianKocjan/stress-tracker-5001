@@ -74,6 +74,26 @@ namespace StressTracker5001Server.Services
             column.Position = newPosition;
             column.UpdatedAt = DateTime.UtcNow;
 
+            // Get all columns in the same board to adjust their positions
+            var columns = await _context.Columns
+                .Where(c => c.BoardId == column.BoardId && c.Id != columnId)
+                .OrderBy(c => c.Position)
+                .ToListAsync();
+
+            // Adjust positions of other columns
+            for (int i = 0; i < columns.Count; i++)
+            {
+                if (i >= newPosition)
+                {
+                    columns[i].Position = i + 1;
+                }
+                else
+                {
+                    columns[i].Position = i;
+                }
+                columns[i].UpdatedAt = DateTime.UtcNow;
+            }
+
             await _context.SaveChangesAsync();
             return true;
         }

@@ -103,9 +103,49 @@ namespace StressTracker5001Server.Services
                 return false;
             }
 
+            var column = await _context.Columns
+                .Include(c => c.Board)
+                .FirstOrDefaultAsync(c => c.Id == dto.NewColumnId && c.Board.OwnerId == ownerId);
+
+            if (column == null)
+            {
+                return false;
+            }
+
+            if (column.WipLimit != null)
+            {
+                var cardCountInTargetColumn = await _context.Cards
+                    .Where(c => c.ColumnId == dto.NewColumnId)
+                    .CountAsync();
+
+                if (cardCountInTargetColumn >= column.WipLimit)
+                {
+                    return false; // Exceeds WIP limit
+                }
+            }
+
             card.Position = dto.NewPosition;
-            card.ColumnId = dto.ColumnId;
+            card.ColumnId = dto.NewColumnId;
             card.UpdatedAt = DateTime.UtcNow;
+
+            // Update the positions of other cards in the same column
+            var cards = await _context.Cards
+                .Where(c => c.ColumnId == dto.NewColumnId && c.Id != cardId)
+                .OrderBy(c => c.Position)
+                .ToListAsync();
+
+            for (int i = 0; i < cards.Count; i++)
+            {
+                if (i >= dto.NewPosition)
+                {
+                    cards[i].Position = i + 1;
+                }
+                else
+                {
+                    cards[i].Position = i;
+                }
+                cards[i].UpdatedAt = DateTime.UtcNow;
+            }
 
             await _context.SaveChangesAsync();
             return true;
