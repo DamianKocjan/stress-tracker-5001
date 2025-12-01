@@ -13,7 +13,7 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
-import { type ReactElement, useCallback, useState } from "react";
+import { type ReactElement, useCallback, useMemo, useState } from "react";
 import { useMediaQuery } from "./use-media-query";
 
 interface UseConfirmProps {
@@ -29,11 +29,11 @@ export function useConfirm({
     resolve: (value: boolean) => void;
   } | null>(null);
 
-  function confirm() {
+  const confirm = useCallback(() => {
     return new Promise((resolve) => {
       setPromise({ resolve });
     });
-  }
+  }, []);
 
   function handleClose() {
     setPromise(null);
@@ -63,7 +63,7 @@ export function useConfirm({
     [handleCancel, handleConfirm, message, promise, title]
   );
 
-  return [dialog, confirm];
+  return useMemo(() => [dialog, confirm], [confirm, dialog]);
 }
 
 interface ConfirmationDialogProps {
@@ -89,11 +89,11 @@ function ConfirmationDialog({
   if (isDesktop) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{message}</DialogDescription>
-        </DialogHeader>
-        <DialogContent className="border-none hide-scrollbar max-h-[85vh] w-full overflow-y-auto p-0 sm:max-w-lg">
+        <DialogContent className="max-h-[85vh] w-full overflow-y-auto sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{message}</DialogDescription>
+          </DialogHeader>
           <div className="flex w-full flex-col items-center justify-end gap-x-2 gap-y-2 pt-4 lg:flex-row">
             <Button
               onClick={handleCancel}
@@ -118,7 +118,7 @@ function ConfirmationDialog({
           <DrawerTitle>{title}</DrawerTitle>
           <DrawerDescription>{message}</DrawerDescription>
         </DrawerHeader>
-        <div className="hide-scrollbar max-h-[85vh] overflow-y-auto">
+        <div className="max-h-[85vh] overflow-y-auto">
           <div className="flex w-full flex-col items-center justify-end gap-x-2 gap-y-2 pt-4 lg:flex-row">
             <Button
               onClick={handleCancel}

@@ -123,7 +123,7 @@ export function KanbanColumn({ column, cards }: KanbanColumnProps) {
             </SortableContext>
           </CardContent>
         </ScrollArea>
-        <CardFooter className="px-0">
+        <CardFooter className="px-0 mt-auto">
           <Button
             type="button"
             className="w-full"

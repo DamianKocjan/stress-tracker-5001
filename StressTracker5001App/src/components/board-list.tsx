@@ -24,7 +24,13 @@ export function BoardList() {
   }
 
   if (status === "error") {
-    return <FetchingErrorAlert error={error} refetch={refetch} />;
+    return (
+      <FetchingErrorAlert
+        title="Failed to load boards"
+        error={error}
+        refetch={refetch}
+      />
+    );
   }
 
   const hasBoards = boards.length > 0;

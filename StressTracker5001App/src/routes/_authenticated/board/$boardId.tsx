@@ -1,5 +1,6 @@
 import { BoardKanban, BoardKanbanSkeleton } from "@/components/board-kanban";
 import { BoardUpdateDialog } from "@/components/board-update-dialog";
+import { CardDetailsDialog } from "@/components/card-details-dialog";
 import { FetchingErrorAlert } from "@/components/fetching-error-alert";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,7 +20,13 @@ function RouteComponent() {
     return <BoardSkeleton />;
   }
   if (status === "error") {
-    return <FetchingErrorAlert error={error} refetch={refetch} />;
+    return (
+      <FetchingErrorAlert
+        title="Failed to load board"
+        error={error}
+        refetch={refetch}
+      />
+    );
   }
 
   return <BoardDetails board={data} />;
@@ -59,6 +66,7 @@ function BoardDetails({ board }: BoardDetailsProps) {
       </Card>
 
       <BoardKanban board={board} />
+      <CardDetailsDialog boardId={board.id} />
     </div>
   );
 }

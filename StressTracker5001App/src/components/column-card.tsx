@@ -4,7 +4,7 @@ import type { CardDto } from "@/dto/card.dto";
 import { useKanbanStore } from "@/stores/kanban-store";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pencil } from "lucide-react";
+import { GripVertical } from "lucide-react";
 
 type ColumnCardProps = {
   card: CardDto;
@@ -35,9 +35,6 @@ export function ColumnCard({ card }: ColumnCardProps) {
       roleDescription: "Card",
     },
   });
-  const setCardDialogUpdateDialogOpen = useKanbanStore(
-    (s) => s.setCardDialogUpdateDialogOpen
-  );
   const setCardId = useKanbanStore((s) => s.setCardId);
 
   const style = {
@@ -56,7 +53,12 @@ export function ColumnCard({ card }: ColumnCardProps) {
   }
 
   return (
-    <Card ref={setNodeRef} style={style} className="p-2">
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className="p-2 cursor-pointer hover:shadow-md"
+      onClick={() => setCardId(card.id)}
+    >
       <CardContent className="p-0 flex items-center gap-2 align-middle text-left whitespace-pre-wrap">
         <Button
           size="icon"
@@ -70,26 +72,13 @@ export function ColumnCard({ card }: ColumnCardProps) {
         </Button>
 
         <div className="grow">
-          <h2 className="font-medium">{card.title}</h2>
+          <h2 className="font-medium max-w-sm break-all">{card.title}</h2>
           {card.description && (
-            <p className="mt-1 text-sm text-secondary-foreground/80">
+            <p className="mt-1 text-sm text-secondary-foreground/80 max-w-sm truncate">
               {card.description}
             </p>
           )}
         </div>
-
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          type="button"
-          onClick={() => {
-            setCardDialogUpdateDialogOpen(true);
-            setCardId(card.id);
-          }}
-        >
-          <span className="sr-only">Edit card</span>
-          <Pencil />
-        </Button>
       </CardContent>
     </Card>
   );
