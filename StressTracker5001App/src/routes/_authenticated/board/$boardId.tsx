@@ -1,6 +1,7 @@
 import { BoardKanban, BoardKanbanSkeleton } from "@/components/board-kanban";
 import { BoardUpdateDialog } from "@/components/board-update-dialog";
 import { CardDetailsDialog } from "@/components/card-details-dialog";
+import { ColumnUpdateDialog } from "@/components/column-update-dialog";
 import { FetchingErrorAlert } from "@/components/fetching-error-alert";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -67,6 +68,13 @@ function BoardDetails({ board }: BoardDetailsProps) {
 
       <BoardKanban board={board} />
       <CardDetailsDialog boardId={board.id} />
+      {board.columns.map((column) => (
+        <ColumnUpdateDialog
+          key={column.id}
+          boardId={board.id}
+          column={column}
+        />
+      ))}
     </div>
   );
 }

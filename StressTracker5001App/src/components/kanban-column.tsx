@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { useKanbanStore } from "@/stores/kanban-store";
 import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Pencil } from "lucide-react";
 import { useMemo } from "react";
 import { ColumnCard } from "./column-card";
 import { Badge } from "./ui/badge";
@@ -29,6 +29,9 @@ export function KanbanColumn({ column, cards }: KanbanColumnProps) {
     (s) => s.setIsCardDialogCreateDialogOpen
   );
   const setColumnId = useKanbanStore((s) => s.setColumnId);
+  const setColumnDialogUpdateOpen = useKanbanStore(
+    (s) => s.setIsColumnDialogUpdateDialogOpen
+  );
 
   const sortedCards = useMemo(() => {
     return cards.toSorted((a, b) => a.position - b.position);
@@ -98,17 +101,33 @@ export function KanbanColumn({ column, cards }: KanbanColumnProps) {
             <GripVertical />
           </Button>
 
-          <h1>{column.name}</h1>
+          <h1 className="w-full text-center relative">
+            {column.name}
+            {column.wipLimit && sortedCards.length ? (
+              <Badge
+                className="absolute right-0 top-0.5"
+                variant={isColumnOverLimit ? "destructive" : "outline"}
+              >
+                {sortedCards.length}/{column.wipLimit}
+              </Badge>
+            ) : sortedCards.length ? (
+              <Badge className="absolute right-0 top-0.5" variant="outline">
+                {sortedCards.length}
+              </Badge>
+            ) : null}
+          </h1>
 
-          {column.wipLimit && sortedCards.length ? (
-            <Badge variant={isColumnOverLimit ? "destructive" : "outline"}>
-              {sortedCards.length}/{column.wipLimit}
-            </Badge>
-          ) : sortedCards.length ? (
-            <Badge variant="outline">{sortedCards.length}</Badge>
-          ) : (
-            <div className="w-6" />
-          )}
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              setColumnId(column.id);
+              setColumnDialogUpdateOpen(true);
+            }}
+          >
+            <span className="sr-only">Edit column</span>
+            <Pencil className="size-4" />
+          </Button>
         </CardHeader>
         <ScrollArea>
           <CardContent className="flex grow flex-col gap-2 p-2">

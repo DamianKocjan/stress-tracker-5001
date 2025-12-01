@@ -14,8 +14,6 @@ interface KanbanStore {
   setColumnId: (columnId: number | null) => void;
   cardId: number | null;
   setCardId: (cardId: number | null) => void;
-  setCardDialogUpdateDialogOpen: (isOpen: boolean) => void;
-  isCardDialogUpdateDialogOpen: boolean;
 }
 
 export const useKanbanStore = create<KanbanStore>((set) => ({
@@ -32,7 +30,4 @@ export const useKanbanStore = create<KanbanStore>((set) => ({
   setColumnId: (columnId: number | null) => set({ columnId }),
   cardId: null,
   setCardId: (cardId: number | null) => set({ cardId }),
-  isCardDialogUpdateDialogOpen: false,
-  setCardDialogUpdateDialogOpen: (isOpen: boolean) =>
-    set({ isCardDialogUpdateDialogOpen: isOpen }),
 }));

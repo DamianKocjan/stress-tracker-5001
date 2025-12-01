@@ -182,7 +182,6 @@ function CardDetailsView({
     if (confirmed) {
       try {
         await cardDeleteMutation.mutateAsync(cardId);
-        useKanbanStore.getState().setCardDialogUpdateDialogOpen(false);
         useKanbanStore.getState().setCardId(null);
       } catch (error) {
         showErrorToast(error);
