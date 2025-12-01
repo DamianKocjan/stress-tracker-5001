@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_auth")({
       if (isAuthenticated) {
         navigate({ to: redirect, search: {} });
       }
-    }, [isAuthenticated, navigate, redirect]);
+    }, [isAuthenticated, redirect]);
 
     return <Outlet />;
   },

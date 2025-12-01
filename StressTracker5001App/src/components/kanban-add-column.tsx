@@ -15,7 +15,7 @@ interface KanbanAddColumnProps {
 }
 
 export function KanbanAddColumn({ hasColumns }: KanbanAddColumnProps) {
-  const setIsOpen = useKanbanStore((s) => s.setIsColumnDialogCreateDialogOpen);
+  const setIsOpen = useKanbanStore((s) => s.setIsColumnCreateDialogOpen);
 
   return (
     <Empty className="border border-dashed min-w-80">

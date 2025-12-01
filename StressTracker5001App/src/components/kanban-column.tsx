@@ -26,11 +26,11 @@ interface KanbanColumnProps {
 
 export function KanbanColumn({ column, cards }: KanbanColumnProps) {
   const setCardCreateDialogOpen = useKanbanStore(
-    (s) => s.setIsCardDialogCreateDialogOpen
+    (s) => s.setIsCardCreateDialogOpen
   );
   const setColumnId = useKanbanStore((s) => s.setColumnId);
   const setColumnDialogUpdateOpen = useKanbanStore(
-    (s) => s.setIsColumnDialogUpdateDialogOpen
+    (s) => s.setIsColumnUpdateDialogOpen
   );
 
   const sortedCards = useMemo(() => {

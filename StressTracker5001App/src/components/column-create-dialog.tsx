@@ -36,8 +36,8 @@ interface ColumnCreateDialogProps {
 }
 
 export function ColumnCreateDialog({ boardId }: ColumnCreateDialogProps) {
-  const isOpen = useKanbanStore((s) => s.isColumnDialogCreateDialogOpen);
-  const setIsOpen = useKanbanStore((s) => s.setIsColumnDialogCreateDialogOpen);
+  const isOpen = useKanbanStore((s) => s.isColumnCreateDialogOpen);
+  const setIsOpen = useKanbanStore((s) => s.setIsColumnCreateDialogOpen);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   if (isDesktop) {
@@ -101,7 +101,7 @@ function ColumnForm({ className, boardId }: ColumnFormProps) {
         });
 
         form.reset();
-        useKanbanStore.getState().setIsColumnDialogCreateDialogOpen(false);
+        useKanbanStore.getState().setIsColumnCreateDialogOpen(false);
       } catch (error) {
         console.error(error);
         showErrorToast(error);
@@ -154,7 +154,9 @@ function ColumnForm({ className, boardId }: ColumnFormProps) {
                   name={field.name}
                   value={field.state.value}
                   onBlur={field.handleBlur}
-                  onChange={(e) => field.handleChange(Number(e.target.value))}
+                  onChange={(e) =>
+                    field.handleChange(parseInt(e.target.value, 10) || 0)
+                  }
                   aria-invalid={isInvalid}
                   placeholder="E.g., 5"
                   type="number"

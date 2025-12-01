@@ -172,7 +172,11 @@ export function BoardKanban({ board }: BoardKanbanProps) {
             ...newCards[activeIndex],
             columnId: overColumnId,
           };
-          const movedCards = arrayMove(newCards, activeIndex, overIndex - 1);
+          const movedCards = arrayMove(
+            newCards,
+            activeIndex,
+            Math.max(overIndex - 1, 0)
+          );
           // Recalculate positions for both source and target columns
           let updatedCards = recalculateCardPositions(movedCards, overColumnId);
           updatedCards = recalculateCardPositions(updatedCards, activeColumnId);

@@ -79,18 +79,11 @@ namespace StressTracker5001Server.Services
                 .Where(c => c.BoardId == column.BoardId && c.Id != columnId)
                 .OrderBy(c => c.Position)
                 .ToListAsync();
+            columns.Insert(newPosition, column);
 
-            // Adjust positions of other columns
             for (int i = 0; i < columns.Count; i++)
             {
-                if (i >= newPosition)
-                {
-                    columns[i].Position = i + 1;
-                }
-                else
-                {
-                    columns[i].Position = i;
-                }
+                columns[i].Position = i;
                 columns[i].UpdatedAt = DateTime.UtcNow;
             }
 

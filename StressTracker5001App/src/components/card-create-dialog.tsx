@@ -42,8 +42,8 @@ interface CardCreateDialogProps {
 }
 
 export function CardCreateDialog({ boardId }: CardCreateDialogProps) {
-  const isOpen = useKanbanStore((s) => s.isCardDialogCreateDialogOpen);
-  const setIsOpen = useKanbanStore((s) => s.setIsCardDialogCreateDialogOpen);
+  const isOpen = useKanbanStore((s) => s.isCardCreateDialogOpen);
+  const setIsOpen = useKanbanStore((s) => s.setIsCardCreateDialogOpen);
   const columnId = useKanbanStore((s) => s.columnId);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
@@ -113,7 +113,7 @@ function CardForm({ className, boardId, columnId }: CardFormProps) {
         });
 
         form.reset();
-        useKanbanStore.getState().setIsCardDialogCreateDialogOpen(false);
+        useKanbanStore.getState().setIsCardCreateDialogOpen(false);
       } catch (error) {
         console.error(error);
         showErrorToast(error);

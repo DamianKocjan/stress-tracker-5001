@@ -1,12 +1,12 @@
 import { create } from "zustand";
 
 interface KanbanStore {
-  isColumnDialogCreateDialogOpen: boolean;
-  setIsColumnDialogCreateDialogOpen: (isOpen: boolean) => void;
-  isColumnDialogUpdateDialogOpen: boolean;
-  setIsColumnDialogUpdateDialogOpen: (isOpen: boolean) => void;
-  isCardDialogCreateDialogOpen: boolean;
-  setIsCardDialogCreateDialogOpen: (isOpen: boolean) => void;
+  isColumnCreateDialogOpen: boolean;
+  setIsColumnCreateDialogOpen: (isOpen: boolean) => void;
+  isColumnUpdateDialogOpen: boolean;
+  setIsColumnUpdateDialogOpen: (isOpen: boolean) => void;
+  isCardCreateDialogOpen: boolean;
+  setIsCardCreateDialogOpen: (isOpen: boolean) => void;
   /**
    * The ID of the column for which the card creation dialog is open.
    */
@@ -17,15 +17,15 @@ interface KanbanStore {
 }
 
 export const useKanbanStore = create<KanbanStore>((set) => ({
-  isColumnDialogCreateDialogOpen: false,
-  setIsColumnDialogCreateDialogOpen: (isOpen: boolean) =>
-    set({ isColumnDialogCreateDialogOpen: isOpen }),
-  isColumnDialogUpdateDialogOpen: false,
-  setIsColumnDialogUpdateDialogOpen: (isOpen: boolean) =>
-    set({ isColumnDialogUpdateDialogOpen: isOpen }),
-  isCardDialogCreateDialogOpen: false,
-  setIsCardDialogCreateDialogOpen: (isOpen: boolean) =>
-    set({ isCardDialogCreateDialogOpen: isOpen }),
+  isColumnCreateDialogOpen: false,
+  setIsColumnCreateDialogOpen: (isOpen: boolean) =>
+    set({ isColumnCreateDialogOpen: isOpen }),
+  isColumnUpdateDialogOpen: false,
+  setIsColumnUpdateDialogOpen: (isOpen: boolean) =>
+    set({ isColumnUpdateDialogOpen: isOpen }),
+  isCardCreateDialogOpen: false,
+  setIsCardCreateDialogOpen: (isOpen: boolean) =>
+    set({ isCardCreateDialogOpen: isOpen }),
   columnId: null,
   setColumnId: (columnId: number | null) => set({ columnId }),
   cardId: null,

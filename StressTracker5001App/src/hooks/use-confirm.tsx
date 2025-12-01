@@ -35,22 +35,22 @@ export function useConfirm({
     });
   }, []);
 
-  function handleClose() {
-    setPromise(null);
-  }
+  const dialog = useCallback(() => {
+    function handleClose() {
+      setPromise(null);
+    }
 
-  function handleConfirm() {
-    promise?.resolve(true);
-    handleClose();
-  }
+    function handleConfirm() {
+      promise?.resolve(true);
+      handleClose();
+    }
 
-  function handleCancel() {
-    promise?.resolve(false);
-    handleClose();
-  }
+    function handleCancel() {
+      promise?.resolve(false);
+      handleClose();
+    }
 
-  const dialog = useCallback(
-    () => (
+    return (
       <ConfirmationDialog
         title={title}
         message={message}
@@ -59,9 +59,8 @@ export function useConfirm({
         handleConfirm={handleConfirm}
         handleCancel={handleCancel}
       />
-    ),
-    [handleCancel, handleConfirm, message, promise, title]
-  );
+    );
+  }, [message, promise, title]);
 
   return useMemo(() => [dialog, confirm], [confirm, dialog]);
 }

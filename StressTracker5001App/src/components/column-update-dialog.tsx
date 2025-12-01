@@ -46,8 +46,8 @@ export function ColumnUpdateDialog({
   boardId,
   column,
 }: ColumnUpdateDialogProps) {
-  const isOpen = useKanbanStore((s) => s.isColumnDialogUpdateDialogOpen);
-  const setIsOpen = useKanbanStore((s) => s.setIsColumnDialogUpdateDialogOpen);
+  const isOpen = useKanbanStore((s) => s.isColumnUpdateDialogOpen);
+  const setIsOpen = useKanbanStore((s) => s.setIsColumnUpdateDialogOpen);
   const columnId = useKanbanStore((s) => s.columnId);
   const setColumnId = useKanbanStore((s) => s.setColumnId);
   const isDesktop = useMediaQuery("(min-width: 768px)");
@@ -116,7 +116,7 @@ interface ColumnUpdateDialogTriggerProps {
 export function ColumnUpdateDialogTrigger({
   columnId,
 }: ColumnUpdateDialogTriggerProps) {
-  const setIsOpen = useKanbanStore((s) => s.setIsColumnDialogUpdateDialogOpen);
+  const setIsOpen = useKanbanStore((s) => s.setIsColumnUpdateDialogOpen);
   const setColumnId = useKanbanStore((s) => s.setColumnId);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 

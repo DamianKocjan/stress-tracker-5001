@@ -45,10 +45,6 @@ export function CardDetailsDialog({ boardId }: CardDetailsDialogProps) {
     }
   }
 
-  if (cardId === null) {
-    return null;
-  }
-
   return (
     <Drawer
       direction={isDesktop ? "right" : undefined}
@@ -57,7 +53,9 @@ export function CardDetailsDialog({ boardId }: CardDetailsDialogProps) {
     >
       <DrawerContent className="data-[vaul-drawer-direction=right]:lg:max-w-1/2 data-[vaul-drawer-direction=right]:xl:max-w-2/5 ">
         <ScrollArea className="flex-1 overflow-y-auto p-4 pb-0">
-          <CardDetailsContent boardId={boardId} cardId={cardId} />
+          {cardId !== null && (
+            <CardDetailsContent boardId={boardId} cardId={cardId} />
+          )}
         </ScrollArea>
         <DrawerFooter className="mt-auto pt-2">
           <DrawerClose asChild>
