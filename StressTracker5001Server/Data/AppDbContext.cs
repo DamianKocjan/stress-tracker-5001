@@ -11,6 +11,7 @@ namespace StressTracker5001Server.Data
         public DbSet<Board> Boards { get; set; }
         public DbSet<Column> Columns { get; set; }
         public DbSet<Card> Cards { get; set; }
+        public DbSet<Tag> Tags { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
             => options.UseSqlite("Data Source=db.sqlite");
@@ -38,6 +39,11 @@ namespace StressTracker5001Server.Data
                 .HasMany(b => b.Columns)
                 .WithOne(c => c.Board)
                 .HasForeignKey(c => c.BoardId);
+
+            modelBuilder.Entity<Board>()
+                .HasMany(b => b.Tags)
+                .WithOne(t => t.Board)
+                .HasForeignKey(t => t.BoardId);
 
             modelBuilder.Entity<Column>()
                 .HasMany(c => c.Cards)
