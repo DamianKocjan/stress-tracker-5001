@@ -12,7 +12,7 @@ namespace StressTracker5001Server.Services
         Task<List<Card>> GetCardsByColumnIdAsync(int columnId, int ownerId);
         Task<Card> CreateCardAsync(int columnId, CreateCardDto dto, int userId);
         Task<Card?> UpdateCardAsync(int cardId, UpdateCardDto dto, int ownerId);
-        Task<bool> MoveCardAsync(int cardId, int newPosition, int ownerId);
+        Task<bool> MoveCardAsync(int cardId, MoveCardDto dto, int ownerId);
         Task<bool> DeleteCardAsync(int cardId, int ownerId);
     }
 
@@ -95,7 +95,7 @@ namespace StressTracker5001Server.Services
             return card;
         }
 
-        public async Task<bool> MoveCardAsync(int cardId, int newPosition, int ownerId)
+        public async Task<bool> MoveCardAsync(int cardId, MoveCardDto dto, int ownerId)
         {
             var card = await GetCardByIdAsync(cardId, ownerId);
             if (card == null)
@@ -103,8 +103,82 @@ namespace StressTracker5001Server.Services
                 return false;
             }
 
-            card.Position = newPosition;
+            var oldColumnId = card.ColumnId;
+            var oldPosition = card.Position;
+
+            if (oldColumnId == dto.NewColumnId && oldPosition == dto.NewPosition)
+            {
+                return true; // No change needed
+            }
+
+            if (oldColumnId == dto.NewColumnId)
+            {
+                // Moving within the same column
+                var cardsInColumn = await _context.Cards
+                    .Where(c => c.ColumnId == oldColumnId && c.Id != cardId)
+                    .OrderBy(c => c.Position)
+                    .ToListAsync();
+
+                cardsInColumn.Insert(dto.NewPosition, card);
+                for (int i = 0; i < cardsInColumn.Count; i++)
+                {
+                    cardsInColumn[i].Position = i;
+                    cardsInColumn[i].UpdatedAt = DateTime.UtcNow;
+                }
+
+                await _context.SaveChangesAsync();
+                return true;
+            }
+
+            // Moving to a different column
+            var column = await _context.Columns
+                .Include(c => c.Board)
+                .FirstOrDefaultAsync(c => c.Id == dto.NewColumnId && c.Board.OwnerId == ownerId);
+
+            if (column == null)
+            {
+                return false;
+            }
+
+            if (column.WipLimit != null)
+            {
+                var cardCountInTargetColumn = await _context.Cards
+                    .Where(c => c.ColumnId == dto.NewColumnId && c.Id != cardId)
+                    .CountAsync();
+
+                if (cardCountInTargetColumn >= column.WipLimit)
+                {
+                    return false; // Exceeds WIP limit
+                }
+            }
+
+            card.Position = dto.NewPosition;
+            card.ColumnId = dto.NewColumnId;
             card.UpdatedAt = DateTime.UtcNow;
+
+            // Update the positions of cards in the old column
+            var oldColumnCards = await _context.Cards
+                .Where(c => c.ColumnId == oldColumnId && c.Id != cardId)
+                .OrderBy(c => c.Position)
+                .ToListAsync();
+            for (int i = 0; i < oldColumnCards.Count; i++)
+            {
+                oldColumnCards[i].Position = i;
+                oldColumnCards[i].UpdatedAt = DateTime.UtcNow;
+            }
+
+            // Update the positions of other cards in the new column
+            var newColumnCards = await _context.Cards
+                .Where(c => c.ColumnId == dto.NewColumnId && c.Id != cardId)
+                .OrderBy(c => c.Position)
+                .ToListAsync();
+
+            newColumnCards.Insert(dto.NewPosition, card);
+            for (int i = 0; i < newColumnCards.Count; i++)
+            {
+                newColumnCards[i].Position = i;
+                newColumnCards[i].UpdatedAt = DateTime.UtcNow;
+            }
 
             await _context.SaveChangesAsync();
             return true;

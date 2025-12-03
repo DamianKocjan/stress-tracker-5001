@@ -1,5 +1,6 @@
-import type { BoardCreateDto, BoardDto } from "@/dto/board.dto";
-import { fetch } from "@/utils/fetch";
+import type { BoardDto } from "@/dto/board.dto";
+import { createBoard } from "@/utils/api";
+import { boardQueryKey, boardsQueryKey } from "@/utils/query-options";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -7,24 +8,13 @@ export function useBoardCreateMutation() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: BoardCreateDto) => {
-      const response = await fetch("/boards", {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to create board");
-      }
-
-      return response.json() as Promise<BoardDto>;
-    },
+    mutationFn: createBoard,
     onSuccess(data, variables) {
       toast.success("Board created successfully!", {
         description: `Board "${variables.name}" has been created.`,
       });
       queryClient.setQueryData(
-        ["boards"],
+        boardsQueryKey,
         (oldData: BoardDto[] | undefined) => {
           if (!oldData) {
             return [data];
@@ -32,7 +22,7 @@ export function useBoardCreateMutation() {
           return [...oldData, data];
         }
       );
-      queryClient.setQueryData(["boards", data.id], data);
+      queryClient.setQueryData(boardQueryKey(data.id), data);
     },
   });
 }

@@ -1,8 +1,11 @@
+import { BoardKanban, BoardKanbanSkeleton } from "@/components/board-kanban";
 import { BoardUpdateDialog } from "@/components/board-update-dialog";
+import { CardDetailsDialog } from "@/components/card-details-dialog";
+import { ColumnUpdateDialog } from "@/components/column-update-dialog";
 import { FetchingErrorAlert } from "@/components/fetching-error-alert";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { BoardDto } from "@/dto/board.dto";
+import type { BoardDetailsDto } from "@/dto/board.dto";
 import { useBoardQuery } from "@/hooks/use-board-query";
 import { createFileRoute } from "@tanstack/react-router";
 
@@ -18,7 +21,13 @@ function RouteComponent() {
     return <BoardSkeleton />;
   }
   if (status === "error") {
-    return <FetchingErrorAlert error={error} refetch={refetch} />;
+    return (
+      <FetchingErrorAlert
+        title="Failed to load board"
+        error={error}
+        refetch={refetch}
+      />
+    );
   }
 
   return <BoardDetails board={data} />;
@@ -31,29 +40,19 @@ function BoardSkeleton() {
 
       <Skeleton className="h-4 w-full" />
 
-      <div className="overflow-hidden">
-        <div className="grid grid-cols-4 min-w-7xl min-h-96 w-full gap-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index}>
-              <Skeleton className="w-full h-8 mb-2" />
-
-              <Skeleton className="w-full h-[calc(100%-2rem)]" />
-            </div>
-          ))}
-        </div>
-      </div>
+      <BoardKanbanSkeleton />
     </div>
   );
 }
 
 interface BoardDetailsProps {
-  board: BoardDto;
+  board: BoardDetailsDto;
 }
 
 function BoardDetails({ board }: BoardDetailsProps) {
   return (
-    <div className="p-6">
-      <Card>
+    <div className="space-y-4">
+      <Card className="mx-6 mt-6">
         <CardHeader>
           <div className="flex justify-between items-center w-full">
             <h2 className="text-lg font-medium">{board.name}</h2>
@@ -66,6 +65,16 @@ function BoardDetails({ board }: BoardDetailsProps) {
           </div>
         </CardHeader>
       </Card>
+
+      <BoardKanban board={board} />
+      <CardDetailsDialog boardId={board.id} />
+      {board.columns.map((column) => (
+        <ColumnUpdateDialog
+          key={column.id}
+          boardId={board.id}
+          column={column}
+        />
+      ))}
     </div>
   );
 }

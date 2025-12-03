@@ -129,10 +129,7 @@ function BoardForm({ className, defaultValues, close }: BoardFormProps) {
   const { boardId } = useParams({ from: "/_authenticated/board/$boardId" });
   const navigate = useNavigate();
   const boardUpdateMutation = useBoardUpdateMutation(Number(boardId));
-  const boardDeleteMutation = useBoardDeleteMutation(
-    Number(boardId),
-    defaultValues.name
-  );
+  const boardDeleteMutation = useBoardDeleteMutation(defaultValues.name);
 
   const form = useForm({
     defaultValues: {
@@ -157,7 +154,7 @@ function BoardForm({ className, defaultValues, close }: BoardFormProps) {
 
   async function handleDelete() {
     try {
-      await boardDeleteMutation.mutateAsync();
+      await boardDeleteMutation.mutateAsync(Number(boardId));
       close();
       navigate({ to: "/dashboard" });
     } catch (error) {

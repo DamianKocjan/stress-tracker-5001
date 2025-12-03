@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Board;
 using StressTracker5001Server.DTOs.Column;
@@ -91,60 +90,13 @@ namespace StressTracker5001Server.Controllers
                 return Unauthorized();
             }
 
-            var board = await boardService.GetBoardByIdAsync(boardId, userId);
+            var board = await boardService.GetBoardWithColumnsAndCardsAsync(boardId, userId);
             if (board == null)
             {
                 return NotFound();
             }
 
-            return Ok(new BoardDto
-            {
-                Id = board.Id,
-                Name = board.Name,
-                Description = board.Description,
-                OwnerId = board.OwnerId,
-                Owner = new UserDto
-                {
-                    Id = board.Owner.Id,
-                    Email = board.Owner.Email,
-                    Username = board.Owner.Username,
-                    CreatedAt = board.Owner.CreatedAt,
-                    UpdatedAt = board.Owner.UpdatedAt,
-                },
-                CreatedAt = board.CreatedAt,
-                UpdatedAt = board.UpdatedAt
-            });
-        }
-
-        [Authorize]
-        [HttpGet("{boardId}/columns")]
-        public async Task<IActionResult> GetBoardColumns([FromRoute] int boardId, [FromServices] IBoardService boardService, [FromServices] IColumnService columnService)
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdClaim?.Value, out var userId))
-            {
-                return Unauthorized();
-            }
-
-            var board = await boardService.GetBoardByIdAsync(boardId, userId);
-            if (board == null)
-            {
-                return NotFound();
-            }
-
-            var columns = await columnService.GetColumnsByBoardIdAsync(boardId, userId);
-            var columnDtos = columns.Select(c => new ColumnDto
-            {
-                Id = c.Id,
-                BoardId = c.BoardId,
-                Name = c.Name,
-                Position = c.Position,
-                WipLimit = c.WipLimit,
-                CreatedAt = c.CreatedAt,
-                UpdatedAt = c.UpdatedAt
-            }).ToList();
-
-            return Ok(columnDtos);
+            return Ok(board);
         }
 
         [Authorize]

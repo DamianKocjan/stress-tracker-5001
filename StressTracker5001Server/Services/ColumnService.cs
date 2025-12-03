@@ -7,9 +7,7 @@ namespace StressTracker5001Server.Services
 {
     public interface IColumnService
     {
-        Task<List<Column>> GetColumnsByBoardIdAsync(int boardId, int ownerId);
         Task<Column?> GetColumnByIdAsync(int columnId, int ownerId);
-        Task<List<Card>> GetCardsByColumnIdAsync(int columnId, int ownerId);
         Task<Column> CreateColumnAsync(int boardId, CreateColumnDto dto, int ownerId);
         Task<Column?> UpdateColumnAsync(int columnId, UpdateColumnDto dto, int ownerId);
         Task<bool> MoveColumnAsync(int columnId, int newPosition, int ownerId);
@@ -25,30 +23,11 @@ namespace StressTracker5001Server.Services
             _context = context;
         }
 
-        public async Task<List<Column>> GetColumnsByBoardIdAsync(int boardId, int ownerId)
-        {
-            return await _context.Columns
-                .Include(c => c.Board)
-                .Where(c => c.BoardId == boardId && c.Board.OwnerId == ownerId)
-                .OrderBy(c => c.Position)
-                .ToListAsync();
-        }
-
         public async Task<Column?> GetColumnByIdAsync(int columnId, int ownerId)
         {
             return await _context.Columns
                 .Include(c => c.Board)
                 .FirstOrDefaultAsync(c => c.Id == columnId && c.Board.OwnerId == ownerId);
-        }
-
-        public async Task<List<Card>> GetCardsByColumnIdAsync(int columnId, int ownerId)
-        {
-            return await _context.Cards
-                .Include(c => c.Column)
-                .ThenInclude(c => c.Board)
-                .Where(c => c.ColumnId == columnId && c.Column.Board.OwnerId == ownerId)
-                .OrderBy(c => c.Position)
-                .ToListAsync();
         }
 
         public async Task<Column> CreateColumnAsync(int boardId, CreateColumnDto dto, int ownerId)
@@ -94,6 +73,19 @@ namespace StressTracker5001Server.Services
 
             column.Position = newPosition;
             column.UpdatedAt = DateTime.UtcNow;
+
+            // Get all columns in the same board to adjust their positions
+            var columns = await _context.Columns
+                .Where(c => c.BoardId == column.BoardId && c.Id != columnId)
+                .OrderBy(c => c.Position)
+                .ToListAsync();
+            columns.Insert(newPosition, column);
+
+            for (int i = 0; i < columns.Count; i++)
+            {
+                columns[i].Position = i;
+                columns[i].UpdatedAt = DateTime.UtcNow;
+            }
 
             await _context.SaveChangesAsync();
             return true;
