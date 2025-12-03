@@ -26,8 +26,12 @@ namespace StressTracker5001Server.Models
 
         [JsonIgnore]
         public List<RefreshToken> RefreshTokens { get; set; } = new();
+
         [JsonIgnore]
         public List<Board> Boards { get; set; } = new();
+
+        [JsonIgnore]
+        public List<Card> CreatedCards { get; set; } = new();
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

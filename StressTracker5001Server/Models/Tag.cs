@@ -18,6 +18,8 @@ namespace StressTracker5001Server.Models
         public required int BoardId { get; set; }
         public Board? Board { get; set; }
 
+        public List<CardTag> CardTags { get; set; } = new();
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
