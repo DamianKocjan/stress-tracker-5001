@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using StressTracker5001Server.Data;
 
@@ -10,9 +11,11 @@ using StressTracker5001Server.Data;
 namespace StressTracker5001Server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251203163601_TagTableMigration")]
+    partial class TagTableMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.11");
@@ -90,21 +93,6 @@ namespace StressTracker5001Server.Migrations
                     b.HasIndex("CreatedById");
 
                     b.ToTable("Cards");
-                });
-
-            modelBuilder.Entity("StressTracker5001Server.Models.CardTag", b =>
-                {
-                    b.Property<int>("CardId")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<int>("TagId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("CardId", "TagId");
-
-                    b.HasIndex("TagId");
-
-                    b.ToTable("CardTags");
                 });
 
             modelBuilder.Entity("StressTracker5001Server.Models.Column", b =>
@@ -259,7 +247,7 @@ namespace StressTracker5001Server.Migrations
                         .IsRequired();
 
                     b.HasOne("StressTracker5001Server.Models.User", "CreatedBy")
-                        .WithMany("CreatedCards")
+                        .WithMany()
                         .HasForeignKey("CreatedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -267,25 +255,6 @@ namespace StressTracker5001Server.Migrations
                     b.Navigation("Column");
 
                     b.Navigation("CreatedBy");
-                });
-
-            modelBuilder.Entity("StressTracker5001Server.Models.CardTag", b =>
-                {
-                    b.HasOne("StressTracker5001Server.Models.Card", "Card")
-                        .WithMany("CardTags")
-                        .HasForeignKey("CardId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("StressTracker5001Server.Models.Tag", "Tag")
-                        .WithMany("CardTags")
-                        .HasForeignKey("TagId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Card");
-
-                    b.Navigation("Tag");
                 });
 
             modelBuilder.Entity("StressTracker5001Server.Models.Column", b =>
@@ -328,26 +297,14 @@ namespace StressTracker5001Server.Migrations
                     b.Navigation("Tags");
                 });
 
-            modelBuilder.Entity("StressTracker5001Server.Models.Card", b =>
-                {
-                    b.Navigation("CardTags");
-                });
-
             modelBuilder.Entity("StressTracker5001Server.Models.Column", b =>
                 {
                     b.Navigation("Cards");
                 });
 
-            modelBuilder.Entity("StressTracker5001Server.Models.Tag", b =>
-                {
-                    b.Navigation("CardTags");
-                });
-
             modelBuilder.Entity("StressTracker5001Server.Models.User", b =>
                 {
                     b.Navigation("Boards");
-
-                    b.Navigation("CreatedCards");
 
                     b.Navigation("RefreshTokens");
                 });

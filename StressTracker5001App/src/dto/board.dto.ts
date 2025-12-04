@@ -1,5 +1,6 @@
 import type { CardDto } from "./card.dto";
 import type { ColumnDto } from "./column.dto";
+import type { TagDto } from "./tag.dto";
 import type { UserDto } from "./user.dto";
 
 export interface BoardCreateDto {
@@ -25,4 +26,5 @@ export interface BoardDto {
 export interface BoardDetailsDto extends BoardDto {
   columns: ColumnDto[];
   cards: CardDto[];
+  tags: TagDto[];
 }

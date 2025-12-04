@@ -18,6 +18,9 @@ namespace StressTracker5001Server.Models
         [JsonIgnore]
         public List<Column> Columns { get; set; } = new();
 
+        [JsonIgnore]
+        public List<Tag> Tags { get; set; } = new();
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

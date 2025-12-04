@@ -13,16 +13,21 @@ namespace StressTracker5001Server.Services
         Task<Card> CreateCardAsync(int columnId, CreateCardDto dto, int userId);
         Task<Card?> UpdateCardAsync(int cardId, UpdateCardDto dto, int ownerId);
         Task<bool> MoveCardAsync(int cardId, MoveCardDto dto, int ownerId);
+        Task<bool> AssignTagsToCardAsync(int cardId, List<int> tagIds, int ownerId);
         Task<bool> DeleteCardAsync(int cardId, int ownerId);
     }
 
     public class CardService : ICardService
     {
         private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly int _maxTagsPerCard;
 
-        public CardService(AppDbContext context)
+        public CardService(AppDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
+            _maxTagsPerCard = _configuration.GetValue("Tags:MaxTagsPerCard", 5);
         }
 
         public async Task<Card?> GetCardByIdAsync(int cardId, int ownerId)
@@ -30,6 +35,7 @@ namespace StressTracker5001Server.Services
             return await _context.Cards
                 .Include(c => c.Column)
                 .ThenInclude(c => c.Board)
+                .Include(c => c.CardTags)
                 .FirstOrDefaultAsync(c => c.Id == cardId && c.Column.Board.OwnerId == ownerId);
         }
 
@@ -39,6 +45,7 @@ namespace StressTracker5001Server.Services
                 .Include(c => c.Column)
                 .ThenInclude(c => c.Board)
                 .Include(c => c.CreatedBy)
+                .Include(c => c.CardTags)
                 .FirstOrDefaultAsync(c => c.Id == cardId && c.Column.Board.OwnerId == ownerId);
         }
 
@@ -179,6 +186,54 @@ namespace StressTracker5001Server.Services
                 newColumnCards[i].Position = i;
                 newColumnCards[i].UpdatedAt = DateTime.UtcNow;
             }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> AssignTagsToCardAsync(int cardId, List<int> tagIds, int ownerId)
+        {
+            var card = await GetCardByIdAsync(cardId, ownerId);
+            if (card == null)
+            {
+                return false;
+            }
+
+            // Get existing tag IDs
+            var existingTagIds = card.CardTags.Select(ct => ct.TagId).ToHashSet();
+
+            // Check if adding new tags would exceed the maximum limit
+            var totalTagsCount = tagIds.Union(existingTagIds).Count();
+            if (totalTagsCount > _maxTagsPerCard)
+            {
+                return false;
+            }
+
+            // Add new tags
+            foreach (var tagId in tagIds.Where(id => !existingTagIds.Contains(id)))
+            {
+                card.CardTags.Add(new CardTag
+                {
+                    CardId = cardId,
+                    TagId = tagId
+                });
+            }
+
+            // Remove tags that are no longer assigned
+            var tagsToRemove = existingTagIds.Except(tagIds).ToHashSet();
+            if (tagsToRemove.Count != 0)
+            {
+                var cardTagsToRemove = card.CardTags
+                    .Where(ct => tagsToRemove.Contains(ct.TagId))
+                    .ToList();
+
+                foreach (var cardTag in cardTagsToRemove)
+                {
+                    _context.CardTags.Remove(cardTag);
+                }
+            }
+
+            card.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return true;

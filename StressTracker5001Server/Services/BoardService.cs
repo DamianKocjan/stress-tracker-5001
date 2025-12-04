@@ -3,6 +3,7 @@ using StressTracker5001Server.Data;
 using StressTracker5001Server.DTOs.Board;
 using StressTracker5001Server.DTOs.Card;
 using StressTracker5001Server.DTOs.Column;
+using StressTracker5001Server.DTOs.Tag;
 using StressTracker5001Server.Models;
 
 namespace StressTracker5001Server.Services
@@ -38,8 +39,11 @@ namespace StressTracker5001Server.Services
             var board = await _context.Boards
                 .Where(b => b.Id == boardId && b.OwnerId == userId)
                 .Include(b => b.Owner)
+                .Include(b => b.Tags)
                 .Include(b => b.Columns)
-                    .ThenInclude(c => c.Cards)
+                .ThenInclude(c => c.Cards)
+                .ThenInclude(c => c.CardTags)
+                .ThenInclude(ct => ct.Tag)
                 .FirstOrDefaultAsync();
 
             if (board == null)
@@ -83,7 +87,17 @@ namespace StressTracker5001Server.Services
                     Position = card.Position,
                     DueDate = card.DueDate,
                     CreatedAt = card.CreatedAt,
-                    UpdatedAt = card.UpdatedAt
+                    UpdatedAt = card.UpdatedAt,
+                    Tags = card.CardTags.Select(ct => ct.TagId).ToList()
+                }).ToList(),
+                Tags = board.Tags.Select(t => new TagDto
+                {
+                    Id = t.Id,
+                    Name = t.Name,
+                    Color = t.Color,
+                    BoardId = t.BoardId,
+                    CreatedAt = t.CreatedAt,
+                    UpdatedAt = t.UpdatedAt
                 }).ToList()
             };
 

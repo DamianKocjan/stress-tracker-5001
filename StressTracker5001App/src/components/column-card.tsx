@@ -1,10 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { CardDto } from "@/dto/card.dto";
+import { useTagsQuery } from "@/hooks/use-tags-query";
 import { useKanbanStore } from "@/stores/kanban-store";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
+import { memo } from "react";
+import { TagBadge } from "./tag-badge";
 
 type ColumnCardProps = {
   card: CardDto;
@@ -71,15 +74,45 @@ export function ColumnCard({ card }: ColumnCardProps) {
           <GripVertical />
         </Button>
 
-        <div className="grow">
+        <div className="grow space-y-2">
           <h2 className="font-medium max-w-sm break-all">{card.title}</h2>
           {card.description && (
-            <p className="mt-1 text-sm text-secondary-foreground/80 max-w-sm truncate">
+            <p className="text-sm text-secondary-foreground/80 max-w-sm truncate">
               {card.description}
             </p>
           )}
+
+          <CardTags tags={card.tags} />
         </div>
       </CardContent>
     </Card>
   );
 }
+
+const CardTags = memo(function CardTags({ tags }: { tags?: CardDto["tags"] }) {
+  const { data: tagData } = useTagsQuery();
+
+  if (!tags || tags.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {tags.map((tag) => {
+        const tagInfo = tagData?.find((t) => t.id === tag);
+
+        if (!tagInfo) {
+          return null;
+        }
+        return (
+          <TagBadge
+            key={tag}
+            tag={tagInfo}
+            variant="outline"
+            className="text-xs"
+          />
+        );
+      })}
+    </div>
+  );
+});

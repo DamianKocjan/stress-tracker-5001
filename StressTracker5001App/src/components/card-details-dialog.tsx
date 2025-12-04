@@ -1,16 +1,21 @@
+import type { CardDetailsDto } from "@/dto/card.dto";
+import { useCardAssignTagsMutation } from "@/hooks/use-card-assign-tags-mutation";
 import { useCardDeleteMutation } from "@/hooks/use-card-delete-mutation";
 import { useCardDetailsQuery } from "@/hooks/use-card-details-query";
 import { useCardUpdateMutation } from "@/hooks/use-card-update-mutation";
 import { useConfirm } from "@/hooks/use-confirm";
 import { useMediaQuery } from "@/hooks/use-media-query";
+import { useTagDeleteMutation } from "@/hooks/use-tag-delete-mutation";
+import { useTagsQuery } from "@/hooks/use-tags-query";
 import { cn } from "@/lib/utils";
 import { CardFormSchema } from "@/schemas/card";
 import { useKanbanStore } from "@/stores/kanban-store";
 import { showErrorToast } from "@/utils/handle-error";
 import { useForm } from "@tanstack/react-form";
-import { Calendar, Clock, Pencil, Trash2, User, X } from "lucide-react";
+import { Calendar, Clock, Pencil, Tag, Trash2, User, X } from "lucide-react";
 import { useState } from "react";
 import { FetchingErrorAlert } from "./fetching-error-alert";
+import { TagSelector } from "./tag-selector";
 import { Button } from "./ui/button";
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter } from "./ui/drawer";
 import {
@@ -117,13 +122,7 @@ function CardDetailsContent({
     <CardDetailsView
       className={className}
       boardId={boardId}
-      cardId={cardId}
-      title={data.title}
-      description={data.description}
-      dueDate={data.dueDate}
-      createdBy={data.createdBy.username}
-      createdAt={data.createdAt}
-      updatedAt={data.updatedAt}
+      {...data}
       onEdit={() => setIsEditing(true)}
     />
   );
@@ -144,27 +143,21 @@ function CardDetailsSkeleton({ className }: { className?: string }) {
   );
 }
 
-interface CardDetailsViewProps {
+interface CardDetailsViewProps extends CardDetailsDto {
   className?: string;
   boardId: number;
-  cardId: number;
-  title: string;
-  description: string;
-  dueDate: string | null;
-  createdBy: string;
-  createdAt: string;
-  updatedAt: string;
   onEdit: () => void;
 }
 
 function CardDetailsView({
   className,
   boardId,
-  cardId,
+  id,
   title,
   description,
   dueDate,
   createdBy,
+  tags: cardTags,
   createdAt,
   updatedAt,
   onEdit,
@@ -174,12 +167,15 @@ function CardDetailsView({
     message: `Are you sure you want to delete "${title}"? This action cannot be undone.`,
   });
   const cardDeleteMutation = useCardDeleteMutation(boardId, title);
+  const assignTagMutation = useCardAssignTagsMutation(boardId);
+  const removeTagMutation = useTagDeleteMutation(boardId);
+  const { data: tags = [] } = useTagsQuery();
 
   async function handleDelete() {
     const confirmed = await confirm();
     if (confirmed) {
       try {
-        await cardDeleteMutation.mutateAsync(cardId);
+        await cardDeleteMutation.mutateAsync(id);
         useKanbanStore.getState().setCardId(null);
       } catch (error) {
         showErrorToast(error);
@@ -222,6 +218,24 @@ function CardDetailsView({
 
       <Separator />
 
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <Tag className="text-muted-foreground h-4 w-4" />
+          <span className="text-sm text-muted-foreground">Tags:</span>
+        </div>
+        <TagSelector
+          availableTags={tags}
+          selectedTags={tags.filter((tag) => cardTags.includes(tag.id))}
+          onClose={(tags) =>
+            assignTagMutation.mutateAsync({ tags, cardId: id })
+          }
+          maxTags={5}
+          disabled={assignTagMutation.isPending || removeTagMutation.isPending}
+        />
+      </div>
+
+      <Separator />
+
       <div className="space-y-2 text-sm">
         <div className="flex items-center gap-2">
           <Calendar className="text-muted-foreground h-4 w-4" />
@@ -238,7 +252,7 @@ function CardDetailsView({
         <div className="flex items-center gap-2">
           <User className="text-muted-foreground h-4 w-4" />
           <span className="text-muted-foreground">Created by:</span>
-          <span>{createdBy}</span>
+          <span>{createdBy.username}</span>
         </div>
 
         <div className="flex items-center gap-2">

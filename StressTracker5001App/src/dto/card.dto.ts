@@ -8,6 +8,7 @@ export interface CardDetailsDto {
   position: number;
   dueDate: string | null;
   createdById: number;
+  tags: number[];
   createdBy: UserDto;
   createdAt: string;
   updatedAt: string;
@@ -20,8 +21,10 @@ export interface CardDto {
   description: string;
   position: number;
   dueDate: string | null;
+  createdById: number;
   createdAt: string;
   updatedAt: string;
+  tags: number[];
 }
 
 export interface CardCreateDto {
@@ -33,6 +36,10 @@ export interface CardCreateDto {
 export interface CardMoveDto {
   newPosition: number;
   newColumnId: number;
+}
+
+export interface CardAssignTagsDto {
+  tags: number[];
 }
 
 export interface CardUpdateDto {

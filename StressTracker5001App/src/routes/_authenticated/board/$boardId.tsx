@@ -3,6 +3,7 @@ import { BoardUpdateDialog } from "@/components/board-update-dialog";
 import { CardDetailsDialog } from "@/components/card-details-dialog";
 import { ColumnUpdateDialog } from "@/components/column-update-dialog";
 import { FetchingErrorAlert } from "@/components/fetching-error-alert";
+import { TagManagementDialog } from "@/components/tag-management-dialog";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BoardDetailsDto } from "@/dto/board.dto";
@@ -56,12 +57,15 @@ function BoardDetails({ board }: BoardDetailsProps) {
         <CardHeader>
           <div className="flex justify-between items-center w-full">
             <h2 className="text-lg font-medium">{board.name}</h2>
-            <BoardUpdateDialog
-              defaultValues={{
-                name: board.name,
-                description: board.description,
-              }}
-            />
+            <div className="flex gap-2">
+              <TagManagementDialog boardId={board.id} tags={board.tags} />
+              <BoardUpdateDialog
+                defaultValues={{
+                  name: board.name,
+                  description: board.description,
+                }}
+              />
+            </div>
           </div>
         </CardHeader>
       </Card>

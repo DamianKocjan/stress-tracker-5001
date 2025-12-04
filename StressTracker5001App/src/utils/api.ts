@@ -17,6 +17,7 @@ import type {
   ColumnMoveDto,
   ColumnUpdateDto,
 } from "@/dto/column.dto";
+import type { TagCreateDto, TagDto, TagUpdateDto } from "@/dto/tag.dto";
 import { fetch } from "./fetch";
 
 export async function createBoard(data: BoardCreateDto): Promise<BoardDto> {
@@ -200,6 +201,20 @@ export async function moveCard(
   return response.json() as Promise<CardDto>;
 }
 
+export async function assignTagsToCard(
+  cardId: number,
+  tagIds: number[]
+): Promise<void> {
+  const response = await fetch(`/cards/${cardId}/tags`, {
+    method: "POST",
+    body: JSON.stringify({ tags: tagIds }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to assign tags to card");
+  }
+}
+
 export async function deleteCard(cardId: number): Promise<void> {
   const response = await fetch(`/cards/${cardId}`, {
     method: "DELETE",
@@ -207,5 +222,47 @@ export async function deleteCard(cardId: number): Promise<void> {
 
   if (!response.ok) {
     throw new Error("Failed to delete card");
+  }
+}
+
+export async function createTag(
+  boardId: number,
+  data: TagCreateDto
+): Promise<TagDto> {
+  const response = await fetch("/tags", {
+    method: "POST",
+    body: JSON.stringify({ ...data, boardId }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create tag");
+  }
+
+  return response.json() as Promise<TagDto>;
+}
+
+export async function updateTag(
+  tagId: number,
+  data: TagUpdateDto
+): Promise<TagDto> {
+  const response = await fetch(`/tags/${tagId}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update tag");
+  }
+
+  return response.json() as Promise<TagDto>;
+}
+
+export async function deleteTag(tagId: number): Promise<void> {
+  const response = await fetch(`/tags/${tagId}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete tag");
   }
 }
