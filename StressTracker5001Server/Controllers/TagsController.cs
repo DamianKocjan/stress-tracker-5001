@@ -64,6 +64,7 @@ namespace StressTracker5001Server.Controllers
             });
         }
 
+        [Authorize]
         [HttpDelete("{tagId}")]
         public async Task<IActionResult> DeleteTag(int tagId, [FromServices] ITagService tagService)
         {

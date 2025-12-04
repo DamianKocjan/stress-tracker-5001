@@ -20,10 +20,14 @@ namespace StressTracker5001Server.Services
     public class CardService : ICardService
     {
         private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly int _maxTagsPerCard;
 
-        public CardService(AppDbContext context)
+        public CardService(AppDbContext context, IConfiguration configuration)
         {
             _context = context;
+            _configuration = configuration;
+            _maxTagsPerCard = _configuration.GetValue("Tags:MaxTagsPerCard", 5);
         }
 
         public async Task<Card?> GetCardByIdAsync(int cardId, int ownerId)
@@ -197,6 +201,13 @@ namespace StressTracker5001Server.Services
 
             // Get existing tag IDs
             var existingTagIds = card.CardTags.Select(ct => ct.TagId).ToHashSet();
+
+            // Check if adding new tags would exceed the maximum limit
+            var totalTagsCount = tagIds.Union(existingTagIds).Count();
+            if (totalTagsCount > _maxTagsPerCard)
+            {
+                return false;
+            }
 
             // Add new tags
             foreach (var tagId in tagIds.Where(id => !existingTagIds.Contains(id)))

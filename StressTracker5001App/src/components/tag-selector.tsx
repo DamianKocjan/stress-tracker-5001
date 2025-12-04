@@ -33,7 +33,6 @@ export function TagSelector({
     initialSelectedTags.map((tag) => tag.id)
   );
   const initialValue = useRef(selectedTags);
-  const canAddMore = selectedTags.length < maxTags;
 
   useEffect(() => {
     if (!initialSelectedTags) {
@@ -64,6 +63,10 @@ export function TagSelector({
     if (selectedTags.includes(tagId)) {
       setSelectedTags((prev) => prev.filter((id) => id !== tagId));
     } else {
+      if (selectedTags.length >= maxTags) {
+        return;
+      }
+
       setSelectedTags((prev) => [...prev, tagId]);
     }
   }
@@ -74,7 +77,7 @@ export function TagSelector({
 
   return (
     <Tags open={isOpen} onOpenChange={handleIsOpenChange}>
-      <TagsTrigger disabled={disabled || !canAddMore}>
+      <TagsTrigger disabled={disabled}>
         {selectedTags.map((tag) => (
           <TagsValue
             key={tag}

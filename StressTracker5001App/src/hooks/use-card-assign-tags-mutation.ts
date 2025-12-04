@@ -45,7 +45,7 @@ export function useCardAssignTagsMutation(boardId: number) {
       }
     },
     onSuccess(data, { cardId, tags }) {
-      // Update the board's cards to reflect the moved card
+      // Update the board's cards to reflect the assigned tags
       queryClient.setQueryData(
         boardQueryKey(boardId),
         (oldData: BoardDetailsDto | undefined) => {
@@ -62,12 +62,12 @@ export function useCardAssignTagsMutation(boardId: number) {
         }
       );
 
-      // Update the card so that its position and columnId are correct
+      // Update the card details cache if it exists
       queryClient.setQueryData(
         cardDetailsQueryKey(cardId),
         (oldData: CardDetailsDto | undefined) => {
           if (!oldData) {
-            return data;
+            return;
           }
 
           return { ...oldData, tags };

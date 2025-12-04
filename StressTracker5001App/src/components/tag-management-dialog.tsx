@@ -17,7 +17,7 @@ import { useTagUpdateMutation } from "@/hooks/use-tag-update-mutation";
 import { TagSchema } from "@/schemas/tag";
 import { useForm } from "@tanstack/react-form";
 import { Pencil, Tags, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ColorPickerInput } from "./color-picker-input";
 import { TagBadge } from "./tag-badge";
@@ -66,6 +66,16 @@ export function TagManagementDialog({
       resetForm();
     },
   });
+
+  useEffect(() => {
+    if (editingTag) {
+      form.reset({
+        name: editingTag.name,
+        color: editingTag.color,
+      });
+    }
+  }, [editingTag, form]);
+
   const [ConfirmDialog, confirm] = useConfirm({
     title: "Delete Tag",
     message:
