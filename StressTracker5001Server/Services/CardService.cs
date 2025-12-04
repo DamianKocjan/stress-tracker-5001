@@ -13,6 +13,7 @@ namespace StressTracker5001Server.Services
         Task<Card> CreateCardAsync(int columnId, CreateCardDto dto, int userId);
         Task<Card?> UpdateCardAsync(int cardId, UpdateCardDto dto, int ownerId);
         Task<bool> MoveCardAsync(int cardId, MoveCardDto dto, int ownerId);
+        Task<bool> AssignTagsToCardAsync(int cardId, List<int> tagIds, int ownerId);
         Task<bool> DeleteCardAsync(int cardId, int ownerId);
     }
 
@@ -30,6 +31,7 @@ namespace StressTracker5001Server.Services
             return await _context.Cards
                 .Include(c => c.Column)
                 .ThenInclude(c => c.Board)
+                .Include(c => c.CardTags)
                 .FirstOrDefaultAsync(c => c.Id == cardId && c.Column.Board.OwnerId == ownerId);
         }
 
@@ -39,6 +41,7 @@ namespace StressTracker5001Server.Services
                 .Include(c => c.Column)
                 .ThenInclude(c => c.Board)
                 .Include(c => c.CreatedBy)
+                .Include(c => c.CardTags)
                 .FirstOrDefaultAsync(c => c.Id == cardId && c.Column.Board.OwnerId == ownerId);
         }
 
@@ -179,6 +182,47 @@ namespace StressTracker5001Server.Services
                 newColumnCards[i].Position = i;
                 newColumnCards[i].UpdatedAt = DateTime.UtcNow;
             }
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> AssignTagsToCardAsync(int cardId, List<int> tagIds, int ownerId)
+        {
+            var card = await GetCardByIdAsync(cardId, ownerId);
+            if (card == null)
+            {
+                return false;
+            }
+
+            // Get existing tag IDs
+            var existingTagIds = card.CardTags.Select(ct => ct.TagId).ToHashSet();
+
+            // Add new tags
+            foreach (var tagId in tagIds.Where(id => !existingTagIds.Contains(id)))
+            {
+                card.CardTags.Add(new CardTag
+                {
+                    CardId = cardId,
+                    TagId = tagId
+                });
+            }
+
+            // Remove tags that are no longer assigned
+            var tagsToRemove = existingTagIds.Except(tagIds).ToHashSet();
+            if (tagsToRemove.Count != 0)
+            {
+                var cardTagsToRemove = card.CardTags
+                    .Where(ct => tagsToRemove.Contains(ct.TagId))
+                    .ToList();
+
+                foreach (var cardTag in cardTagsToRemove)
+                {
+                    _context.CardTags.Remove(cardTag);
+                }
+            }
+
+            card.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
             return true;

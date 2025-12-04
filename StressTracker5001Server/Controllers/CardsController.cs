@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Card;
+using StressTracker5001Server.DTOs.Tag;
 using StressTracker5001Server.DTOs.User;
 using StressTracker5001Server.Services;
 
@@ -43,6 +44,7 @@ namespace StressTracker5001Server.Controllers
                     CreatedAt = card.CreatedBy.CreatedAt,
                     UpdatedAt = card.CreatedBy.UpdatedAt,
                 },
+                Tags = card.CardTags.Select(ct => ct.TagId).ToList(),
                 ColumnId = card.ColumnId,
                 CreatedAt = card.CreatedAt,
                 UpdatedAt = card.UpdatedAt
@@ -113,6 +115,25 @@ namespace StressTracker5001Server.Controllers
                 CreatedAt = card.CreatedAt,
                 UpdatedAt = card.UpdatedAt
             });
+        }
+
+        [Authorize]
+        [HttpPost("{id}/tags")]
+        public async Task<IActionResult> AssignTagsToCard(int id, [FromBody] CardAssignTagsDto dto, [FromServices] ICardService cardService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var result = await cardService.AssignTagsToCardAsync(id, dto.Tags, userId);
+            if (!result)
+            {
+                return NotFound();
+            }
+
+            return Ok();
         }
 
         [Authorize]

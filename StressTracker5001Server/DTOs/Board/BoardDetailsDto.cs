@@ -1,5 +1,6 @@
 using StressTracker5001Server.DTOs.Card;
 using StressTracker5001Server.DTOs.Column;
+using StressTracker5001Server.DTOs.Tag;
 using StressTracker5001Server.DTOs.User;
 
 namespace StressTracker5001Server.DTOs.Board
@@ -13,6 +14,7 @@ namespace StressTracker5001Server.DTOs.Board
         public required UserDto Owner { get; set; }
         public required List<ColumnDto> Columns { get; set; } = new();
         public required List<CardDto> Cards { get; set; } = new();
+        public required List<TagDto> Tags { get; set; } = new();
         public required DateTime CreatedAt { get; set; }
         public required DateTime UpdatedAt { get; set; }
     }
