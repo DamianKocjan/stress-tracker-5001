@@ -13,6 +13,7 @@ builder.Services.AddScoped<IColumnService, ColumnService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
 
 // JWT Configuration
 var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!);

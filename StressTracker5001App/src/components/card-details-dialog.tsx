@@ -14,6 +14,7 @@ import { showErrorToast } from "@/utils/handle-error";
 import { useForm } from "@tanstack/react-form";
 import { Calendar, Clock, Pencil, Tag, Trash2, User, X } from "lucide-react";
 import { useState } from "react";
+import { CardComments } from "./card-comments";
 import { FetchingErrorAlert } from "./fetching-error-alert";
 import { TagSelector } from "./tag-selector";
 import { Button } from "./ui/button";
@@ -267,6 +268,10 @@ function CardDetailsView({
           <span>{formatDateTime(updatedAt)}</span>
         </div>
       </div>
+
+      <Separator />
+
+      <CardComments cardId={id} />
     </div>
   );
 }

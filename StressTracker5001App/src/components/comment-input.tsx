@@ -116,6 +116,7 @@ export function CommentInput({ value, onChange, ...props }: CommentInputProps) {
         <Tooltip>
           <TooltipTrigger asChild>
             <InputGroupButton
+              type="submit"
               variant="default"
               className="ml-auto rounded-full"
               size="icon-xs"

@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Card;
-using StressTracker5001Server.DTOs.Tag;
+using StressTracker5001Server.DTOs.Comment;
 using StressTracker5001Server.DTOs.User;
 using StressTracker5001Server.Services;
 
@@ -134,6 +134,82 @@ namespace StressTracker5001Server.Controllers
             }
 
             return Ok();
+        }
+
+        [Authorize]
+        [HttpGet("{id}/comments")]
+        public async Task<IActionResult> GetCardComments(int id, [FromServices] ICardService cardService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var comments = await cardService.GetCommentsByCardIdAsync(id, userId);
+            if (comments == null)
+            {
+                return NotFound();
+            }
+
+            var commentDtos = comments.Select(c => new CommentDto
+            {
+                Id = c.Id,
+                UserId = c.UserId,
+                User = new UserDto
+                {
+                    Id = c.User.Id,
+                    Email = c.User.Email,
+                    Username = c.User.Username,
+                    CreatedAt = c.User.CreatedAt,
+                    UpdatedAt = c.User.UpdatedAt,
+                },
+                Content = c.Content,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt
+            }).ToList();
+
+            return Ok(commentDtos);
+        }
+
+        [Authorize]
+        [HttpPost("{id}/comments")]
+        public async Task<IActionResult> AddCommentToCard(int id, [FromBody] CreateCommentDto dto, [FromServices] ICardService cardService, [FromServices] ICommentService commentService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var commentId = await cardService.AddCommentToCardAsync(id, dto, userId);
+            if (commentId == null)
+            {
+                return NotFound();
+            }
+
+            var comment = await commentService.GetCommentByIdAsync(commentId.Value, userId);
+            if (comment == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new CommentDto
+            {
+                Id = comment.Id,
+                UserId = comment.UserId,
+                User = new UserDto
+                {
+                    Id = comment.User.Id,
+                    Email = comment.User.Email,
+                    Username = comment.User.Username,
+                    CreatedAt = comment.User.CreatedAt,
+                    UpdatedAt = comment.User.UpdatedAt,
+                },
+                Content = comment.Content,
+                CreatedAt = comment.CreatedAt,
+                UpdatedAt = comment.UpdatedAt
+            });
         }
 
         [Authorize]

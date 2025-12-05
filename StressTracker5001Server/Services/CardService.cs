@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using StressTracker5001Server.Data;
 using StressTracker5001Server.DTOs.Card;
+using StressTracker5001Server.DTOs.Comment;
 using StressTracker5001Server.Models;
 
 namespace StressTracker5001Server.Services
@@ -14,6 +15,8 @@ namespace StressTracker5001Server.Services
         Task<Card?> UpdateCardAsync(int cardId, UpdateCardDto dto, int ownerId);
         Task<bool> MoveCardAsync(int cardId, MoveCardDto dto, int ownerId);
         Task<bool> AssignTagsToCardAsync(int cardId, List<int> tagIds, int ownerId);
+        Task<List<Comment>> GetCommentsByCardIdAsync(int cardId, int ownerId);
+        Task<int?> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId);
         Task<bool> DeleteCardAsync(int cardId, int ownerId);
     }
 
@@ -237,6 +240,47 @@ namespace StressTracker5001Server.Services
 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<List<Comment>> GetCommentsByCardIdAsync(int cardId, int ownerId)
+        {
+            var card = await GetCardByIdAsync(cardId, ownerId);
+            if (card == null)
+            {
+                return new List<Comment>();
+            }
+
+            return await _context.Comments
+                .Include(c => c.User)
+                .Where(c => c.CardId == cardId)
+                .OrderBy(c => c.CreatedAt)
+                .ToListAsync();
+        }
+
+        public async Task<int?> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId)
+        {
+            var card = await _context.Cards
+                .Include(c => c.Column)
+                .ThenInclude(c => c.Board)
+                .FirstOrDefaultAsync(c => c.Id == cardId && c.Column.Board.OwnerId == userId);
+
+            if (card == null)
+            {
+                return null;
+            }
+
+            var comment = new Comment
+            {
+                CardId = cardId,
+                UserId = userId,
+                Content = dto.Content,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.Comments.Add(comment);
+            await _context.SaveChangesAsync();
+            return comment.Id;
         }
 
         public async Task<bool> DeleteCardAsync(int cardId, int ownerId)

@@ -25,6 +25,7 @@ namespace StressTracker5001Server.Models
         public User? CreatedBy { get; set; }
 
         public List<CardTag> CardTags { get; set; } = new();
+        public List<Comment> Comments { get; set; } = new();
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
