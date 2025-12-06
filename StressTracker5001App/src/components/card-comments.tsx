@@ -14,7 +14,7 @@ export function CardComments({ cardId }: CardCommentsProps) {
 
   return (
     <div className="flex w-full items-start justify-center">
-      <div className="w-full max-w-2xl">
+      <div className="w-full">
         <div className="mb-6">
           <h2 className="text-lg font-bold mb-1">Comments</h2>
           <p className="text-muted-foreground text-sm">

@@ -12,6 +12,7 @@ import { useForm } from "@tanstack/react-form";
 import { CheckIcon, Edit2Icon, TrashIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CommentInput } from "../comment-input";
+import { Textarea } from "./textarea";
 
 type CommentLayoutProps = React.ComponentProps<"div"> & {
   comment: CommentDto;
@@ -147,10 +148,13 @@ export function CommentCard({ comment, cardId, ...props }: CommentCardProps) {
         >
           <form.Field name="content">
             {({ state, handleChange }) => (
-              <CommentInput
+              <Textarea
+                className="resize-none"
+                placeholder="Comment..."
                 value={state.value}
-                onChange={handleChange}
+                onChange={(e) => handleChange(e.target.value)}
                 autoFocus
+                rows={5}
               />
             )}
           </form.Field>
