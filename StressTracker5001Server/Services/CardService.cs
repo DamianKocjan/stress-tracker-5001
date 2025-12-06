@@ -15,7 +15,8 @@ namespace StressTracker5001Server.Services
         Task<Card?> UpdateCardAsync(int cardId, UpdateCardDto dto, int ownerId);
         Task<bool> MoveCardAsync(int cardId, MoveCardDto dto, int ownerId);
         Task<bool> AssignTagsToCardAsync(int cardId, List<int> tagIds, int ownerId);
-        Task<List<Comment>> GetCommentsByCardIdAsync(int cardId, int ownerId);
+        Task<List<Comment>?> GetCommentsByCardIdAsync(int cardId, int ownerId, int page, int pageSize);
+        Task<bool> HasMoreCommentsAsync(int cardId, int ownerId, int page, int pageSize);
         Task<int?> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId);
         Task<bool> DeleteCardAsync(int cardId, int ownerId);
     }
@@ -242,19 +243,39 @@ namespace StressTracker5001Server.Services
             return true;
         }
 
-        public async Task<List<Comment>> GetCommentsByCardIdAsync(int cardId, int ownerId)
+        public async Task<List<Comment>?> GetCommentsByCardIdAsync(int cardId, int ownerId, int page, int pageSize)
         {
             var card = await GetCardByIdAsync(cardId, ownerId);
             if (card == null)
             {
-                return new List<Comment>();
+                return null;
             }
+
+            var offset = (page - 1) * pageSize;
 
             return await _context.Comments
                 .Include(c => c.User)
                 .Where(c => c.CardId == cardId)
                 .OrderBy(c => c.CreatedAt)
+                .Skip(offset)
+                .Take(pageSize)
                 .ToListAsync();
+        }
+
+        public async Task<bool> HasMoreCommentsAsync(int cardId, int ownerId, int page, int pageSize)
+        {
+            var card = await GetCardByIdAsync(cardId, ownerId);
+            if (card == null)
+            {
+                return false;
+            }
+
+            var totalComments = await _context.Comments
+                .Where(c => c.CardId == cardId)
+                .CountAsync();
+
+            var fetchedComments = page * pageSize;
+            return fetchedComments < totalComments;
         }
 
         public async Task<int?> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId)

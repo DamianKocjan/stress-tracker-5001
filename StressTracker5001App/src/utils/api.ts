@@ -18,6 +18,7 @@ import type {
   ColumnUpdateDto,
 } from "@/dto/column.dto";
 import type { CommentDto } from "@/dto/comment.dto";
+import type { PagedResultDto } from "@/dto/common.dto";
 import type { TagCreateDto, TagDto, TagUpdateDto } from "@/dto/tag.dto";
 import { fetch } from "./fetch";
 
@@ -180,6 +181,21 @@ export async function getCardComments(cardId: number): Promise<CommentDto[]> {
   }
 
   return response.json() as Promise<CommentDto[]>;
+}
+
+export async function getCardCommentsPaged(
+  cardId: number,
+  page: number,
+  pageSize: number = 10
+): Promise<PagedResultDto<CommentDto>> {
+  const response = await fetch(
+    `/cards/${cardId}/comments?page=${page}&pageSize=${pageSize}`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch card comments");
+  }
+  return response.json() as Promise<PagedResultDto<CommentDto>>;
 }
 
 export async function updateCard(

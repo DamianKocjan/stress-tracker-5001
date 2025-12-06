@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Card;
 using StressTracker5001Server.DTOs.Comment;
+using StressTracker5001Server.DTOs.Common;
 using StressTracker5001Server.DTOs.User;
 using StressTracker5001Server.Services;
 
@@ -138,7 +139,7 @@ namespace StressTracker5001Server.Controllers
 
         [Authorize]
         [HttpGet("{id}/comments")]
-        public async Task<IActionResult> GetCardComments(int id, [FromServices] ICardService cardService)
+        public async Task<IActionResult> GetCardComments(int id, [FromServices] ICardService cardService, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
@@ -146,11 +147,23 @@ namespace StressTracker5001Server.Controllers
                 return Unauthorized();
             }
 
-            var comments = await cardService.GetCommentsByCardIdAsync(id, userId);
+            if (page <= 0)
+            {
+                page = 1;
+            }
+
+            if (pageSize <= 0 || pageSize > 100)
+            {
+                pageSize = 10;
+            }
+
+            var comments = await cardService.GetCommentsByCardIdAsync(id, userId, page, pageSize);
             if (comments == null)
             {
                 return NotFound();
             }
+
+            var hasMore = await cardService.HasMoreCommentsAsync(id, userId, page, pageSize);
 
             var commentDtos = comments.Select(c => new CommentDto
             {
@@ -169,7 +182,15 @@ namespace StressTracker5001Server.Controllers
                 UpdatedAt = c.UpdatedAt
             }).ToList();
 
-            return Ok(commentDtos);
+            return Ok(new PagedResultDto<CommentDto>
+            {
+                Items = commentDtos,
+                HasMore = hasMore,
+                PreviousPage = page > 1 ? page - 1 : 1,
+                Page = page,
+                NextPage = hasMore ? page + 1 : page,
+                PageSize = pageSize
+            });
         }
 
         [Authorize]

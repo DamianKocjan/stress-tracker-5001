@@ -57,8 +57,8 @@ export function CardDetailsDialog({ boardId }: CardDetailsDialogProps) {
       open={cardId !== null}
       onOpenChange={handleOpenChange}
     >
-      <DrawerContent className="data-[vaul-drawer-direction=right]:lg:max-w-1/2 data-[vaul-drawer-direction=right]:xl:max-w-2/5 ">
-        <ScrollArea className="flex-1 overflow-y-auto p-4 pb-0">
+      <DrawerContent className="data-[vaul-drawer-direction=right]:lg:max-w-1/2 data-[vaul-drawer-direction=right]:xl:max-w-2/5">
+        <ScrollArea className="flex-1 overflow-y-hidden p-4 pb-0">
           {cardId !== null && (
             <CardDetailsContent boardId={boardId} cardId={cardId} />
           )}
