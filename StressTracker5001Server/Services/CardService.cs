@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using StressTracker5001Server.Data;
 using StressTracker5001Server.DTOs.Card;
+using StressTracker5001Server.DTOs.Comment;
 using StressTracker5001Server.Models;
 
 namespace StressTracker5001Server.Services
@@ -14,6 +15,9 @@ namespace StressTracker5001Server.Services
         Task<Card?> UpdateCardAsync(int cardId, UpdateCardDto dto, int ownerId);
         Task<bool> MoveCardAsync(int cardId, MoveCardDto dto, int ownerId);
         Task<bool> AssignTagsToCardAsync(int cardId, List<int> tagIds, int ownerId);
+        Task<List<Comment>?> GetCommentsByCardIdAsync(int cardId, int ownerId, int page, int pageSize);
+        Task<bool> HasMoreCommentsAsync(int cardId, int ownerId, int page, int pageSize);
+        Task<int?> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId);
         Task<bool> DeleteCardAsync(int cardId, int ownerId);
     }
 
@@ -67,6 +71,8 @@ namespace StressTracker5001Server.Services
                 .Where(c => c.ColumnId == columnId && c.Column.Board.OwnerId == userId)
                 .Count();
 
+            var now = DateTime.UtcNow;
+
             var card = new Card
             {
                 Title = dto.Title,
@@ -75,8 +81,8 @@ namespace StressTracker5001Server.Services
                 ColumnId = columnId,
                 CreatedById = userId,
                 Position = cardCount,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             };
 
             _context.Cards.Add(card);
@@ -237,6 +243,69 @@ namespace StressTracker5001Server.Services
 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<List<Comment>?> GetCommentsByCardIdAsync(int cardId, int ownerId, int page, int pageSize)
+        {
+            var card = await GetCardByIdAsync(cardId, ownerId);
+            if (card == null)
+            {
+                return null;
+            }
+
+            var offset = (page - 1) * pageSize;
+
+            return await _context.Comments
+                .Include(c => c.User)
+                .Where(c => c.CardId == cardId)
+                .OrderBy(c => c.CreatedAt)
+                .Skip(offset)
+                .Take(pageSize)
+                .ToListAsync();
+        }
+
+        public async Task<bool> HasMoreCommentsAsync(int cardId, int ownerId, int page, int pageSize)
+        {
+            var card = await GetCardByIdAsync(cardId, ownerId);
+            if (card == null)
+            {
+                return false;
+            }
+
+            var totalComments = await _context.Comments
+                .Where(c => c.CardId == cardId)
+                .CountAsync();
+
+            var fetchedComments = page * pageSize;
+            return fetchedComments < totalComments;
+        }
+
+        public async Task<int?> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId)
+        {
+            var card = await _context.Cards
+                .Include(c => c.Column)
+                .ThenInclude(c => c.Board)
+                .FirstOrDefaultAsync(c => c.Id == cardId && c.Column.Board.OwnerId == userId);
+
+            if (card == null)
+            {
+                return null;
+            }
+
+            var now = DateTime.UtcNow;
+
+            var comment = new Comment
+            {
+                CardId = cardId,
+                UserId = userId,
+                Content = dto.Content,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+
+            _context.Comments.Add(comment);
+            await _context.SaveChangesAsync();
+            return comment.Id;
         }
 
         public async Task<bool> DeleteCardAsync(int cardId, int ownerId)

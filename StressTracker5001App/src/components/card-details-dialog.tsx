@@ -14,6 +14,7 @@ import { showErrorToast } from "@/utils/handle-error";
 import { useForm } from "@tanstack/react-form";
 import { Calendar, Clock, Pencil, Tag, Trash2, User, X } from "lucide-react";
 import { useState } from "react";
+import { CardComments } from "./card-comments";
 import { FetchingErrorAlert } from "./fetching-error-alert";
 import { TagSelector } from "./tag-selector";
 import { Button } from "./ui/button";
@@ -56,8 +57,8 @@ export function CardDetailsDialog({ boardId }: CardDetailsDialogProps) {
       open={cardId !== null}
       onOpenChange={handleOpenChange}
     >
-      <DrawerContent className="data-[vaul-drawer-direction=right]:lg:max-w-1/2 data-[vaul-drawer-direction=right]:xl:max-w-2/5 ">
-        <ScrollArea className="flex-1 overflow-y-auto p-4 pb-0">
+      <DrawerContent className="data-[vaul-drawer-direction=right]:lg:max-w-1/2 data-[vaul-drawer-direction=right]:xl:max-w-2/5">
+        <ScrollArea className="flex-1 overflow-y-hidden p-4 pb-0">
           {cardId !== null && (
             <CardDetailsContent boardId={boardId} cardId={cardId} />
           )}
@@ -267,6 +268,10 @@ function CardDetailsView({
           <span>{formatDateTime(updatedAt)}</span>
         </div>
       </div>
+
+      <Separator />
+
+      <CardComments cardId={id} />
     </div>
   );
 }

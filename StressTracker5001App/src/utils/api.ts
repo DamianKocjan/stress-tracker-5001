@@ -17,6 +17,8 @@ import type {
   ColumnMoveDto,
   ColumnUpdateDto,
 } from "@/dto/column.dto";
+import type { CommentDto } from "@/dto/comment.dto";
+import type { PagedResultDto } from "@/dto/common.dto";
 import type { TagCreateDto, TagDto, TagUpdateDto } from "@/dto/tag.dto";
 import { fetch } from "./fetch";
 
@@ -169,6 +171,33 @@ export async function getCardDetails(cardId: number): Promise<CardDetailsDto> {
   return response.json() as Promise<CardDetailsDto>;
 }
 
+export async function getCardComments(cardId: number): Promise<CommentDto[]> {
+  const response = await fetch(`/cards/${cardId}/comments`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch card comments");
+  }
+
+  return response.json() as Promise<CommentDto[]>;
+}
+
+export async function getCardCommentsPaged(
+  cardId: number,
+  page: number,
+  pageSize: number = 10
+): Promise<PagedResultDto<CommentDto>> {
+  const response = await fetch(
+    `/cards/${cardId}/comments?page=${page}&pageSize=${pageSize}`
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch card comments");
+  }
+  return response.json() as Promise<PagedResultDto<CommentDto>>;
+}
+
 export async function updateCard(
   cardId: number,
   data: CardUpdateDto
@@ -264,5 +293,47 @@ export async function deleteTag(tagId: number): Promise<void> {
 
   if (!response.ok) {
     throw new Error("Failed to delete tag");
+  }
+}
+
+export async function createComment(
+  cardId: number,
+  content: string
+): Promise<CommentDto> {
+  const response = await fetch(`/cards/${cardId}/comments`, {
+    method: "POST",
+    body: JSON.stringify({ content }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create comment");
+  }
+
+  return response.json() as Promise<CommentDto>;
+}
+
+export async function updateComment(
+  commentId: number,
+  content: string
+): Promise<CommentDto> {
+  const response = await fetch(`/comments/${commentId}`, {
+    method: "PUT",
+    body: JSON.stringify({ content }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update comment");
+  }
+
+  return response.json() as Promise<CommentDto>;
+}
+
+export async function deleteComment(commentId: number): Promise<void> {
+  const response = await fetch(`/comments/${commentId}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to delete comment");
   }
 }

@@ -62,14 +62,15 @@ namespace StressTracker5001Server.Services
 
         public RefreshToken GenerateRefreshToken()
         {
+            var now = DateTime.UtcNow;
             var randomNumber = new byte[32];
             _randomNumberGenerator.GetBytes(randomNumber);
             var refreshToken = new RefreshToken
             {
                 Token = Convert.ToBase64String(randomNumber),
-                ExpiresAt = DateTime.UtcNow.AddDays(7),
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
+                ExpiresAt = now.AddDays(7),
+                CreatedAt = now,
+                UpdatedAt = now,
             };
 
             return refreshToken;
@@ -177,11 +178,12 @@ namespace StressTracker5001Server.Services
 
             refreshToken.UserId = userId;
 
+            var now = DateTime.UtcNow;
             var refreshTokenCookieExpiryDays = int.Parse(_configuration["Jwt:RefreshTokenExpiryDays"] ?? "7");
-            refreshToken.ExpiresAt = DateTime.UtcNow.AddDays(refreshTokenCookieExpiryDays);
+            refreshToken.ExpiresAt = now.AddDays(refreshTokenCookieExpiryDays);
 
-            refreshToken.CreatedAt = DateTime.UtcNow;
-            refreshToken.UpdatedAt = DateTime.UtcNow;
+            refreshToken.CreatedAt = now;
+            refreshToken.UpdatedAt = now;
 
             _context.RefreshTokens.Add(refreshToken);
             await _context.SaveChangesAsync();

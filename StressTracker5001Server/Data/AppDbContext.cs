@@ -13,6 +13,7 @@ namespace StressTracker5001Server.Data
         public DbSet<Card> Cards { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<CardTag> CardTags { get; set; }
+        public DbSet<Comment> Comments { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
             => options.UseSqlite("Data Source=db.sqlite");
@@ -69,6 +70,16 @@ namespace StressTracker5001Server.Data
                 .HasOne(ct => ct.Tag)
                 .WithMany(t => t.CardTags)
                 .HasForeignKey(ct => ct.TagId);
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.User)
+                .WithMany(u => u.Comments)
+                .HasForeignKey(c => c.UserId);
+
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Card)
+                .WithMany(c => c.Comments)
+                .HasForeignKey(c => c.CardId);
         }
     }
 }

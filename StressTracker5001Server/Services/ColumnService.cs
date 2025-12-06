@@ -32,14 +32,16 @@ namespace StressTracker5001Server.Services
 
         public async Task<Column> CreateColumnAsync(int boardId, CreateColumnDto dto, int ownerId)
         {
+            var now = DateTime.UtcNow;
+
             var column = new Column
             {
                 BoardId = boardId,
                 Name = dto.Name,
                 Position = dto.Position,
                 WipLimit = dto.WipLimit,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             };
 
             _context.Columns.Add(column);
