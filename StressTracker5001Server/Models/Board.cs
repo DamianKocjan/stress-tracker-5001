@@ -21,6 +21,12 @@ namespace StressTracker5001Server.Models
         [JsonIgnore]
         public List<Tag> Tags { get; set; } = new();
 
+        [JsonIgnore]
+        public List<BoardMember> Members { get; set; } = new();
+
+        [JsonIgnore]
+        public List<BoardInvite> Invites { get; set; } = new();
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }

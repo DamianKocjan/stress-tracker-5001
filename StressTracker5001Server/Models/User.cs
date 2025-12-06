@@ -36,6 +36,12 @@ namespace StressTracker5001Server.Models
         [JsonIgnore]
         public List<Comment> Comments { get; set; } = new();
 
+        [JsonIgnore]
+        public List<BoardMember> BoardMemberships { get; set; } = new();
+
+        [JsonIgnore]
+        public List<BoardInvite> BoardInvites { get; set; } = new();
+
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
