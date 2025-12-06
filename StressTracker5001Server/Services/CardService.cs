@@ -71,6 +71,8 @@ namespace StressTracker5001Server.Services
                 .Where(c => c.ColumnId == columnId && c.Column.Board.OwnerId == userId)
                 .Count();
 
+            var now = DateTime.UtcNow;
+
             var card = new Card
             {
                 Title = dto.Title,
@@ -79,8 +81,8 @@ namespace StressTracker5001Server.Services
                 ColumnId = columnId,
                 CreatedById = userId,
                 Position = cardCount,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             };
 
             _context.Cards.Add(card);
@@ -290,13 +292,15 @@ namespace StressTracker5001Server.Services
                 return null;
             }
 
+            var now = DateTime.UtcNow;
+
             var comment = new Comment
             {
                 CardId = cardId,
                 UserId = userId,
                 Content = dto.Content,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             };
 
             _context.Comments.Add(comment);

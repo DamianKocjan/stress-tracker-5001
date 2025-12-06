@@ -115,13 +115,14 @@ namespace StressTracker5001Server.Services
 
         public async Task<int> CreateBoardAsync(CreateBoardDto dto, int ownerId)
         {
+            var now = DateTime.UtcNow;
             var board = new Board
             {
                 Name = dto.Name,
                 Description = dto.Description ?? string.Empty,
                 OwnerId = ownerId,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
+                CreatedAt = now,
+                UpdatedAt = now
             };
 
             _context.Boards.Add(board);

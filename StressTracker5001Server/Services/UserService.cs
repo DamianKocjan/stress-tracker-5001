@@ -57,13 +57,14 @@ namespace StressTracker5001Server.Services
 
         public async Task<User?> CreateUserAsync(CreateUserDto dto)
         {
+            var now = DateTime.UtcNow;
             var user = new User
             {
                 Email = dto.Email,
                 Password = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                 Username = dto.Username,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow,
+                CreatedAt = now,
+                UpdatedAt = now,
             };
 
             _context.Users.Add(user);
