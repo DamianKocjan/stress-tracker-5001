@@ -45,7 +45,7 @@ function CommentLayout({
     >
       <Avatar className="h-9 w-9">
         <AvatarFallback className="text-xs">
-          {getInitialChar(comment.user.username)}
+          {getInitials(comment.user.username)}
         </AvatarFallback>
       </Avatar>
       <div className="flex-1 min-w-0">
@@ -235,7 +235,7 @@ export function CommentForm({
         content: data.content,
       });
     }
-  }, [data, commentId, form]);
+  }, [data, commentId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -252,7 +252,7 @@ export function CommentForm({
       <div className="flex w-full gap-x-3">
         <Avatar className="h-9 w-9">
           <AvatarFallback className="text-xs">
-            {getInitialChar(currentUser.username)}
+            {getInitials(currentUser.username)}
           </AvatarFallback>
         </Avatar>
         <form.Field name="content">
@@ -302,7 +302,7 @@ export function SkeletonCard({
   );
 }
 
-function getInitialChar(value: string) {
+function getInitials(value: string) {
   return value
     .split(" ")
     .map((word) => word.charAt(0).toUpperCase())
@@ -331,7 +331,7 @@ function getTimeAgo(timestamp: number | Date) {
   } else if (days < 30) {
     return `${days} day${days === 1 ? "" : "s"} ago`;
   } else if (months < 12) {
-    return `${months}mo ago`;
+    return `${months} mo ago`;
   } else {
     return `${years} yr. ago`;
   }
