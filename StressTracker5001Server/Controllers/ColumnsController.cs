@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Card;
 using StressTracker5001Server.DTOs.Column;
+using StressTracker5001Server.DTOs.Common;
 using StressTracker5001Server.Services;
+using StressTracker5001Server.Extensions;
 
 namespace StressTracker5001Server.Controllers
 {
@@ -18,28 +20,17 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var column = await columnService.GetColumnByIdAsync(columnId, userId);
-            if (column == null)
+            var columnResult = await columnService.GetColumnByIdAsync(columnId, userId);
+            if (!columnResult.IsSuccess)
             {
-                return NotFound();
+                return columnResult.ToActionResult();
             }
 
-            var card = await cardService.CreateCardAsync(columnId, dto, userId);
-            return Ok(new CardDto
-            {
-                Id = card.Id,
-                Title = card.Title,
-                Description = card.Description,
-                Position = card.Position,
-                DueDate = card.DueDate,
-                CreatedById = card.CreatedById,
-                ColumnId = card.ColumnId,
-                CreatedAt = card.CreatedAt,
-                UpdatedAt = card.UpdatedAt
-            });
+            var result = await cardService.CreateCardAsync(columnId, dto, userId);
+            return result.ToActionResult(c => c.ToDto());
         }
 
         [Authorize]
@@ -49,33 +40,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var column = await columnService.GetColumnByIdAsync(columnId, userId);
-            if (column == null)
-            {
-                return NotFound();
-            }
-
-            await columnService.UpdateColumnAsync(columnId, dto, userId);
-
-            var updatedColumn = await columnService.GetColumnByIdAsync(columnId, userId);
-            if (updatedColumn == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(new ColumnDto
-            {
-                Id = updatedColumn.Id,
-                BoardId = updatedColumn.BoardId,
-                Name = updatedColumn.Name,
-                Position = updatedColumn.Position,
-                WipLimit = updatedColumn.WipLimit,
-                CreatedAt = updatedColumn.CreatedAt,
-                UpdatedAt = updatedColumn.UpdatedAt
-            });
+            var result = await columnService.UpdateColumnAsync(columnId, dto, userId);
+            return result.ToActionResult(c => c.ToDto());
         }
 
         [Authorize]
@@ -85,28 +54,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var column = await columnService.GetColumnByIdAsync(columnId, userId);
-            if (column == null)
-            {
-                return NotFound();
-            }
-
-            await columnService.MoveColumnAsync(columnId, dto.NewPosition, userId);
-
-            var movedColumn = await columnService.GetColumnByIdAsync(columnId, userId);
-            return Ok(new ColumnDto
-            {
-                Id = movedColumn.Id,
-                BoardId = movedColumn.BoardId,
-                Name = movedColumn.Name,
-                Position = movedColumn.Position,
-                WipLimit = movedColumn.WipLimit,
-                CreatedAt = movedColumn.CreatedAt,
-                UpdatedAt = movedColumn.UpdatedAt
-            });
+            var result = await columnService.MoveColumnAsync(columnId, dto.NewPosition, userId);
+            return result.ToActionResult(c => c.ToDto());
         }
 
         [Authorize]
@@ -116,22 +68,16 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var column = await columnService.GetColumnByIdAsync(columnId, userId);
-            if (column == null)
+            var result = await columnService.DeleteColumnAsync(columnId, userId);
+            if (result.IsSuccess)
             {
-                return NotFound();
+                return new ObjectResult(ResultDto.CreateSuccess(204)) { StatusCode = 204 };
             }
 
-            var success = await columnService.DeleteColumnAsync(columnId, userId);
-            if (!success)
-            {
-                return NotFound();
-            }
-
-            return NoContent();
+            return result.ToActionResult();
         }
     }
 }

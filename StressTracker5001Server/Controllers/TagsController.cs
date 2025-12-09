@@ -2,7 +2,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Tag;
+using StressTracker5001Server.DTOs.Common;
 using StressTracker5001Server.Services;
+using StressTracker5001Server.Extensions;
 
 namespace StressTracker5001Server.Controllers
 {
@@ -17,24 +19,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return Unauthorized(ResultDto.Unauthorized("Invalid user token"));
             }
 
-            var tag = await tagService.CreateTagAsync(dto, userId);
-            if (tag == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(new TagDto
-            {
-                Id = tag.Id,
-                Name = tag.Name,
-                Color = tag.Color,
-                BoardId = tag.BoardId,
-                CreatedAt = tag.CreatedAt,
-                UpdatedAt = tag.UpdatedAt
-            });
+            var result = await tagService.CreateTagAsync(dto, userId);
+            return result.ToActionResult(t => t.ToDto());
         }
 
         [Authorize]
@@ -44,24 +33,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return Unauthorized(ResultDto.Unauthorized("Invalid user token"));
             }
 
-            var tag = await tagService.UpdateTagAsync(tagId, dto, userId);
-            if (tag == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(new TagDto
-            {
-                Id = tag.Id,
-                Name = tag.Name,
-                Color = tag.Color,
-                BoardId = tag.BoardId,
-                CreatedAt = tag.CreatedAt,
-                UpdatedAt = tag.UpdatedAt
-            });
+            var result = await tagService.UpdateTagAsync(tagId, dto, userId);
+            return result.ToActionResult(t => t.ToDto());
         }
 
         [Authorize]
@@ -71,16 +47,16 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return Unauthorized(ResultDto.Unauthorized("Invalid user token"));
             }
 
             var result = await tagService.DeleteTagAsync(tagId, userId);
-            if (!result)
+            if (result.IsSuccess)
             {
-                return NotFound();
+                return NoContent();
             }
 
-            return NoContent();
+            return result.ToActionResult();
         }
     }
 }

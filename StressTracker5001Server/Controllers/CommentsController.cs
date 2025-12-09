@@ -2,8 +2,9 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Comment;
-using StressTracker5001Server.DTOs.User;
+using StressTracker5001Server.DTOs.Common;
 using StressTracker5001Server.Services;
+using StressTracker5001Server.Extensions;
 
 namespace StressTracker5001Server.Controllers
 {
@@ -18,31 +19,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var comment = await commentService.UpdateCommentAsync(commentId, dto, userId);
-            if (comment == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(new CommentDto
-            {
-                Id = comment.Id,
-                Content = comment.Content,
-                UserId = comment.UserId,
-                User = new UserDto
-                {
-                    Id = comment.User.Id,
-                    Email = comment.User.Email,
-                    Username = comment.User.Username,
-                    CreatedAt = comment.User.CreatedAt,
-                    UpdatedAt = comment.User.UpdatedAt,
-                },
-                CreatedAt = comment.CreatedAt,
-                UpdatedAt = comment.UpdatedAt
-            });
+            var result = await commentService.UpdateCommentAsync(commentId, dto, userId);
+            return result.ToActionResult(c => c.ToDto());
         }
 
         [Authorize]
@@ -52,16 +33,16 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
             var result = await commentService.DeleteCommentAsync(commentId, userId);
-            if (!result)
+            if (result.IsSuccess)
             {
-                return NotFound();
+                return new ObjectResult(ResultDto.CreateSuccess(204)) { StatusCode = 204 };
             }
 
-            return NoContent();
+            return result.ToActionResult();
         }
     }
 }

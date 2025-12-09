@@ -2,16 +2,17 @@ using Microsoft.EntityFrameworkCore;
 using StressTracker5001Server.Data;
 using StressTracker5001Server.DTOs.Column;
 using StressTracker5001Server.Models;
+using StressTracker5001Server.Common;
 
 namespace StressTracker5001Server.Services
 {
     public interface IColumnService
     {
-        Task<Column?> GetColumnByIdAsync(int columnId, int ownerId);
-        Task<Column> CreateColumnAsync(int boardId, CreateColumnDto dto, int ownerId);
-        Task<Column?> UpdateColumnAsync(int columnId, UpdateColumnDto dto, int ownerId);
-        Task<bool> MoveColumnAsync(int columnId, int newPosition, int ownerId);
-        Task<bool> DeleteColumnAsync(int columnId, int ownerId);
+        Task<Result<Column>> GetColumnByIdAsync(int columnId, int ownerId);
+        Task<Result<Column>> CreateColumnAsync(int boardId, CreateColumnDto dto, int ownerId);
+        Task<Result<Column>> UpdateColumnAsync(int columnId, UpdateColumnDto dto, int ownerId);
+        Task<Result<Column>> MoveColumnAsync(int columnId, int newPosition, int ownerId);
+        Task<Result<bool>> DeleteColumnAsync(int columnId, int ownerId);
     }
 
     public class ColumnService : IColumnService
@@ -23,15 +24,29 @@ namespace StressTracker5001Server.Services
             _context = context;
         }
 
-        public async Task<Column?> GetColumnByIdAsync(int columnId, int ownerId)
+        public async Task<Result<Column>> GetColumnByIdAsync(int columnId, int ownerId)
         {
-            return await _context.Columns
+            var column = await _context.Columns
                 .Include(c => c.Board)
                 .FirstOrDefaultAsync(c => c.Id == columnId && c.Board.OwnerId == ownerId);
+
+            if (column == null)
+            {
+                return Result<Column>.NotFound($"Column with ID {columnId} not found or access denied");
+            }
+
+            return Result<Column>.Success(column);
         }
 
-        public async Task<Column> CreateColumnAsync(int boardId, CreateColumnDto dto, int ownerId)
+        public async Task<Result<Column>> CreateColumnAsync(int boardId, CreateColumnDto dto, int ownerId)
         {
+            // Validate board exists and user has access
+            var board = await _context.Boards.FindAsync(boardId);
+            if (board == null || board.OwnerId != ownerId)
+            {
+                return Result<Column>.NotFound($"Board with ID {boardId} not found or access denied");
+            }
+
             var now = DateTime.UtcNow;
 
             var column = new Column
@@ -46,33 +61,35 @@ namespace StressTracker5001Server.Services
 
             _context.Columns.Add(column);
             await _context.SaveChangesAsync();
-            return column;
+            return Result<Column>.Success(column);
         }
 
-        public async Task<Column?> UpdateColumnAsync(int columnId, UpdateColumnDto dto, int ownerId)
+        public async Task<Result<Column>> UpdateColumnAsync(int columnId, UpdateColumnDto dto, int ownerId)
         {
-            var column = await GetColumnByIdAsync(columnId, ownerId);
-            if (column == null)
+            var columnResult = await GetColumnByIdAsync(columnId, ownerId);
+            if (!columnResult.IsSuccess)
             {
-                return null;
+                return columnResult;
             }
 
+            var column = columnResult.Value!;
             column.Name = dto.Name;
             column.WipLimit = dto.WipLimit;
             column.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            return column;
+            return Result<Column>.Success(column);
         }
 
-        public async Task<bool> MoveColumnAsync(int columnId, int newPosition, int ownerId)
+        public async Task<Result<Column>> MoveColumnAsync(int columnId, int newPosition, int ownerId)
         {
-            var column = await GetColumnByIdAsync(columnId, ownerId);
-            if (column == null)
+            var columnResult = await GetColumnByIdAsync(columnId, ownerId);
+            if (!columnResult.IsSuccess)
             {
-                return false;
+                return Result<Column>.NotFound(columnResult.Error ?? "Column not found");
             }
 
+            var column = columnResult.Value!;
             column.Position = newPosition;
             column.UpdatedAt = DateTime.UtcNow;
 
@@ -90,20 +107,21 @@ namespace StressTracker5001Server.Services
             }
 
             await _context.SaveChangesAsync();
-            return true;
+            return Result<Column>.Success(column);
         }
 
-        public async Task<bool> DeleteColumnAsync(int columnId, int ownerId)
+        public async Task<Result<bool>> DeleteColumnAsync(int columnId, int ownerId)
         {
-            var column = await GetColumnByIdAsync(columnId, ownerId);
-            if (column == null)
+            var columnResult = await GetColumnByIdAsync(columnId, ownerId);
+            if (!columnResult.IsSuccess)
             {
-                return false;
+                return Result<bool>.NotFound(columnResult.Error ?? "Column not found");
             }
 
+            var column = columnResult.Value!;
             _context.Columns.Remove(column);
             await _context.SaveChangesAsync();
-            return true;
+            return Result<bool>.Success(true);
         }
     }
 }

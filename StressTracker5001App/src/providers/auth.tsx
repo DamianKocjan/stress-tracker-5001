@@ -1,4 +1,5 @@
 import type { LoginDto, RegisterDto } from "@/dto/auth.dto";
+import type { ResultDto } from "@/dto/common.dto";
 import type { UserDto } from "@/dto/user.dto";
 import { fetch } from "@/utils/fetch";
 import {
@@ -35,7 +36,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        throw new Error("Login failed");
+        const result = (await response.json()) as ResultDto<void>;
+        throw new Error(result.errorMessage || "Login failed");
       }
 
       setIsAuthenticated(true);
@@ -50,7 +52,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (!response.ok) {
-        throw new Error("Registration failed");
+        const result = (await response.json()) as ResultDto<void>;
+        throw new Error(result.errorMessage || "Registration failed");
       }
     },
   });
@@ -81,7 +84,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
       });
       if (!response.ok) {
-        throw new Error("Failed to refresh token");
+        const result = (await response.json()) as ResultDto<void>;
+        throw new Error(result.errorMessage || "Failed to refresh token");
       }
     },
     onError() {
@@ -99,10 +103,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const response = await fetch("/auth/profile");
 
       if (!response.ok) {
-        throw new Error("Failed to fetch profile");
+        const result = (await response.json()) as ResultDto<UserDto>;
+        throw new Error(result.errorMessage || "Failed to fetch profile");
       }
 
-      return response.json() as Promise<UserDto>;
+      const result = (await response.json()) as ResultDto<UserDto>;
+      if (!result.success || !result.data) {
+        throw new Error(result.errorMessage || "Failed to fetch profile");
+      }
+      return result.data;
     },
     enabled: isAuthenticated,
   });

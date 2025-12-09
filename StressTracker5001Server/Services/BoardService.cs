@@ -1,21 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 using StressTracker5001Server.Data;
 using StressTracker5001Server.DTOs.Board;
-using StressTracker5001Server.DTOs.Card;
-using StressTracker5001Server.DTOs.Column;
-using StressTracker5001Server.DTOs.Tag;
 using StressTracker5001Server.Models;
+using StressTracker5001Server.Common;
+using StressTracker5001Server.Extensions;
 
 namespace StressTracker5001Server.Services
 {
     public interface IBoardService
     {
-        Task<Board?> GetBoardByIdAsync(int boardId, int ownerId);
-        Task<BoardDetailsDto?> GetBoardWithColumnsAndCardsAsync(int boardId, int userId);
-        Task<List<Board>> GetBoardsByOwnerIdAsync(int ownerId);
-        Task<int> CreateBoardAsync(CreateBoardDto dto, int ownerId);
-        Task<Board?> UpdateBoardAsync(int boardId, UpdateBoardDto dto, int ownerId);
-        Task<bool> DeleteBoardAsync(int boardId, int ownerId);
+        Task<Result<Board>> GetBoardByIdAsync(int boardId, int userId);
+        Task<Result<BoardDetailsDto>> GetBoardWithColumnsAndCardsAsync(int boardId, int userId);
+        Task<Result<List<Board>>> GetOwnedBoardsAsync(int userId);
+        Task<Result<List<Board>>> GetUserMembershipBoardsAsync(int userId);
+        Task<Result<int>> CreateBoardAsync(CreateBoardDto dto, int ownerId);
+        Task<Result<Board>> UpdateBoardAsync(int boardId, UpdateBoardDto dto, int userId);
+        Task<Result<bool>> DeleteBoardAsync(int boardId, int userId);
     }
 
     public class BoardService : IBoardService
@@ -27,17 +27,25 @@ namespace StressTracker5001Server.Services
             _context = context;
         }
 
-        public async Task<Board?> GetBoardByIdAsync(int boardId, int ownerId)
-        {
-            return await _context.Boards
-                .Include(b => b.Owner)
-                .FirstOrDefaultAsync(b => b.Id == boardId && b.OwnerId == ownerId);
-        }
-
-        public async Task<BoardDetailsDto?> GetBoardWithColumnsAndCardsAsync(int boardId, int userId)
+        public async Task<Result<Board>> GetBoardByIdAsync(int boardId, int userId)
         {
             var board = await _context.Boards
-                .Where(b => b.Id == boardId && b.OwnerId == userId)
+                .Include(b => b.Owner)
+                .FirstOrDefaultAsync(b => b.Id == boardId &&
+                    (b.OwnerId == userId || b.Members.Any(m => m.UserId == userId)));
+
+            if (board == null)
+            {
+                return Result<Board>.NotFound($"Board with ID {boardId} not found or access denied");
+            }
+
+            return Result<Board>.Success(board);
+        }
+
+        public async Task<Result<BoardDetailsDto>> GetBoardWithColumnsAndCardsAsync(int boardId, int userId)
+        {
+            var board = await _context.Boards
+                .Where(b => b.Id == boardId && (b.OwnerId == userId || b.Members.Any(m => m.UserId == userId)))
                 .Include(b => b.Owner)
                 .Include(b => b.Tags)
                 .Include(b => b.Columns)
@@ -48,72 +56,36 @@ namespace StressTracker5001Server.Services
 
             if (board == null)
             {
-                return null;
+                return Result<BoardDetailsDto>.NotFound($"Board with ID {boardId} not found or access denied");
             }
 
-            var boardDetailsDto = new BoardDetailsDto
-            {
-                Id = board.Id,
-                Name = board.Name,
-                Description = board.Description,
-                OwnerId = board.OwnerId,
-                Owner = new DTOs.User.UserDto
-                {
-                    Id = board.Owner.Id,
-                    Email = board.Owner.Email,
-                    Username = board.Owner.Username,
-                    CreatedAt = board.Owner.CreatedAt,
-                    UpdatedAt = board.Owner.UpdatedAt,
-                },
-                CreatedAt = board.CreatedAt,
-                UpdatedAt = board.UpdatedAt,
-                Columns = board.Columns.Select(c => new ColumnDto
-                {
-                    Id = c.Id,
-                    Name = c.Name,
-                    BoardId = c.BoardId,
-                    Position = c.Position,
-                    WipLimit = c.WipLimit,
-                    CreatedAt = c.CreatedAt,
-                    UpdatedAt = c.UpdatedAt
-                }).OrderBy(c => c.Position).ToList(),
-                Cards = board.Columns.SelectMany(c => c.Cards).Select(card => new CardDto
-                {
-                    Id = card.Id,
-                    Title = card.Title,
-                    Description = card.Description,
-                    ColumnId = card.ColumnId,
-                    CreatedById = card.CreatedById,
-                    Position = card.Position,
-                    DueDate = card.DueDate,
-                    CreatedAt = card.CreatedAt,
-                    UpdatedAt = card.UpdatedAt,
-                    Tags = card.CardTags.Select(ct => ct.TagId).ToList()
-                }).ToList(),
-                Tags = board.Tags.Select(t => new TagDto
-                {
-                    Id = t.Id,
-                    Name = t.Name,
-                    Color = t.Color,
-                    BoardId = t.BoardId,
-                    CreatedAt = t.CreatedAt,
-                    UpdatedAt = t.UpdatedAt
-                }).ToList()
-            };
-
-            return boardDetailsDto;
+            var boardDetailsDto = board.ToDetailsDto();
+            return Result<BoardDetailsDto>.Success(boardDetailsDto);
         }
 
-        public async Task<List<Board>> GetBoardsByOwnerIdAsync(int ownerId)
+        public async Task<Result<List<Board>>> GetOwnedBoardsAsync(int userId)
         {
-            return await _context.Boards
-                .Where(b => b.OwnerId == ownerId)
+            var boards = await _context.Boards
+                .Where(b => b.OwnerId == userId)
                 .Include(b => b.Owner)
                 .OrderBy(b => b.UpdatedAt)
                 .ToListAsync();
+
+            return Result<List<Board>>.Success(boards);
         }
 
-        public async Task<int> CreateBoardAsync(CreateBoardDto dto, int ownerId)
+        public async Task<Result<List<Board>>> GetUserMembershipBoardsAsync(int userId)
+        {
+            var boards = await _context.Boards
+                .Where(b => b.Members.Any(m => m.UserId == userId))
+                .Include(b => b.Owner)
+                .OrderBy(b => b.UpdatedAt)
+                .ToListAsync();
+
+            return Result<List<Board>>.Success(boards);
+        }
+
+        public async Task<Result<int>> CreateBoardAsync(CreateBoardDto dto, int ownerId)
         {
             var now = DateTime.UtcNow;
             var board = new Board
@@ -128,38 +100,50 @@ namespace StressTracker5001Server.Services
             _context.Boards.Add(board);
             await _context.SaveChangesAsync();
 
-            return board.Id;
+            return Result<int>.Success(board.Id);
         }
 
-        public async Task<Board?> UpdateBoardAsync(int boardId, UpdateBoardDto dto, int ownerId)
+        public async Task<Result<Board>> UpdateBoardAsync(int boardId, UpdateBoardDto dto, int userId)
         {
-            var board = await GetBoardByIdAsync(boardId, ownerId);
+            var board = await _context.Boards
+                .FirstOrDefaultAsync(b => b.Id == boardId && b.OwnerId == userId);
+
             if (board == null)
             {
-                return null;
+                return Result<Board>.NotFound($"Board with ID {boardId} not found or access denied");
             }
 
-            board.Name = dto.Name;
-            board.Description = dto.Description ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(dto.Name))
+            {
+                board.Name = dto.Name;
+            }
+
+            if (dto.Description != null)
+            {
+                board.Description = dto.Description;
+            }
+
             board.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
 
-            return board;
+            return Result<Board>.Success(board);
         }
 
-        public async Task<bool> DeleteBoardAsync(int boardId, int ownerId)
+        public async Task<Result<bool>> DeleteBoardAsync(int boardId, int userId)
         {
-            var board = await GetBoardByIdAsync(boardId, ownerId);
+            var board = await _context.Boards
+                .FirstOrDefaultAsync(b => b.Id == boardId && b.OwnerId == userId);
+
             if (board == null)
             {
-                return false;
+                return Result<bool>.NotFound($"Board with ID {boardId} not found or access denied");
             }
 
             _context.Boards.Remove(board);
             await _context.SaveChangesAsync();
 
-            return true;
+            return Result<bool>.Success(true);
         }
     }
 }

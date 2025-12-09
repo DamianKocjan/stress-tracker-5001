@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Auth;
 using StressTracker5001Server.DTOs.User;
+using StressTracker5001Server.DTOs.Common;
 using StressTracker5001Server.Services;
+using StressTracker5001Server.Extensions;
 
 namespace StressTracker5001Server.Controllers
 {
@@ -14,10 +16,16 @@ namespace StressTracker5001Server.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto, [FromServices] IUserService userService, [FromServices] ITokenService tokenService)
         {
-            var user = await userService.GetUserByEmailAsync(dto.Email);
-            if (user == null || !userService.VerifyPassword(user, dto.Password))
+            var userResult = await userService.GetUserByEmailAsync(dto.Email);
+            if (!userResult.IsSuccess)
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid email or password")) { StatusCode = 401 };
+            }
+
+            var user = userResult.Value!;
+            if (!userService.VerifyPassword(user, dto.Password))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid email or password")) { StatusCode = 401 };
             }
 
             var token = tokenService.GenerateToken(user.Id, user.Email, user.Username);
@@ -27,24 +35,20 @@ namespace StressTracker5001Server.Controllers
 
             tokenService.ApplyTokensToResponse(Response, token, refreshToken.Token);
 
-            return Ok();
+            return Ok(ResultDto.CreateSuccess());
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto, [FromServices] IUserService userService)
         {
-            var user = await userService.CreateUserAsync(new CreateUserDto
+            var result = await userService.CreateUserAsync(new CreateUserDto
             {
                 Email = dto.Email,
                 Username = dto.Username,
                 Password = dto.Password
             });
 
-            if (user == null)
-            {
-                return BadRequest(new { message = "User registration failed" });
-            }
-            return Ok();
+            return result.ToActionResult();
         }
 
         [HttpPost("logout")]
@@ -58,7 +62,7 @@ namespace StressTracker5001Server.Controllers
 
             tokenService.RemoveTokensFromResponse(Response);
 
-            return Ok();
+            return Ok(ResultDto.CreateSuccess());
         }
 
         [HttpPost("validate-token")]
@@ -67,16 +71,16 @@ namespace StressTracker5001Server.Controllers
             var token = tokenService.GetTokenFromRequest(Request);
             if (string.IsNullOrEmpty(token))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Token is required")) { StatusCode = 401 };
             }
 
             var isValid = tokenService.ValidateToken(token);
             if (!isValid)
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid or expired token")) { StatusCode = 401 };
             }
 
-            return Ok();
+            return Ok(ResultDto<object>.CreateSuccessResult(new { valid = true }));
         }
 
         [HttpPost("refresh-token")]
@@ -85,22 +89,23 @@ namespace StressTracker5001Server.Controllers
             var refreshTokenCookie = tokenService.GetRefreshTokenFromRequest(Request);
             if (string.IsNullOrEmpty(refreshTokenCookie))
             {
-                return BadRequest(new { message = "Refresh token is required" });
+                return BadRequest(ResultDto.CreateFailureResult("Refresh token is required"));
             }
 
             var refreshToken = await tokenService.GetRefreshTokenAsync(refreshTokenCookie);
-            if (refreshToken == null)
+            if (!refreshToken.IsSuccess)
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized(refreshToken.Error ?? "Invalid or expired refresh token")) { StatusCode = 401 };
             }
 
-            var user = await userService.GetUserByIdAsync(refreshToken.UserId);
-            if (user == null)
+            var userResult = await userService.GetUserByIdAsync(refreshToken.Value!.UserId);
+            if (!userResult.IsSuccess)
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("User not found")) { StatusCode = 401 };
             }
 
-            await tokenService.RevokeRefreshTokenAsync(refreshToken.Token);
+            var user = userResult.Value!;
+            await tokenService.RevokeRefreshTokenAsync(refreshToken.Value!.Token);
 
             var newToken = tokenService.GenerateToken(user.Id, user.Email, user.Username);
             var newRefreshToken = tokenService.GenerateRefreshToken();
@@ -109,7 +114,7 @@ namespace StressTracker5001Server.Controllers
 
             tokenService.ApplyTokensToResponse(Response, newToken, newRefreshToken.Token);
 
-            return Ok();
+            return Ok(ResultDto.CreateSuccess());
         }
 
         [Authorize]
@@ -119,22 +124,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var user = await userService.GetUserByIdAsync(userId);
-            if (user == null)
-            {
-                return NotFound();
-            }
-            return Ok(new UserDto
-            {
-                Id = user.Id,
-                Email = user.Email,
-                Username = user.Username,
-                CreatedAt = user.CreatedAt,
-                UpdatedAt = user.UpdatedAt,
-            });
+            var result = await userService.GetUserByIdAsync(userId);
+            return result.ToActionResult(u => u.ToDto());
         }
 
         [Authorize]
@@ -144,22 +138,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var updatedUser = await userService.UpdateUserAsync(userId, dto);
-            if (updatedUser == null)
-            {
-                return NotFound();
-            }
-            return Ok(new UserDto
-            {
-                Id = updatedUser.Id,
-                Email = updatedUser.Email,
-                Username = updatedUser.Username,
-                CreatedAt = updatedUser.CreatedAt,
-                UpdatedAt = updatedUser.UpdatedAt,
-            });
+            var result = await userService.UpdateUserAsync(userId, dto);
+            return result.ToActionResult(u => u.ToDto());
         }
 
         [Authorize]
@@ -169,26 +152,28 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var user = await userService.GetUserByIdAsync(userId);
-            if (user == null || !userService.VerifyPassword(user, dto.CurrentPassword))
+            var userResult = await userService.GetUserByIdAsync(userId);
+            if (!userResult.IsSuccess)
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("User not found")) { StatusCode = 401 };
+            }
+
+            var user = userResult.Value!;
+            if (!userService.VerifyPassword(user, dto.CurrentPassword))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Current password is incorrect")) { StatusCode = 401 };
             }
 
             if (dto.NewPassword != dto.ConfirmNewPassword)
             {
-                return BadRequest(new { message = "New passwords do not match" });
+                return BadRequest(ResultDto.CreateFailureResult("New passwords do not match"));
             }
 
-            var updatedUser = await userService.UpdateUserPasswordAsync(userId, dto.NewPassword);
-            if (updatedUser == null)
-            {
-                return NotFound();
-            }
-            return Ok();
+            var result = await userService.UpdateUserPasswordAsync(userId, dto.NewPassword);
+            return result.ToActionResult();
         }
     }
 }

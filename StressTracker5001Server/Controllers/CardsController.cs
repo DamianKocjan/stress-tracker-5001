@@ -4,8 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Card;
 using StressTracker5001Server.DTOs.Comment;
 using StressTracker5001Server.DTOs.Common;
-using StressTracker5001Server.DTOs.User;
 using StressTracker5001Server.Services;
+using StressTracker5001Server.Extensions;
 
 namespace StressTracker5001Server.Controllers
 {
@@ -20,36 +20,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var card = await cardService.GetCardDetailsByIdAsync(id, userId);
-            if (card == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(new CardDetailsDto
-            {
-                Id = card.Id,
-                Title = card.Title,
-                Description = card.Description,
-                Position = card.Position,
-                DueDate = card.DueDate,
-                CreatedById = card.CreatedById,
-                CreatedBy = new UserDto
-                {
-                    Id = card.CreatedBy.Id,
-                    Email = card.CreatedBy.Email,
-                    Username = card.CreatedBy.Username,
-                    CreatedAt = card.CreatedBy.CreatedAt,
-                    UpdatedAt = card.CreatedBy.UpdatedAt,
-                },
-                Tags = card.CardTags.Select(ct => ct.TagId).ToList(),
-                ColumnId = card.ColumnId,
-                CreatedAt = card.CreatedAt,
-                UpdatedAt = card.UpdatedAt
-            });
+            var result = await cardService.GetCardDetailsByIdAsync(id, userId);
+            return result.ToActionResult(c => c.ToDetailsDto());
         }
 
         [Authorize]
@@ -59,27 +34,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var card = await cardService.UpdateCardAsync(id, dto, userId);
-            if (card == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(new CardDto
-            {
-                Id = card.Id,
-                Title = card.Title,
-                Description = card.Description,
-                Position = card.Position,
-                DueDate = card.DueDate,
-                CreatedById = card.CreatedById,
-                ColumnId = card.ColumnId,
-                CreatedAt = card.CreatedAt,
-                UpdatedAt = card.UpdatedAt
-            });
+            var result = await cardService.UpdateCardAsync(id, dto, userId);
+            return result.ToActionResult(c => c.ToDto());
         }
 
         [Authorize]
@@ -89,33 +48,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var success = await cardService.MoveCardAsync(id, dto, userId);
-            if (!success)
-            {
-                return NotFound();
-            }
-
-            var card = await cardService.GetCardByIdAsync(id, userId);
-            if (card == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(new CardDto
-            {
-                Id = card.Id,
-                Title = card.Title,
-                Description = card.Description,
-                Position = card.Position,
-                DueDate = card.DueDate,
-                CreatedById = card.CreatedById,
-                ColumnId = card.ColumnId,
-                CreatedAt = card.CreatedAt,
-                UpdatedAt = card.UpdatedAt
-            });
+            var result = await cardService.MoveCardAsync(id, dto, userId);
+            return result.ToActionResult(c => c.ToDto());
         }
 
         [Authorize]
@@ -125,16 +62,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
             var result = await cardService.AssignTagsToCardAsync(id, dto.Tags, userId);
-            if (!result)
-            {
-                return NotFound();
-            }
-
-            return Ok();
+            return result.ToActionResult(c => c.ToDto());
         }
 
         [Authorize]
@@ -144,7 +76,7 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
             if (page <= 0)
@@ -157,32 +89,19 @@ namespace StressTracker5001Server.Controllers
                 pageSize = 10;
             }
 
-            var comments = await cardService.GetCommentsByCardIdAsync(id, userId, page, pageSize);
-            if (comments == null)
+            var commentsResult = await cardService.GetCommentsByCardIdAsync(id, userId, page, pageSize);
+            if (!commentsResult.IsSuccess)
             {
-                return NotFound();
+                return commentsResult.ToActionResult();
             }
 
-            var hasMore = await cardService.HasMoreCommentsAsync(id, userId, page, pageSize);
+            var comments = commentsResult.Value!;
+            var hasMoreResult = await cardService.HasMoreCommentsAsync(id, userId, page, pageSize);
+            var hasMore = hasMoreResult.IsSuccess && hasMoreResult.Value;
 
-            var commentDtos = comments.Select(c => new CommentDto
-            {
-                Id = c.Id,
-                UserId = c.UserId,
-                User = new UserDto
-                {
-                    Id = c.User.Id,
-                    Email = c.User.Email,
-                    Username = c.User.Username,
-                    CreatedAt = c.User.CreatedAt,
-                    UpdatedAt = c.User.UpdatedAt,
-                },
-                Content = c.Content,
-                CreatedAt = c.CreatedAt,
-                UpdatedAt = c.UpdatedAt
-            }).ToList();
+            var commentDtos = comments.Select(c => c.ToDto()).ToList();
 
-            return Ok(new PagedResultDto<CommentDto>
+            return new ObjectResult(ResultDto.CreateSuccessResult(new PagedResultDto<CommentDto>
             {
                 Items = commentDtos,
                 HasMore = hasMore,
@@ -190,7 +109,7 @@ namespace StressTracker5001Server.Controllers
                 Page = page,
                 NextPage = hasMore ? page + 1 : page,
                 PageSize = pageSize
-            });
+            }));
         }
 
         [Authorize]
@@ -200,37 +119,17 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var commentId = await cardService.AddCommentToCardAsync(id, dto, userId);
-            if (commentId == null)
+            var commentIdResult = await cardService.AddCommentToCardAsync(id, dto, userId);
+            if (!commentIdResult.IsSuccess)
             {
-                return NotFound();
+                return commentIdResult.ToActionResult();
             }
 
-            var comment = await commentService.GetCommentByIdAsync(commentId.Value, userId);
-            if (comment == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(new CommentDto
-            {
-                Id = comment.Id,
-                UserId = comment.UserId,
-                User = new UserDto
-                {
-                    Id = comment.User.Id,
-                    Email = comment.User.Email,
-                    Username = comment.User.Username,
-                    CreatedAt = comment.User.CreatedAt,
-                    UpdatedAt = comment.User.UpdatedAt,
-                },
-                Content = comment.Content,
-                CreatedAt = comment.CreatedAt,
-                UpdatedAt = comment.UpdatedAt
-            });
+            var commentResult = await commentService.GetCommentByIdAsync(commentIdResult.Value, userId);
+            return commentResult.ToActionResult(c => c.ToDto());
         }
 
         [Authorize]
@@ -240,16 +139,16 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
             var result = await cardService.DeleteCardAsync(id, userId);
-            if (!result)
+            if (result.IsSuccess)
             {
-                return NotFound();
+                return new ObjectResult(ResultDto.CreateSuccess(204)) { StatusCode = 204 };
             }
 
-            return NoContent();
+            return result.ToActionResult();
         }
     }
 }

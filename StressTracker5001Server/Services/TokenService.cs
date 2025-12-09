@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using StressTracker5001Server.Common;
 using StressTracker5001Server.Data;
 using StressTracker5001Server.Models;
 
@@ -16,9 +17,9 @@ namespace StressTracker5001Server.Services
         string? GetRefreshTokenFromRequest(HttpRequest request);
         void RemoveTokensFromResponse(HttpResponse response);
         bool ValidateToken(string token);
-        Task<RefreshToken?> GetRefreshTokenAsync(string refreshToken);
-        Task<bool> RevokeRefreshTokenAsync(string refreshToken);
-        Task SaveRefreshTokenAsync(int userId, RefreshToken refreshToken);
+        Task<Result<RefreshToken>> GetRefreshTokenAsync(string refreshToken);
+        Task<Result<bool>> RevokeRefreshTokenAsync(string refreshToken);
+        Task<Result<bool>> SaveRefreshTokenAsync(int userId, RefreshToken refreshToken);
         void ApplyTokensToResponse(HttpResponse response, string token, string refreshToken);
     }
 
@@ -131,7 +132,7 @@ namespace StressTracker5001Server.Services
             }
         }
 
-        public async Task<RefreshToken?> GetRefreshTokenAsync(string refreshToken)
+        public async Task<Result<RefreshToken>> GetRefreshTokenAsync(string refreshToken)
         {
             var token = await _context.RefreshTokens
                 .Where(rt => rt.Token == refreshToken && rt.RevokedAt == null)
@@ -139,18 +140,18 @@ namespace StressTracker5001Server.Services
 
             if (token == null)
             {
-                return null;
+                return Result<RefreshToken>.NotFound("Refresh token not found");
             }
 
             if (token.ExpiresAt <= DateTime.UtcNow)
             {
-                return null;
+                return Result<RefreshToken>.Failure("Refresh token expired");
             }
 
-            return token;
+            return Result<RefreshToken>.Success(token);
         }
 
-        public async Task<bool> RevokeRefreshTokenAsync(string refreshToken)
+        public async Task<Result<bool>> RevokeRefreshTokenAsync(string refreshToken)
         {
             var token = await _context.RefreshTokens
                 .Where(rt => rt.Token == refreshToken && rt.RevokedAt == null)
@@ -158,22 +159,22 @@ namespace StressTracker5001Server.Services
 
             if (token == null)
             {
-                return false;
+                return Result<bool>.NotFound("Refresh token not found");
             }
 
             token.RevokedAt = DateTime.UtcNow;
             token.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            return true;
+            return Result<bool>.Success(true);
         }
 
-        public async Task SaveRefreshTokenAsync(int userId, RefreshToken refreshToken)
+        public async Task<Result<bool>> SaveRefreshTokenAsync(int userId, RefreshToken refreshToken)
         {
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
             {
-                throw new ArgumentException("User not found", nameof(userId));
+                return Result<bool>.NotFound("User not found");
             }
 
             refreshToken.UserId = userId;
@@ -187,6 +188,7 @@ namespace StressTracker5001Server.Services
 
             _context.RefreshTokens.Add(refreshToken);
             await _context.SaveChangesAsync();
+            return Result<bool>.Success(true);
         }
 
         public void ApplyTokensToResponse(HttpResponse response, string token, string refreshToken)

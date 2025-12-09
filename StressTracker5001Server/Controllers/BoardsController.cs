@@ -3,8 +3,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Board;
 using StressTracker5001Server.DTOs.Column;
-using StressTracker5001Server.DTOs.User;
+using StressTracker5001Server.DTOs.Common;
 using StressTracker5001Server.Services;
+using StressTracker5001Server.Extensions;
 
 namespace StressTracker5001Server.Controllers
 {
@@ -19,33 +20,18 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var boardId = await boardService.CreateBoardAsync(dto, userId);
-            var board = await boardService.GetBoardByIdAsync(boardId, userId);
-            if (board == null)
+            var createResult = await boardService.CreateBoardAsync(dto, userId);
+            if (!createResult.IsSuccess)
             {
-                return NotFound();
+                return createResult.ToActionResult();
             }
 
-            return Ok(new BoardDto
-            {
-                Id = board.Id,
-                Name = board.Name,
-                Description = board.Description,
-                OwnerId = board.OwnerId,
-                Owner = new UserDto
-                {
-                    Id = board.Owner.Id,
-                    Email = board.Owner.Email,
-                    Username = board.Owner.Username,
-                    CreatedAt = board.Owner.CreatedAt,
-                    UpdatedAt = board.Owner.UpdatedAt,
-                },
-                CreatedAt = board.CreatedAt,
-                UpdatedAt = board.UpdatedAt
-            });
+            var boardId = createResult.Value;
+            var result = await boardService.GetBoardByIdAsync(boardId, userId);
+            return result.ToActionResult(b => b.ToDto());
         }
 
         [Authorize]
@@ -55,29 +41,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var boards = await boardService.GetBoardsByOwnerIdAsync(userId);
-            var boardDtos = boards.Select(board => new BoardDto
-            {
-                Id = board.Id,
-                Name = board.Name,
-                Description = board.Description,
-                OwnerId = board.OwnerId,
-                Owner = new UserDto
-                {
-                    Id = board.Owner.Id,
-                    Email = board.Owner.Email,
-                    Username = board.Owner.Username,
-                    CreatedAt = board.Owner.CreatedAt,
-                    UpdatedAt = board.Owner.UpdatedAt,
-                },
-                CreatedAt = board.CreatedAt,
-                UpdatedAt = board.UpdatedAt
-            }).ToList();
-
-            return Ok(boardDtos);
+            var result = await boardService.GetOwnedBoardsAsync(userId);
+            return result.ToActionResult(boards => boards.Select(b => b.ToDto()).ToList());
         }
 
         [Authorize]
@@ -87,16 +55,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var board = await boardService.GetBoardWithColumnsAndCardsAsync(boardId, userId);
-            if (board == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(board);
+            var result = await boardService.GetBoardWithColumnsAndCardsAsync(boardId, userId);
+            return result.ToActionResult();
         }
 
         [Authorize]
@@ -106,26 +69,17 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var board = await boardService.GetBoardByIdAsync(boardId, userId);
-            if (board == null)
+            var boardResult = await boardService.GetBoardByIdAsync(boardId, userId);
+            if (!boardResult.IsSuccess)
             {
-                return NotFound();
+                return boardResult.ToActionResult();
             }
 
-            var column = await columnService.CreateColumnAsync(boardId, dto, userId);
-            return Ok(new ColumnDto
-            {
-                Id = column.Id,
-                BoardId = column.BoardId,
-                Name = column.Name,
-                Position = column.Position,
-                WipLimit = column.WipLimit,
-                CreatedAt = column.CreatedAt,
-                UpdatedAt = column.UpdatedAt
-            });
+            var result = await columnService.CreateColumnAsync(boardId, dto, userId);
+            return result.ToActionResult(c => c.ToDto());
         }
 
         [Authorize]
@@ -135,32 +89,11 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var board = await boardService.UpdateBoardAsync(boardId, dto, userId);
-            if (board == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(new BoardDto
-            {
-                Id = board.Id,
-                Name = board.Name,
-                Description = board.Description,
-                OwnerId = board.OwnerId,
-                Owner = new UserDto
-                {
-                    Id = board.Owner.Id,
-                    Email = board.Owner.Email,
-                    Username = board.Owner.Username,
-                    CreatedAt = board.Owner.CreatedAt,
-                    UpdatedAt = board.Owner.UpdatedAt,
-                },
-                CreatedAt = board.CreatedAt,
-                UpdatedAt = board.UpdatedAt
-            });
+            var result = await boardService.UpdateBoardAsync(boardId, dto, userId);
+            return result.ToActionResult(b => b.ToDto());
         }
 
         [Authorize]
@@ -170,16 +103,16 @@ namespace StressTracker5001Server.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
             {
-                return Unauthorized();
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var success = await boardService.DeleteBoardAsync(boardId, userId);
-            if (!success)
+            var result = await boardService.DeleteBoardAsync(boardId, userId);
+            if (result.IsSuccess)
             {
-                return NotFound();
+                return new ObjectResult(ResultDto.CreateSuccess(204)) { StatusCode = 204 };
             }
 
-            return NoContent();
+            return result.ToActionResult();
         }
     }
 }

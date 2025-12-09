@@ -6,3 +6,11 @@ export interface PagedResultDto<T> {
   nextPage: number;
   pageSize: number;
 }
+
+export interface ResultDto<T> {
+  success: boolean;
+  data?: T;
+  errorMessage?: string;
+  errors?: string[];
+  statusCode?: number;
+}
