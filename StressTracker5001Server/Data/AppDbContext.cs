@@ -98,15 +98,8 @@ namespace StressTracker5001Server.Data
                 .HasForeignKey(bm => bm.UserId);
 
             modelBuilder.Entity<BoardInvite>()
-                .HasIndex(bi => bi.InviteToken)
+                .HasIndex(bi => bi.Token)
                 .IsUnique();
-
-            modelBuilder.Entity<BoardInvite>()
-                .Property(bi => bi.UsedByUserIds)
-                .HasConversion(
-                    v => string.Join(',', v),
-                    v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList()
-                );
 
             modelBuilder.Entity<BoardInvite>()
                 .HasOne(bi => bi.Board)
