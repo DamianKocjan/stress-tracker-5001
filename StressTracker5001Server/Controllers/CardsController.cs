@@ -122,13 +122,7 @@ namespace StressTracker5001Server.Controllers
                 return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var commentIdResult = await cardService.AddCommentToCardAsync(id, dto, userId);
-            if (!commentIdResult.IsSuccess)
-            {
-                return commentIdResult.ToActionResult();
-            }
-
-            var commentResult = await commentService.GetCommentByIdAsync(commentIdResult.Value, userId);
+            var commentResult = await cardService.AddCommentToCardAsync(id, dto, userId);
             return commentResult.ToActionResult(c => c.ToDto());
         }
 

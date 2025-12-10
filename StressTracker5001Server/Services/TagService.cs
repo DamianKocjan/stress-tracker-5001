@@ -8,33 +8,41 @@ namespace StressTracker5001Server.Services
 {
     public interface ITagService
     {
-        Task<Result<List<Tag>>> GetTagsByBoardIdAsync(int boardId, int ownerId);
-        Task<Result<Tag>> GetTagByIdAsync(int tagId, int ownerId);
-        Task<Result<Tag>> CreateTagAsync(TagCreateDto dto, int ownerId);
-        Task<Result<Tag>> UpdateTagAsync(int tagId, TagUpdateDto dto, int ownerId);
-        Task<Result<bool>> DeleteTagAsync(int tagId, int ownerId);
+        Task<Result<List<Tag>>> GetTagsByBoardIdAsync(int boardId, int userId);
+        Task<Result<Tag>> CreateTagAsync(TagCreateDto dto, int userId);
+        Task<Result<Tag>> UpdateTagAsync(int tagId, TagUpdateDto dto, int userId);
+        Task<Result<bool>> DeleteTagAsync(int tagId, int userId);
     }
 
     public class TagService : ITagService
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IBoardAuthorizationService _boardAuthorizationService;
+
         private readonly int _maxTagsPerBoard;
 
-        public TagService(AppDbContext context, IConfiguration configuration)
+        public TagService(AppDbContext context, IConfiguration configuration, IBoardAuthorizationService boardAuthorizationService)
         {
             _context = context;
             _configuration = configuration;
+            _boardAuthorizationService = boardAuthorizationService;
+
             _maxTagsPerBoard = _configuration.GetValue("Tags:MaxTagsPerBoard", 20);
         }
 
-        public async Task<Result<List<Tag>>> GetTagsByBoardIdAsync(int boardId, int ownerId)
+        public async Task<Result<List<Tag>>> GetTagsByBoardIdAsync(int boardId, int userId)
         {
             // Validate board exists and user has access
             var board = await _context.Boards.FindAsync(boardId);
-            if (board == null || board.OwnerId != ownerId)
+            if (board == null)
             {
-                return Result<List<Tag>>.NotFound($"Board with ID {boardId} not found or access denied");
+                return Result<List<Tag>>.NotFound($"Board with ID {boardId} not found");
+            }
+
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Viewer))
+            {
+                return Result<List<Tag>>.Forbidden("You do not have permission to access tags for this board");
             }
 
             var tags = await _context.Tags
@@ -45,26 +53,17 @@ namespace StressTracker5001Server.Services
             return Result<List<Tag>>.Success(tags);
         }
 
-        public async Task<Result<Tag>> GetTagByIdAsync(int tagId, int ownerId)
-        {
-            var tag = await _context.Tags
-                .Include(t => t.Board)
-                .FirstOrDefaultAsync(t => t.Id == tagId && t.Board!.OwnerId == ownerId);
-
-            if (tag == null)
-            {
-                return Result<Tag>.NotFound($"Tag with ID {tagId} not found or access denied");
-            }
-
-            return Result<Tag>.Success(tag);
-        }
-
-        public async Task<Result<Tag>> CreateTagAsync(TagCreateDto dto, int ownerId)
+        public async Task<Result<Tag>> CreateTagAsync(TagCreateDto dto, int userId)
         {
             var board = await _context.Boards.FindAsync(dto.BoardId);
-            if (board == null || board.OwnerId != ownerId)
+            if (board == null)
             {
-                return Result<Tag>.NotFound($"Board with ID {dto.BoardId} not found or access denied");
+                return Result<Tag>.NotFound($"Board with ID {dto.BoardId} not found");
+            }
+
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(dto.BoardId, userId, BoardMemberRole.Admin))
+            {
+                return Result<Tag>.Forbidden("You do not have permission to create tags for this board");
             }
 
             // Check if board has reached the configured tag limit
@@ -99,12 +98,17 @@ namespace StressTracker5001Server.Services
             return Result<Tag>.Success(tag);
         }
 
-        public async Task<Result<Tag>> UpdateTagAsync(int tagId, TagUpdateDto dto, int ownerId)
+        public async Task<Result<Tag>> UpdateTagAsync(int tagId, TagUpdateDto dto, int userId)
         {
             var tag = await _context.Tags.Include(t => t.Board).FirstOrDefaultAsync(t => t.Id == tagId);
-            if (tag == null || tag.Board?.OwnerId != ownerId)
+            if (tag == null)
             {
-                return Result<Tag>.NotFound($"Tag with ID {tagId} not found or access denied");
+                return Result<Tag>.NotFound($"Tag with ID {tagId} not found");
+            }
+
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(tag.BoardId, userId, BoardMemberRole.Admin))
+            {
+                return Result<Tag>.Forbidden("You do not have permission to update this tag");
             }
 
             // Check if new name already exists in this board (excluding current tag)
@@ -125,12 +129,17 @@ namespace StressTracker5001Server.Services
             return Result<Tag>.Success(tag);
         }
 
-        public async Task<Result<bool>> DeleteTagAsync(int tagId, int ownerId)
+        public async Task<Result<bool>> DeleteTagAsync(int tagId, int userId)
         {
             var tag = await _context.Tags.Include(t => t.Board).FirstOrDefaultAsync(t => t.Id == tagId);
-            if (tag == null || tag.Board?.OwnerId != ownerId)
+            if (tag == null)
             {
-                return Result<bool>.NotFound($"Tag with ID {tagId} not found or access denied");
+                return Result<bool>.NotFound($"Tag with ID {tagId} not found");
+            }
+
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(tag.BoardId, userId, BoardMemberRole.Admin))
+            {
+                return Result<bool>.Forbidden("You do not have permission to delete this tag");
             }
 
             _context.Tags.Remove(tag);

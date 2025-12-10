@@ -7,13 +7,14 @@ namespace StressTracker5001Server.Services
 {
     public interface IBoardAuthorizationService
     {
-        Task<Result<BoardMember>> AddMemberAsync(int boardId, int userId, BoardMemberRole role);
-        Task<Result<bool>> RemoveMemberAsync(int boardId, int userId);
-        Task<Result<List<BoardMember>>> GetMembersAsync(int boardId);
+        Task<Result<BoardMember>> AddMemberAsync(int boardId, int userMemberId, int userId, BoardMemberRole role);
+        Task<Result<bool>> RemoveMemberAsync(int boardId, int userMemberId, int userId);
+        Task<Result<List<BoardMember>>> GetMembersAsync(int boardId, int userId);
         Task<Result<BoardMember>> GetMemberAsync(int boardId, int userId);
         Task<Result<BoardMember>> ChangeMemberRoleAsync(int boardId, int userId, int userMemberId, BoardMemberRole newRole);
         Task<Result<BoardMemberRole>> GetBoardUserRoleByIdAsync(int boardId, int userId);
         Task<Result<bool>> IsUserBoardMemberAsync(int boardId, int userId);
+        Task<bool> UserCanAccessBoardAsync(int boardId, int userId, BoardMemberRole? requiredRole = BoardMemberRole.Viewer);
     }
 
     public class BoardAuthorizationService : IBoardAuthorizationService
@@ -25,9 +26,9 @@ namespace StressTracker5001Server.Services
             _context = context;
         }
 
-        public async Task<Result<BoardMember>> AddMemberAsync(int boardId, int userId, BoardMemberRole role)
+        public async Task<Result<BoardMember>> AddMemberAsync(int boardId, int userMemberId, int userId, BoardMemberRole role)
         {
-            var existingMemberResult = await GetMemberAsync(boardId, userId);
+            var existingMemberResult = await GetMemberAsync(boardId, userMemberId);
             if (existingMemberResult.IsSuccess)
             {
                 return Result<BoardMember>.Failure("User is already a member of this board", 400);
@@ -40,11 +41,16 @@ namespace StressTracker5001Server.Services
                 return Result<BoardMember>.NotFound($"Board with ID {boardId} not found");
             }
 
+            if (!await UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin))
+            {
+                return Result<BoardMember>.Forbidden("You do not have permission to add members to this board");
+            }
+
             var now = DateTime.UtcNow;
             var boardMember = new BoardMember
             {
                 BoardId = boardId,
-                UserId = userId,
+                UserId = userMemberId,
                 Role = role,
                 CreatedAt = now,
                 UpdatedAt = now
@@ -55,12 +61,17 @@ namespace StressTracker5001Server.Services
             return Result<BoardMember>.Success(boardMember);
         }
 
-        public async Task<Result<bool>> RemoveMemberAsync(int boardId, int userId)
+        public async Task<Result<bool>> RemoveMemberAsync(int boardId, int userMemberId, int userId)
         {
-            var memberResult = await GetMemberAsync(boardId, userId);
+            var memberResult = await GetMemberAsync(boardId, userMemberId);
             if (!memberResult.IsSuccess)
             {
                 return Result<bool>.NotFound("Board member not found");
+            }
+
+            if (!await UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin))
+            {
+                return Result<bool>.Forbidden("You do not have permission to remove this member from the board");
             }
 
             var member = memberResult.Value!;
@@ -69,13 +80,18 @@ namespace StressTracker5001Server.Services
             return Result<bool>.Success(true);
         }
 
-        public async Task<Result<List<BoardMember>>> GetMembersAsync(int boardId)
+        public async Task<Result<List<BoardMember>>> GetMembersAsync(int boardId, int userId)
         {
             // Validate board exists
             var board = await _context.Boards.FindAsync(boardId);
             if (board == null)
             {
                 return Result<List<BoardMember>>.NotFound($"Board with ID {boardId} not found");
+            }
+
+            if (!await UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin))
+            {
+                return Result<List<BoardMember>>.Forbidden("You do not have permission to view members of this board");
             }
 
             var members = await _context.BoardMembers
@@ -90,6 +106,7 @@ namespace StressTracker5001Server.Services
         {
             var member = await _context.BoardMembers
                 .Include(bm => bm.User)
+                .Include(bm => bm.Board)
                 .FirstOrDefaultAsync(bm => bm.BoardId == boardId && bm.UserId == userId);
 
             if (member == null)
@@ -106,6 +123,11 @@ namespace StressTracker5001Server.Services
             if (!memberResult.IsSuccess)
             {
                 return Result<BoardMember>.NotFound("Board member not found");
+            }
+
+            if (!await UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin))
+            {
+                return Result<BoardMember>.Forbidden("You do not have permission to change member roles on this board");
             }
 
             var member = memberResult.Value!;
@@ -131,6 +153,18 @@ namespace StressTracker5001Server.Services
         {
             var memberResult = await GetMemberAsync(boardId, userId);
             return Result<bool>.Success(memberResult.IsSuccess);
+        }
+
+        public async Task<bool> UserCanAccessBoardAsync(int boardId, int userId, BoardMemberRole? requiredRole = BoardMemberRole.Viewer)
+        {
+            var memberResult = await GetMemberAsync(boardId, userId);
+            // If user is not a member and not the owner, deny access
+            if (!memberResult.IsSuccess && memberResult.Value?.Board?.OwnerId != userId)
+            {
+                return false;
+            }
+
+            return memberResult.Value!.Role >= requiredRole;
         }
     }
 }

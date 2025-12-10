@@ -9,16 +9,15 @@ namespace StressTracker5001Server.Services
 {
     public interface ICardService
     {
-        Task<Result<Card>> GetCardByIdAsync(int cardId, int ownerId);
-        Task<Result<Card>> GetCardDetailsByIdAsync(int cardId, int ownerId);
-        Task<Result<List<Card>>> GetCardsByColumnIdAsync(int columnId, int ownerId);
+        Task<Result<Card>> GetCardByIdAsync(int cardId, int userId, BoardMemberRole requiredRole = BoardMemberRole.Viewer);
+        Task<Result<Card>> GetCardDetailsByIdAsync(int cardId, int userId);
         Task<Result<Card>> CreateCardAsync(int columnId, CreateCardDto dto, int userId);
         Task<Result<Card>> UpdateCardAsync(int cardId, UpdateCardDto dto, int userId);
         Task<Result<Card>> MoveCardAsync(int cardId, MoveCardDto dto, int userId);
         Task<Result<Card>> AssignTagsToCardAsync(int cardId, List<int> tagIds, int userId);
         Task<Result<List<Comment>>> GetCommentsByCardIdAsync(int cardId, int userId, int page, int pageSize);
         Task<Result<bool>> HasMoreCommentsAsync(int cardId, int userId, int page, int pageSize);
-        Task<Result<int>> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId);
+        Task<Result<Comment>> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId);
         Task<Result<bool>> DeleteCardAsync(int cardId, int userId);
     }
 
@@ -26,81 +25,75 @@ namespace StressTracker5001Server.Services
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IBoardAuthorizationService _boardAuthorizationService;
+        private readonly IColumnService _columnService;
+
         private readonly int _maxTagsPerCard;
 
-        public CardService(AppDbContext context, IConfiguration configuration)
+        public CardService(AppDbContext context, IConfiguration configuration, IBoardAuthorizationService boardAuthorizationService, IColumnService columnService)
         {
             _context = context;
             _configuration = configuration;
+            _boardAuthorizationService = boardAuthorizationService;
+            _columnService = columnService;
+
             _maxTagsPerCard = _configuration.GetValue("Tags:MaxTagsPerCard", 5);
         }
 
-        public async Task<Result<Card>> GetCardByIdAsync(int cardId, int ownerId)
+        public async Task<Result<Card>> GetCardByIdAsync(int cardId, int userId, BoardMemberRole requiredRole = BoardMemberRole.Viewer)
         {
             var card = await _context.Cards
                 .Include(c => c.Column)
                 .ThenInclude(c => c.Board)
                 .Include(c => c.CardTags)
-                .FirstOrDefaultAsync(c => c.Id == cardId && c.Column.Board.OwnerId == ownerId);
+                .FirstOrDefaultAsync(c => c.Id == cardId);
 
             if (card == null)
             {
-                return Result<Card>.NotFound($"Card with ID {cardId} not found or access denied");
+                return Result<Card>.NotFound($"Card with ID {cardId} not found");
+            }
+
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(card.Column.BoardId, userId, requiredRole))
+            {
+                return Result<Card>.Forbidden("You do not have permission to access this card");
             }
 
             return Result<Card>.Success(card);
         }
 
-        public async Task<Result<Card>> GetCardDetailsByIdAsync(int cardId, int ownerId)
+        public async Task<Result<Card>> GetCardDetailsByIdAsync(int cardId, int userId)
         {
             var card = await _context.Cards
                 .Include(c => c.Column)
                 .ThenInclude(c => c.Board)
                 .Include(c => c.CreatedBy)
                 .Include(c => c.CardTags)
-                .FirstOrDefaultAsync(c => c.Id == cardId && c.Column.Board.OwnerId == ownerId);
+                .FirstOrDefaultAsync(c => c.Id == cardId);
 
             if (card == null)
             {
-                return Result<Card>.NotFound($"Card with ID {cardId} not found or access denied");
+                return Result<Card>.NotFound($"Card with ID {cardId} not found");
+            }
+
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(card.Column.BoardId, userId))
+            {
+                return Result<Card>.Forbidden("You do not have permission to access this card");
             }
 
             return Result<Card>.Success(card);
         }
 
-        public async Task<Result<List<Card>>> GetCardsByColumnIdAsync(int columnId, int ownerId)
-        {
-            // Validate column exists and user has access
-            var column = await _context.Columns
-                .Include(c => c.Board)
-                .FirstOrDefaultAsync(c => c.Id == columnId && c.Board.OwnerId == ownerId);
-
-            if (column == null)
-            {
-                return Result<List<Card>>.NotFound($"Column with ID {columnId} not found or access denied");
-            }
-
-            var cards = await _context.Cards
-                .Include(c => c.CardTags)
-                .Where(c => c.ColumnId == columnId)
-                .OrderBy(c => c.Position)
-                .ToListAsync();
-
-            return Result<List<Card>>.Success(cards);
-        }
-
         public async Task<Result<Card>> CreateCardAsync(int columnId, CreateCardDto dto, int userId)
         {
             // Validate column exists and user has access
-            var column = await _context.Columns
-                .Include(c => c.Board)
-                .FirstOrDefaultAsync(c => c.Id == columnId && c.Board.OwnerId == userId);
+            var columnResult = await _columnService.GetColumnByIdAsync(columnId, userId, BoardMemberRole.Member);
 
-            if (column == null)
+            if (!columnResult.IsSuccess)
             {
-                return Result<Card>.NotFound($"Column with ID {columnId} not found or access denied");
+                return Result<Card>.NotFound(columnResult.Error ?? "Column not found");
             }
 
+            var column = columnResult.Value!;
             var cardCount = await _context.Cards.CountAsync(c => c.ColumnId == columnId);
 
             // Check WIP limit
@@ -131,7 +124,7 @@ namespace StressTracker5001Server.Services
 
         public async Task<Result<Card>> UpdateCardAsync(int cardId, UpdateCardDto dto, int userId)
         {
-            var cardResult = await GetCardByIdAsync(cardId, userId);
+            var cardResult = await GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
             if (!cardResult.IsSuccess)
             {
                 return cardResult;
@@ -149,7 +142,7 @@ namespace StressTracker5001Server.Services
 
         public async Task<Result<Card>> MoveCardAsync(int cardId, MoveCardDto dto, int userId)
         {
-            var cardResult = await GetCardByIdAsync(cardId, userId);
+            var cardResult = await GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
             if (!cardResult.IsSuccess)
             {
                 return Result<Card>.NotFound(cardResult.Error ?? "Card not found");
@@ -184,14 +177,13 @@ namespace StressTracker5001Server.Services
             }
 
             // Moving to a different column - validate target column
-            var column = await _context.Columns
-                .Include(c => c.Board)
-                .FirstOrDefaultAsync(c => c.Id == dto.NewColumnId && c.Board!.OwnerId == userId);
-
-            if (column == null)
+            var columnResult = await _columnService.GetColumnByIdAsync(dto.NewColumnId, userId, BoardMemberRole.Member);
+            if (!columnResult.IsSuccess)
             {
-                return Result<Card>.NotFound($"Target column with ID {dto.NewColumnId} not found or access denied");
+                return Result<Card>.NotFound(columnResult.Error ?? "Target column not found");
             }
+
+            var column = columnResult.Value!;
 
             // Check WIP limit
             if (column.WipLimit != null)
@@ -240,7 +232,7 @@ namespace StressTracker5001Server.Services
 
         public async Task<Result<Card>> AssignTagsToCardAsync(int cardId, List<int> tagIds, int userId)
         {
-            var cardResult = await GetCardByIdAsync(cardId, userId);
+            var cardResult = await GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
             if (!cardResult.IsSuccess)
             {
                 return Result<Card>.NotFound(cardResult.Error ?? "Card not found");
@@ -327,24 +319,21 @@ namespace StressTracker5001Server.Services
             return Result<bool>.Success(hasMore);
         }
 
-        public async Task<Result<int>> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId)
+        public async Task<Result<Comment>> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId)
         {
-            var card = await _context.Cards
-                .Include(c => c.Column)
-                .ThenInclude(c => c.Board)
-                .FirstOrDefaultAsync(c => c.Id == cardId && c.Column!.Board!.OwnerId == userId);
+            var cardResult = await GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
 
-            if (card == null)
+            if (!cardResult.IsSuccess)
             {
-                return Result<int>.NotFound($"Card with ID {cardId} not found or access denied");
+                return Result<Comment>.NotFound($"Card with ID {cardId} not found or access denied");
             }
 
             var now = DateTime.UtcNow;
-
             var comment = new Comment
             {
                 CardId = cardId,
                 UserId = userId,
+                User = _context.Users.Find(userId)!,
                 Content = dto.Content,
                 CreatedAt = now,
                 UpdatedAt = now
@@ -353,12 +342,12 @@ namespace StressTracker5001Server.Services
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
 
-            return Result<int>.Success(comment.Id);
+            return Result<Comment>.Success(comment);
         }
 
         public async Task<Result<bool>> DeleteCardAsync(int cardId, int userId)
         {
-            var cardResult = await GetCardByIdAsync(cardId, userId);
+            var cardResult = await GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
             if (!cardResult.IsSuccess)
             {
                 return Result<bool>.NotFound(cardResult.Error ?? "Card not found");

@@ -13,7 +13,7 @@ namespace StressTracker5001Server.Services
         Task<Result<BoardDetailsDto>> GetBoardWithColumnsAndCardsAsync(int boardId, int userId);
         Task<Result<List<Board>>> GetOwnedBoardsAsync(int userId);
         Task<Result<List<Board>>> GetUserMembershipBoardsAsync(int userId);
-        Task<Result<int>> CreateBoardAsync(CreateBoardDto dto, int ownerId);
+        Task<Result<int>> CreateBoardAsync(CreateBoardDto dto, int userId);
         Task<Result<Board>> UpdateBoardAsync(int boardId, UpdateBoardDto dto, int userId);
         Task<Result<bool>> DeleteBoardAsync(int boardId, int userId);
     }
@@ -21,22 +21,28 @@ namespace StressTracker5001Server.Services
     public class BoardService : IBoardService
     {
         private readonly AppDbContext _context;
+        private readonly IBoardAuthorizationService _boardAuthorizationService;
 
-        public BoardService(AppDbContext context)
+        public BoardService(AppDbContext context, IBoardAuthorizationService boardAuthorizationService)
         {
             _context = context;
+            _boardAuthorizationService = boardAuthorizationService;
         }
 
         public async Task<Result<Board>> GetBoardByIdAsync(int boardId, int userId)
         {
             var board = await _context.Boards
                 .Include(b => b.Owner)
-                .FirstOrDefaultAsync(b => b.Id == boardId &&
-                    (b.OwnerId == userId || b.Members.Any(m => m.UserId == userId)));
+                .FirstOrDefaultAsync(b => b.Id == boardId);
 
             if (board == null)
             {
-                return Result<Board>.NotFound($"Board with ID {boardId} not found or access denied");
+                return Result<Board>.NotFound($"Board with ID {boardId} not found");
+            }
+
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId))
+            {
+                return Result<Board>.Forbidden("You do not have permission to access this board");
             }
 
             return Result<Board>.Success(board);
@@ -59,6 +65,11 @@ namespace StressTracker5001Server.Services
                 return Result<BoardDetailsDto>.NotFound($"Board with ID {boardId} not found or access denied");
             }
 
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId))
+            {
+                return Result<BoardDetailsDto>.Forbidden("You do not have permission to access this board");
+            }
+
             var boardDetailsDto = board.ToDetailsDto();
             return Result<BoardDetailsDto>.Success(boardDetailsDto);
         }
@@ -77,6 +88,7 @@ namespace StressTracker5001Server.Services
         public async Task<Result<List<Board>>> GetUserMembershipBoardsAsync(int userId)
         {
             var boards = await _context.Boards
+                .Include(b => b.Members)
                 .Where(b => b.Members.Any(m => m.UserId == userId))
                 .Include(b => b.Owner)
                 .OrderBy(b => b.UpdatedAt)
@@ -85,14 +97,14 @@ namespace StressTracker5001Server.Services
             return Result<List<Board>>.Success(boards);
         }
 
-        public async Task<Result<int>> CreateBoardAsync(CreateBoardDto dto, int ownerId)
+        public async Task<Result<int>> CreateBoardAsync(CreateBoardDto dto, int userId)
         {
             var now = DateTime.UtcNow;
             var board = new Board
             {
                 Name = dto.Name,
                 Description = dto.Description ?? string.Empty,
-                OwnerId = ownerId,
+                OwnerId = userId,
                 CreatedAt = now,
                 UpdatedAt = now
             };
@@ -106,11 +118,16 @@ namespace StressTracker5001Server.Services
         public async Task<Result<Board>> UpdateBoardAsync(int boardId, UpdateBoardDto dto, int userId)
         {
             var board = await _context.Boards
-                .FirstOrDefaultAsync(b => b.Id == boardId && b.OwnerId == userId);
+                .FirstOrDefaultAsync(b => b.Id == boardId);
 
             if (board == null)
             {
                 return Result<Board>.NotFound($"Board with ID {boardId} not found or access denied");
+            }
+
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin))
+            {
+                return Result<Board>.Forbidden("You do not have permission to update this board");
             }
 
             if (!string.IsNullOrWhiteSpace(dto.Name))
@@ -135,6 +152,7 @@ namespace StressTracker5001Server.Services
             var board = await _context.Boards
                 .FirstOrDefaultAsync(b => b.Id == boardId && b.OwnerId == userId);
 
+            // Owner can only delete the board
             if (board == null)
             {
                 return Result<bool>.NotFound($"Board with ID {boardId} not found or access denied");

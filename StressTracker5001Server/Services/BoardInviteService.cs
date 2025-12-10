@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using StressTracker5001Server.Data;
 using StressTracker5001Server.Models;
 using StressTracker5001Server.Common;
+using System.Security.Cryptography;
 
 namespace StressTracker5001Server.Services
 {
@@ -9,8 +10,8 @@ namespace StressTracker5001Server.Services
     {
         Task<Result<BoardInvite>> GenerateInviteAsync(int boardId, int userId, BoardMemberRole role = BoardMemberRole.Member);
         Task<Result<bool>> CanGenerateInviteAsync(int boardId, int userId);
-        Task<Result<bool>> ValidateInviteCodeAsync(string code, int boardId);
-        Task<Result<BoardInvite>> GetInviteByCodeAsync(string code);
+        Result<bool> ValidateInviteCodeAsync(BoardInvite invite);
+        Task<BoardInvite?> GetInviteByCodeAsync(string code);
         Task<Result<bool>> RevokeInviteAsync(int inviteId);
         Task<Result<List<BoardInvite>>> GetActiveInvitesForBoardAsync(int boardId);
         Task<Result<bool>> RevokeAllInvitesForBoardAsync(int boardId);
@@ -20,19 +21,26 @@ namespace StressTracker5001Server.Services
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IBoardAuthorizationService _boardAuthorizationService;
+
         private readonly int MaxActiveInvitesPerBoard;
         private readonly int DefaultInviteExpiryHours;
-        private readonly Random random;
+        private readonly string InviteChars;
+        private readonly int InviteTokenLength;
+        private readonly RandomNumberGenerator random;
 
-        public BoardInviteService(AppDbContext context, IConfiguration configuration)
+        public BoardInviteService(AppDbContext context, IConfiguration configuration, IBoardAuthorizationService boardAuthorizationService)
         {
             _context = context;
             _configuration = configuration;
+            _boardAuthorizationService = boardAuthorizationService;
 
             MaxActiveInvitesPerBoard = _configuration.GetValue<int>("BoardInvites:MaxActiveInvitesPerBoard");
             DefaultInviteExpiryHours = _configuration.GetValue<int>("BoardInvites:DefaultInviteExpiryHours");
+            InviteChars = _configuration.GetValue<string>("BoardInvites:InviteChars");
+            InviteTokenLength = _configuration.GetValue<int>("BoardInvites:InviteTokenLength");
 
-            random = new Random();
+            random = RandomNumberGenerator.Create();
         }
 
         public async Task<Result<BoardInvite>> GenerateInviteAsync(int boardId, int userId, BoardMemberRole role = BoardMemberRole.Member)
@@ -51,16 +59,21 @@ namespace StressTracker5001Server.Services
                 return Result<BoardInvite>.Failure($"Board has reached maximum active invite limit of {MaxActiveInvitesPerBoard}", 400);
             }
 
-            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-            var token = new string(Enumerable.Repeat(chars, 8)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
+            var token = new char[InviteTokenLength];
+            var tokenBytes = new byte[InviteTokenLength];
+
+            random.GetBytes(tokenBytes);
+            for (int i = 0; i < token.Length; i++)
+            {
+                token[i] = InviteChars[tokenBytes[i] % InviteChars.Length];
+            }
 
             var now = DateTime.UtcNow;
 
             var invite = new BoardInvite
             {
                 BoardId = boardId,
-                Token = token,
+                Token = new string(token),
                 ExpiresAt = now.AddHours(DefaultInviteExpiryHours),
                 CreatedAt = now,
                 UpdatedAt = now,
@@ -77,34 +90,38 @@ namespace StressTracker5001Server.Services
 
         public async Task<Result<bool>> CanGenerateInviteAsync(int boardId, int userId)
         {
-            var isAdminBoardMember = await _context.BoardMembers
-                .AnyAsync(bm => bm.BoardId == boardId && bm.UserId == userId && bm.Role == BoardMemberRole.Admin);
-
-            var isOwner = await _context.Boards
-                .AnyAsync(b => b.Id == boardId && b.OwnerId == userId);
-
-            return Result<bool>.Success(isAdminBoardMember || isOwner);
-        }
-
-        public async Task<Result<bool>> ValidateInviteCodeAsync(string code, int boardId)
-        {
-            var invite = await _context.BoardInvites
-                .FirstOrDefaultAsync(bi => bi.Token == code && bi.BoardId == boardId && !bi.IsRevoked && !bi.HasBeenUsed && bi.ExpiresAt > DateTime.UtcNow);
-
-            return Result<bool>.Success(invite != null);
-        }
-
-        public async Task<Result<BoardInvite>> GetInviteByCodeAsync(string code)
-        {
-            var invite = await _context.BoardInvites
-                .FirstOrDefaultAsync(bi => bi.Token == code && !bi.IsRevoked && !bi.HasBeenUsed && bi.ExpiresAt > DateTime.UtcNow);
-
-            if (invite == null)
+            var isBoardMemberResult = await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin);
+            if (!isBoardMemberResult)
             {
-                return Result<BoardInvite>.NotFound("Invalid or expired invite code");
+                return Result<bool>.Forbidden("User does not have permission to generate invites for this board");
+            }
+            return Result<bool>.Success(true);
+        }
+
+        public Result<bool> ValidateInviteCodeAsync(BoardInvite invite)
+        {
+            if (invite.IsRevoked)
+            {
+                return Result<bool>.Failure("Invite has been revoked", 400);
             }
 
-            return Result<BoardInvite>.Success(invite);
+            if (invite.HasBeenUsed)
+            {
+                return Result<bool>.Failure("Invite has already been used", 400);
+            }
+
+            if (invite.ExpiresAt <= DateTime.UtcNow)
+            {
+                return Result<bool>.Failure("Invite has expired", 400);
+            }
+
+            return Result<bool>.Success(true);
+        }
+
+        public async Task<BoardInvite?> GetInviteByCodeAsync(string code)
+        {
+            return await _context.BoardInvites
+                .FirstOrDefaultAsync(bi => bi.Token == code);
         }
 
         public async Task<Result<bool>> RevokeInviteAsync(int inviteId)
