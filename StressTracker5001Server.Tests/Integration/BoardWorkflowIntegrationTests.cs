@@ -21,8 +21,8 @@ public class BoardWorkflowIntegrationTests : IDisposable
   public BoardWorkflowIntegrationTests()
   {
     _context = TestDbContextFactory.CreateInMemoryDbContext();
-    _boardService = new BoardService(_context);
     _authService = new BoardAuthorizationService(_context);
+    _boardService = new BoardService(_context, _authService);
     _userService = new UserService(_context);
   }
 
@@ -70,8 +70,11 @@ public class BoardWorkflowIntegrationTests : IDisposable
 
     var boardId = createBoardResult.Value;
 
-    // Act 2 - Owner adds a member to the board
-    var addMemberResult = await _authService.AddMemberAsync(boardId, memberId, BoardMemberRole.Member);
+    // Act 2 - Owner adds a member to the board (owner needs to be Admin first)
+    var ownerMemberResult = await _authService.AddMemberAsync(boardId, ownerId, ownerId, BoardMemberRole.Admin);
+    Assert.True(ownerMemberResult.IsSuccess);
+
+    var addMemberResult = await _authService.AddMemberAsync(boardId, memberId, ownerId, BoardMemberRole.Member);
     Assert.True(addMemberResult.IsSuccess);
 
     // Act 3 - Verify member can access the board
@@ -84,9 +87,9 @@ public class BoardWorkflowIntegrationTests : IDisposable
     Assert.Equal(BoardMemberRole.Member, memberRoleResult.Value);
 
     // Act 5 - Verify board owner can see the member
-    var membersResult = await _authService.GetMembersAsync(boardId);
+    var membersResult = await _authService.GetMembersAsync(boardId, ownerId);
     Assert.True(membersResult.IsSuccess);
-    Assert.Single(membersResult.Value!);
+    Assert.Equal(2, membersResult.Value!.Count); // Owner and member
     Assert.Contains(membersResult.Value, m => m.UserId == memberId);
 
     // Act 6 - Update board details
@@ -101,13 +104,13 @@ public class BoardWorkflowIntegrationTests : IDisposable
     Assert.Equal(updateDto.Name, updateResult.Value!.Name);
 
     // Act 7 - Remove member
-    var removeResult = await _authService.RemoveMemberAsync(boardId, memberId);
+    var removeResult = await _authService.RemoveMemberAsync(boardId, memberId, ownerId);
     Assert.True(removeResult.IsSuccess);
 
     // Act 8 - Verify member no longer has access
     var noAccessResult = await _boardService.GetBoardByIdAsync(boardId, memberId);
     Assert.False(noAccessResult.IsSuccess);
-    Assert.Equal(404, noAccessResult.StatusCode);
+    Assert.Equal(403, noAccessResult.StatusCode);
   }
 
   [Fact]
@@ -129,7 +132,7 @@ public class BoardWorkflowIntegrationTests : IDisposable
 
     // Assert
     Assert.False(accessResult.IsSuccess);
-    Assert.Equal(404, accessResult.StatusCode);
+    Assert.Equal(403, accessResult.StatusCode);
   }
 
   [Fact]

@@ -36,8 +36,13 @@ public class BoardAuthorizationServiceTests : IDisposable
     _context.Boards.Add(board);
     await _context.SaveChangesAsync();
 
+    // Owner needs to be a board member with Admin role to add members
+    var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+    _context.BoardMembers.Add(ownerMember);
+    await _context.SaveChangesAsync();
+
     // Act
-    var result = await _authService.AddMemberAsync(board.Id, newMember.Id, BoardMemberRole.Member);
+    var result = await _authService.AddMemberAsync(board.Id, newMember.Id, owner.Id, BoardMemberRole.Member);
 
     // Assert
     Assert.True(result.IsSuccess);
@@ -60,12 +65,13 @@ public class BoardAuthorizationServiceTests : IDisposable
     _context.Boards.Add(board);
     await _context.SaveChangesAsync();
 
+    var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
     var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, member.Id);
-    _context.BoardMembers.Add(boardMember);
+    _context.BoardMembers.AddRange(ownerMember, boardMember);
     await _context.SaveChangesAsync();
 
     // Act
-    var result = await _authService.AddMemberAsync(board.Id, member.Id, BoardMemberRole.Member);
+    var result = await _authService.AddMemberAsync(board.Id, member.Id, owner.Id, BoardMemberRole.Member);
 
     // Assert
     Assert.False(result.IsSuccess);
@@ -78,13 +84,14 @@ public class BoardAuthorizationServiceTests : IDisposable
   {
     // Arrange
     var user = TestDataFactory.CreateTestUser();
-    _context.Users.Add(user);
+    var newMember = TestDataFactory.CreateTestUser(email: "newmember@example.com");
+    _context.Users.AddRange(user, newMember);
     await _context.SaveChangesAsync();
 
     var nonExistentBoardId = 999;
 
     // Act
-    var result = await _authService.AddMemberAsync(nonExistentBoardId, user.Id, BoardMemberRole.Member);
+    var result = await _authService.AddMemberAsync(nonExistentBoardId, newMember.Id, user.Id, BoardMemberRole.Member);
 
     // Assert
     Assert.False(result.IsSuccess);
@@ -104,12 +111,13 @@ public class BoardAuthorizationServiceTests : IDisposable
     _context.Boards.Add(board);
     await _context.SaveChangesAsync();
 
+    var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
     var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, member.Id);
-    _context.BoardMembers.Add(boardMember);
+    _context.BoardMembers.AddRange(ownerMember, boardMember);
     await _context.SaveChangesAsync();
 
     // Act
-    var result = await _authService.RemoveMemberAsync(board.Id, member.Id);
+    var result = await _authService.RemoveMemberAsync(board.Id, member.Id, owner.Id);
 
     // Assert
     Assert.True(result.IsSuccess);
@@ -135,18 +143,19 @@ public class BoardAuthorizationServiceTests : IDisposable
     _context.Boards.Add(board);
     await _context.SaveChangesAsync();
 
+    var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
     var boardMember1 = TestDataFactory.CreateTestBoardMember(board.Id, member1.Id, BoardMemberRole.Member);
     var boardMember2 = TestDataFactory.CreateTestBoardMember(board.Id, member2.Id, BoardMemberRole.Viewer);
-    _context.BoardMembers.AddRange(boardMember1, boardMember2);
+    _context.BoardMembers.AddRange(ownerMember, boardMember1, boardMember2);
     await _context.SaveChangesAsync();
 
     // Act
-    var result = await _authService.GetMembersAsync(board.Id);
+    var result = await _authService.GetMembersAsync(board.Id, owner.Id);
 
     // Assert
     Assert.True(result.IsSuccess);
     Assert.NotNull(result.Value);
-    Assert.Equal(2, result.Value.Count);
+    Assert.Equal(3, result.Value.Count);
   }
 
   [Fact]
@@ -259,8 +268,12 @@ public class BoardAuthorizationServiceTests : IDisposable
     _context.Boards.Add(board);
     await _context.SaveChangesAsync();
 
+    var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+    _context.BoardMembers.Add(ownerMember);
+    await _context.SaveChangesAsync();
+
     // Act
-    var result = await _authService.AddMemberAsync(board.Id, member.Id, role);
+    var result = await _authService.AddMemberAsync(board.Id, member.Id, owner.Id, role);
 
     // Assert
     Assert.True(result.IsSuccess);

@@ -41,7 +41,9 @@ namespace StressTracker5001Server.Services
                 return Result<BoardMember>.NotFound($"Board with ID {boardId} not found");
             }
 
-            if (!await UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin))
+            // Check if user is board owner or has Admin role
+            var isOwner = board.OwnerId == userId;
+            if (!isOwner && !await UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin))
             {
                 return Result<BoardMember>.Forbidden("You do not have permission to add members to this board");
             }
@@ -157,14 +159,24 @@ namespace StressTracker5001Server.Services
 
         public async Task<bool> UserCanAccessBoardAsync(int boardId, int userId, BoardMemberRole? requiredRole = BoardMemberRole.Viewer)
         {
+            // Check if user is a board member
             var memberResult = await GetMemberAsync(boardId, userId);
-            // If user is not a member and not the owner, deny access
-            if (!memberResult.IsSuccess && memberResult.Value?.Board?.OwnerId != userId)
+
+            // If user is a member, check their role
+            if (memberResult.IsSuccess)
             {
-                return false;
+                return memberResult.Value!.Role >= requiredRole;
             }
 
-            return memberResult.Value!.Role >= requiredRole;
+            // If not a member, check if they're the board owner (only for basic access)
+            var board = await _context.Boards.FindAsync(boardId);
+            if (board != null && board.OwnerId == userId && requiredRole == BoardMemberRole.Viewer)
+            {
+                // Owner has basic view access even without being in members table
+                return true;
+            }
+
+            return false;
         }
     }
 }

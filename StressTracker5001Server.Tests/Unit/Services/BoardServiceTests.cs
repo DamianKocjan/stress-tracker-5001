@@ -10,12 +10,14 @@ namespace StressTracker5001Server.Tests.Unit.Services;
 public class BoardServiceTests : IDisposable
 {
   private readonly AppDbContext _context;
+  private readonly BoardAuthorizationService _authService;
   private readonly BoardService _boardService;
 
   public BoardServiceTests()
   {
     _context = TestDbContextFactory.CreateInMemoryDbContext();
-    _boardService = new BoardService(_context);
+    _authService = new BoardAuthorizationService(_context);
+    _boardService = new BoardService(_context, _authService);
   }
 
   public void Dispose()
@@ -72,7 +74,7 @@ public class BoardServiceTests : IDisposable
   }
 
   [Fact]
-  public async Task GetBoardByIdAsync_AsNonMember_ReturnsNotFound()
+  public async Task GetBoardByIdAsync_AsNonMember_ReturnsForbidden()
   {
     // Arrange
     var owner = TestDataFactory.CreateTestUser(email: "owner@example.com");
@@ -89,7 +91,7 @@ public class BoardServiceTests : IDisposable
 
     // Assert
     Assert.False(result.IsSuccess);
-    Assert.Equal(404, result.StatusCode);
+    Assert.Equal(403, result.StatusCode);
   }
 
   [Fact]
@@ -132,6 +134,10 @@ public class BoardServiceTests : IDisposable
     _context.Boards.Add(board);
     await _context.SaveChangesAsync();
 
+    var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, user.Id, BoardMemberRole.Admin);
+    _context.BoardMembers.Add(ownerMember);
+    await _context.SaveChangesAsync();
+
     var updateDto = new UpdateBoardDto
     {
       Name = "Updated Name",
@@ -149,16 +155,21 @@ public class BoardServiceTests : IDisposable
   }
 
   [Fact]
-  public async Task UpdateBoardAsync_AsNonOwner_ReturnsNotFound()
+  public async Task UpdateBoardAsync_AsNonAdmin_ReturnsForbidden()
   {
     // Arrange
     var owner = TestDataFactory.CreateTestUser(email: "owner@example.com");
-    var nonOwner = TestDataFactory.CreateTestUser(email: "nonowner@example.com");
-    _context.Users.AddRange(owner, nonOwner);
+    var member = TestDataFactory.CreateTestUser(email: "member@example.com");
+    _context.Users.AddRange(owner, member);
     await _context.SaveChangesAsync();
 
     var board = TestDataFactory.CreateTestBoard(owner.Id);
     _context.Boards.Add(board);
+    await _context.SaveChangesAsync();
+
+    // Member is not Admin, so should be forbidden
+    var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, member.Id, BoardMemberRole.Member);
+    _context.BoardMembers.Add(boardMember);
     await _context.SaveChangesAsync();
 
     var updateDto = new UpdateBoardDto
@@ -167,11 +178,11 @@ public class BoardServiceTests : IDisposable
     };
 
     // Act
-    var result = await _boardService.UpdateBoardAsync(board.Id, updateDto, nonOwner.Id);
+    var result = await _boardService.UpdateBoardAsync(board.Id, updateDto, member.Id);
 
     // Assert
     Assert.False(result.IsSuccess);
-    Assert.Equal(404, result.StatusCode);
+    Assert.Equal(403, result.StatusCode);
   }
 
   [Fact]
@@ -184,6 +195,10 @@ public class BoardServiceTests : IDisposable
 
     var board = TestDataFactory.CreateTestBoard(user.Id);
     _context.Boards.Add(board);
+    await _context.SaveChangesAsync();
+
+    var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, user.Id, BoardMemberRole.Admin);
+    _context.BoardMembers.Add(ownerMember);
     await _context.SaveChangesAsync();
 
     // Act

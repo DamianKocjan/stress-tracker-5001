@@ -37,12 +37,14 @@ public static class TestDataFactory
   public static Column CreateTestColumn(
       int boardId,
       string name = "Test Column",
-      int position = 0)
+      int position = 0,
+      int? wipLimit = null)
   {
     return new Column
     {
       Name = name,
       Position = position,
+      WipLimit = wipLimit,
       BoardId = boardId,
       CreatedAt = DateTime.UtcNow,
       UpdatedAt = DateTime.UtcNow
@@ -53,7 +55,8 @@ public static class TestDataFactory
       int columnId,
       string title = "Test Card",
       string description = "Test Card Description",
-      int position = 0)
+      int position = 0,
+      int? createdById = null)
   {
     return new Card
     {
@@ -61,6 +64,7 @@ public static class TestDataFactory
       Description = description,
       Position = position,
       ColumnId = columnId,
+      CreatedById = createdById ?? 0,
       CreatedAt = DateTime.UtcNow,
       UpdatedAt = DateTime.UtcNow
     };

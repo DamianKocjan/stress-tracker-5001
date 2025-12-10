@@ -278,10 +278,6 @@ public class CardsControllerTests
 
     _mockCardService
         .Setup(s => s.AddCommentToCardAsync(1, createDto, 1))
-        .ReturnsAsync(Result<int>.Success(1));
-
-    _mockCommentService
-        .Setup(s => s.GetCommentByIdAsync(1, 1))
         .ReturnsAsync(Result<Comment>.Success(comment));
 
     // Act
@@ -303,7 +299,7 @@ public class CardsControllerTests
 
     _mockCardService
         .Setup(s => s.AddCommentToCardAsync(999, createDto, 1))
-        .ReturnsAsync(Result<int>.NotFound("Card not found"));
+        .ReturnsAsync(Result<Comment>.NotFound("Card not found"));
 
     // Act
     var result = await _controller.AddCommentToCard(999, createDto, _mockCardService.Object, _mockCommentService.Object);
