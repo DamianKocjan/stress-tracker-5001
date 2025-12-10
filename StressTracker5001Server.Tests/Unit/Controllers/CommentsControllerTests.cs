@@ -14,173 +14,173 @@ namespace StressTracker5001Server.Tests.Unit.Controllers;
 
 public class CommentsControllerTests
 {
-  private readonly Mock<ICommentService> _mockCommentService;
-  private readonly CommentsController _controller;
-  private readonly ClaimsPrincipal _userPrincipal;
+    private readonly Mock<ICommentService> _mockCommentService;
+    private readonly CommentsController _controller;
+    private readonly ClaimsPrincipal _userPrincipal;
 
-  public CommentsControllerTests()
-  {
-    _mockCommentService = new Mock<ICommentService>();
-    _controller = new CommentsController();
+    public CommentsControllerTests()
+    {
+        _mockCommentService = new Mock<ICommentService>();
+        _controller = new CommentsController();
 
-    var claims = new List<Claim>
+        var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, "1")
         };
-    _userPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuthType"));
-    _controller.ControllerContext = new ControllerContext
+        _userPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuthType"));
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = _userPrincipal }
+        };
+    }
+
+    [Fact]
+    public async Task UpdateComment_WithValidData_ReturnsUpdatedComment()
     {
-      HttpContext = new DefaultHttpContext { User = _userPrincipal }
-    };
-  }
+        // Arrange
+        var updateDto = new UpdateCommentDto
+        {
+            Content = "Updated comment content"
+        };
+        var comment = TestDataFactory.CreateTestComment(1, 1, "Updated comment content");
+        comment.Id = 1;
 
-  [Fact]
-  public async Task UpdateComment_WithValidData_ReturnsUpdatedComment()
-  {
-    // Arrange
-    var updateDto = new UpdateCommentDto
+        _mockCommentService
+            .Setup(s => s.UpdateCommentAsync(1, updateDto, 1))
+            .ReturnsAsync(Result<Comment>.Success(comment));
+
+        // Act
+        var result = await _controller.UpdateComment(1, updateDto, _mockCommentService.Object);
+
+        // Assert
+        var okResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(200, okResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task UpdateComment_ByNonAuthor_ReturnsForbidden()
     {
-      Content = "Updated comment content"
-    };
-    var comment = TestDataFactory.CreateTestComment(1, 1, "Updated comment content");
-    comment.Id = 1;
+        // Arrange
+        var updateDto = new UpdateCommentDto
+        {
+            Content = "Updated comment content"
+        };
 
-    _mockCommentService
-        .Setup(s => s.UpdateCommentAsync(1, updateDto, 1))
-        .ReturnsAsync(Result<Comment>.Success(comment));
+        _mockCommentService
+            .Setup(s => s.UpdateCommentAsync(1, updateDto, 1))
+            .ReturnsAsync(Result<Comment>.Forbidden("You can only update your own comments"));
 
-    // Act
-    var result = await _controller.UpdateComment(1, updateDto, _mockCommentService.Object);
+        // Act
+        var result = await _controller.UpdateComment(1, updateDto, _mockCommentService.Object);
 
-    // Assert
-    var okResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(200, okResult.StatusCode);
-  }
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(403, objectResult.StatusCode);
+    }
 
-  [Fact]
-  public async Task UpdateComment_ByNonAuthor_ReturnsForbidden()
-  {
-    // Arrange
-    var updateDto = new UpdateCommentDto
+    [Fact]
+    public async Task UpdateComment_WithInvalidId_ReturnsNotFound()
     {
-      Content = "Updated comment content"
-    };
+        // Arrange
+        var updateDto = new UpdateCommentDto
+        {
+            Content = "Updated comment content"
+        };
 
-    _mockCommentService
-        .Setup(s => s.UpdateCommentAsync(1, updateDto, 1))
-        .ReturnsAsync(Result<Comment>.Forbidden("You can only update your own comments"));
+        _mockCommentService
+            .Setup(s => s.UpdateCommentAsync(999, updateDto, 1))
+            .ReturnsAsync(Result<Comment>.NotFound("Comment not found"));
 
-    // Act
-    var result = await _controller.UpdateComment(1, updateDto, _mockCommentService.Object);
+        // Act
+        var result = await _controller.UpdateComment(999, updateDto, _mockCommentService.Object);
 
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(403, objectResult.StatusCode);
-  }
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(404, objectResult.StatusCode);
+    }
 
-  [Fact]
-  public async Task UpdateComment_WithInvalidId_ReturnsNotFound()
-  {
-    // Arrange
-    var updateDto = new UpdateCommentDto
+    [Fact]
+    public async Task UpdateComment_WithEmptyContent_ReturnsBadRequest()
     {
-      Content = "Updated comment content"
-    };
+        // Arrange
+        var updateDto = new UpdateCommentDto
+        {
+            Content = ""
+        };
 
-    _mockCommentService
-        .Setup(s => s.UpdateCommentAsync(999, updateDto, 1))
-        .ReturnsAsync(Result<Comment>.NotFound("Comment not found"));
+        _mockCommentService
+            .Setup(s => s.UpdateCommentAsync(1, updateDto, 1))
+            .ReturnsAsync(Result<Comment>.Failure("Comment content cannot be empty", 400));
 
-    // Act
-    var result = await _controller.UpdateComment(999, updateDto, _mockCommentService.Object);
+        // Act
+        var result = await _controller.UpdateComment(1, updateDto, _mockCommentService.Object);
 
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(404, objectResult.StatusCode);
-  }
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(400, objectResult.StatusCode);
+    }
 
-  [Fact]
-  public async Task UpdateComment_WithEmptyContent_ReturnsBadRequest()
-  {
-    // Arrange
-    var updateDto = new UpdateCommentDto
+    [Fact]
+    public async Task DeleteComment_WithValidId_ReturnsNoContent()
     {
-      Content = ""
-    };
+        // Arrange
+        _mockCommentService
+            .Setup(s => s.DeleteCommentAsync(1, 1))
+            .ReturnsAsync(Result<bool>.Success(true));
 
-    _mockCommentService
-        .Setup(s => s.UpdateCommentAsync(1, updateDto, 1))
-        .ReturnsAsync(Result<Comment>.Failure("Comment content cannot be empty", 400));
+        // Act
+        var result = await _controller.DeleteComment(1, _mockCommentService.Object);
 
-    // Act
-    var result = await _controller.UpdateComment(1, updateDto, _mockCommentService.Object);
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(204, objectResult.StatusCode);
+    }
 
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(400, objectResult.StatusCode);
-  }
+    [Fact]
+    public async Task DeleteComment_ByNonAuthor_ReturnsForbidden()
+    {
+        // Arrange
+        _mockCommentService
+            .Setup(s => s.DeleteCommentAsync(1, 1))
+            .ReturnsAsync(Result<bool>.Forbidden("You can only delete your own comments"));
 
-  [Fact]
-  public async Task DeleteComment_WithValidId_ReturnsNoContent()
-  {
-    // Arrange
-    _mockCommentService
-        .Setup(s => s.DeleteCommentAsync(1, 1))
-        .ReturnsAsync(Result<bool>.Success(true));
+        // Act
+        var result = await _controller.DeleteComment(1, _mockCommentService.Object);
 
-    // Act
-    var result = await _controller.DeleteComment(1, _mockCommentService.Object);
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(403, objectResult.StatusCode);
+    }
 
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(204, objectResult.StatusCode);
-  }
+    [Fact]
+    public async Task DeleteComment_WithInvalidId_ReturnsNotFound()
+    {
+        // Arrange
+        _mockCommentService
+            .Setup(s => s.DeleteCommentAsync(999, 1))
+            .ReturnsAsync(Result<bool>.NotFound("Comment not found"));
 
-  [Fact]
-  public async Task DeleteComment_ByNonAuthor_ReturnsForbidden()
-  {
-    // Arrange
-    _mockCommentService
-        .Setup(s => s.DeleteCommentAsync(1, 1))
-        .ReturnsAsync(Result<bool>.Forbidden("You can only delete your own comments"));
+        // Act
+        var result = await _controller.DeleteComment(999, _mockCommentService.Object);
 
-    // Act
-    var result = await _controller.DeleteComment(1, _mockCommentService.Object);
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(404, objectResult.StatusCode);
+    }
 
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(403, objectResult.StatusCode);
-  }
+    [Fact]
+    public async Task DeleteComment_WithBoardMemberPermission_ReturnsNoContent()
+    {
+        // Arrange - Board admin/member can delete any comment on their board
+        _mockCommentService
+            .Setup(s => s.DeleteCommentAsync(1, 1))
+            .ReturnsAsync(Result<bool>.Success(true));
 
-  [Fact]
-  public async Task DeleteComment_WithInvalidId_ReturnsNotFound()
-  {
-    // Arrange
-    _mockCommentService
-        .Setup(s => s.DeleteCommentAsync(999, 1))
-        .ReturnsAsync(Result<bool>.NotFound("Comment not found"));
+        // Act
+        var result = await _controller.DeleteComment(1, _mockCommentService.Object);
 
-    // Act
-    var result = await _controller.DeleteComment(999, _mockCommentService.Object);
-
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(404, objectResult.StatusCode);
-  }
-
-  [Fact]
-  public async Task DeleteComment_WithBoardMemberPermission_ReturnsNoContent()
-  {
-    // Arrange - Board admin/member can delete any comment on their board
-    _mockCommentService
-        .Setup(s => s.DeleteCommentAsync(1, 1))
-        .ReturnsAsync(Result<bool>.Success(true));
-
-    // Act
-    var result = await _controller.DeleteComment(1, _mockCommentService.Object);
-
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(204, objectResult.StatusCode);
-  }
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(204, objectResult.StatusCode);
+    }
 }

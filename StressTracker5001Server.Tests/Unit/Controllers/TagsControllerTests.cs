@@ -14,226 +14,226 @@ namespace StressTracker5001Server.Tests.Unit.Controllers;
 
 public class TagsControllerTests
 {
-  private readonly Mock<ITagService> _mockTagService;
-  private readonly TagsController _controller;
-  private readonly ClaimsPrincipal _userPrincipal;
+    private readonly Mock<ITagService> _mockTagService;
+    private readonly TagsController _controller;
+    private readonly ClaimsPrincipal _userPrincipal;
 
-  public TagsControllerTests()
-  {
-    _mockTagService = new Mock<ITagService>();
-    _controller = new TagsController();
+    public TagsControllerTests()
+    {
+        _mockTagService = new Mock<ITagService>();
+        _controller = new TagsController();
 
-    var claims = new List<Claim>
+        var claims = new List<Claim>
         {
             new(ClaimTypes.NameIdentifier, "1")
         };
-    _userPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuthType"));
-    _controller.ControllerContext = new ControllerContext
+        _userPrincipal = new ClaimsPrincipal(new ClaimsIdentity(claims, "TestAuthType"));
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = _userPrincipal }
+        };
+    }
+
+    [Fact]
+    public async Task CreateTag_WithValidData_ReturnsCreatedTag()
     {
-      HttpContext = new DefaultHttpContext { User = _userPrincipal }
-    };
-  }
+        // Arrange
+        var createDto = new TagCreateDto
+        {
+            Name = "Bug",
+            Color = "#FF0000",
+            BoardId = 1
+        };
+        var tag = TestDataFactory.CreateTestTag(1, "Bug", "#FF0000");
+        tag.Id = 1;
 
-  [Fact]
-  public async Task CreateTag_WithValidData_ReturnsCreatedTag()
-  {
-    // Arrange
-    var createDto = new TagCreateDto
+        _mockTagService
+            .Setup(s => s.CreateTagAsync(createDto, 1))
+            .ReturnsAsync(Result<Tag>.Success(tag));
+
+        // Act
+        var result = await _controller.CreateTag(createDto, _mockTagService.Object);
+
+        // Assert
+        var okResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(200, okResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task CreateTag_ForNonOwnedBoard_ReturnsForbidden()
     {
-      Name = "Bug",
-      Color = "#FF0000",
-      BoardId = 1
-    };
-    var tag = TestDataFactory.CreateTestTag(1, "Bug", "#FF0000");
-    tag.Id = 1;
+        // Arrange
+        var createDto = new TagCreateDto
+        {
+            Name = "Bug",
+            Color = "#FF0000",
+            BoardId = 1
+        };
 
-    _mockTagService
-        .Setup(s => s.CreateTagAsync(createDto, 1))
-        .ReturnsAsync(Result<Tag>.Success(tag));
+        _mockTagService
+            .Setup(s => s.CreateTagAsync(createDto, 1))
+            .ReturnsAsync(Result<Tag>.Forbidden("You don't have permission to create tags for this board"));
 
-    // Act
-    var result = await _controller.CreateTag(createDto, _mockTagService.Object);
+        // Act
+        var result = await _controller.CreateTag(createDto, _mockTagService.Object);
 
-    // Assert
-    var okResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(200, okResult.StatusCode);
-  }
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(403, objectResult.StatusCode);
+    }
 
-  [Fact]
-  public async Task CreateTag_ForNonOwnedBoard_ReturnsForbidden()
-  {
-    // Arrange
-    var createDto = new TagCreateDto
+    [Fact]
+    public async Task CreateTag_ForNonExistentBoard_ReturnsNotFound()
     {
-      Name = "Bug",
-      Color = "#FF0000",
-      BoardId = 1
-    };
+        // Arrange
+        var createDto = new TagCreateDto
+        {
+            Name = "Bug",
+            Color = "#FF0000",
+            BoardId = 999
+        };
 
-    _mockTagService
-        .Setup(s => s.CreateTagAsync(createDto, 1))
-        .ReturnsAsync(Result<Tag>.Forbidden("You don't have permission to create tags for this board"));
+        _mockTagService
+            .Setup(s => s.CreateTagAsync(createDto, 1))
+            .ReturnsAsync(Result<Tag>.NotFound("Board not found"));
 
-    // Act
-    var result = await _controller.CreateTag(createDto, _mockTagService.Object);
+        // Act
+        var result = await _controller.CreateTag(createDto, _mockTagService.Object);
 
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(403, objectResult.StatusCode);
-  }
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(404, objectResult.StatusCode);
+    }
 
-  [Fact]
-  public async Task CreateTag_ForNonExistentBoard_ReturnsNotFound()
-  {
-    // Arrange
-    var createDto = new TagCreateDto
+    [Fact]
+    public async Task UpdateTag_WithValidData_ReturnsUpdatedTag()
     {
-      Name = "Bug",
-      Color = "#FF0000",
-      BoardId = 999
-    };
+        // Arrange
+        var updateDto = new TagUpdateDto
+        {
+            Name = "Updated Bug",
+            Color = "#00FF00"
+        };
+        var tag = TestDataFactory.CreateTestTag(1, "Updated Bug", "#00FF00");
+        tag.Id = 1;
 
-    _mockTagService
-        .Setup(s => s.CreateTagAsync(createDto, 1))
-        .ReturnsAsync(Result<Tag>.NotFound("Board not found"));
+        _mockTagService
+            .Setup(s => s.UpdateTagAsync(1, updateDto, 1))
+            .ReturnsAsync(Result<Tag>.Success(tag));
 
-    // Act
-    var result = await _controller.CreateTag(createDto, _mockTagService.Object);
+        // Act
+        var result = await _controller.UpdateTag(1, updateDto, _mockTagService.Object);
 
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(404, objectResult.StatusCode);
-  }
+        // Assert
+        var okResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(200, okResult.StatusCode);
+    }
 
-  [Fact]
-  public async Task UpdateTag_WithValidData_ReturnsUpdatedTag()
-  {
-    // Arrange
-    var updateDto = new TagUpdateDto
+    [Fact]
+    public async Task UpdateTag_WithoutPermission_ReturnsForbidden()
     {
-      Name = "Updated Bug",
-      Color = "#00FF00"
-    };
-    var tag = TestDataFactory.CreateTestTag(1, "Updated Bug", "#00FF00");
-    tag.Id = 1;
+        // Arrange
+        var updateDto = new TagUpdateDto
+        {
+            Name = "Updated Bug",
+            Color = "#00FF00"
+        };
 
-    _mockTagService
-        .Setup(s => s.UpdateTagAsync(1, updateDto, 1))
-        .ReturnsAsync(Result<Tag>.Success(tag));
+        _mockTagService
+            .Setup(s => s.UpdateTagAsync(1, updateDto, 1))
+            .ReturnsAsync(Result<Tag>.Forbidden("You don't have permission to update this tag"));
 
-    // Act
-    var result = await _controller.UpdateTag(1, updateDto, _mockTagService.Object);
+        // Act
+        var result = await _controller.UpdateTag(1, updateDto, _mockTagService.Object);
 
-    // Assert
-    var okResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(200, okResult.StatusCode);
-  }
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(403, objectResult.StatusCode);
+    }
 
-  [Fact]
-  public async Task UpdateTag_WithoutPermission_ReturnsForbidden()
-  {
-    // Arrange
-    var updateDto = new TagUpdateDto
+    [Fact]
+    public async Task UpdateTag_WithInvalidId_ReturnsNotFound()
     {
-      Name = "Updated Bug",
-      Color = "#00FF00"
-    };
+        // Arrange
+        var updateDto = new TagUpdateDto
+        {
+            Name = "Updated Bug",
+            Color = "#00FF00"
+        };
 
-    _mockTagService
-        .Setup(s => s.UpdateTagAsync(1, updateDto, 1))
-        .ReturnsAsync(Result<Tag>.Forbidden("You don't have permission to update this tag"));
+        _mockTagService
+            .Setup(s => s.UpdateTagAsync(999, updateDto, 1))
+            .ReturnsAsync(Result<Tag>.NotFound("Tag not found"));
 
-    // Act
-    var result = await _controller.UpdateTag(1, updateDto, _mockTagService.Object);
+        // Act
+        var result = await _controller.UpdateTag(999, updateDto, _mockTagService.Object);
 
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(403, objectResult.StatusCode);
-  }
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(404, objectResult.StatusCode);
+    }
 
-  [Fact]
-  public async Task UpdateTag_WithInvalidId_ReturnsNotFound()
-  {
-    // Arrange
-    var updateDto = new TagUpdateDto
+    [Fact]
+    public async Task DeleteTag_WithValidId_ReturnsNoContent()
     {
-      Name = "Updated Bug",
-      Color = "#00FF00"
-    };
+        // Arrange
+        _mockTagService
+            .Setup(s => s.DeleteTagAsync(1, 1))
+            .ReturnsAsync(Result<bool>.Success(true));
 
-    _mockTagService
-        .Setup(s => s.UpdateTagAsync(999, updateDto, 1))
-        .ReturnsAsync(Result<Tag>.NotFound("Tag not found"));
+        // Act
+        var result = await _controller.DeleteTag(1, _mockTagService.Object);
 
-    // Act
-    var result = await _controller.UpdateTag(999, updateDto, _mockTagService.Object);
+        // Assert
+        var noContentResult = Assert.IsType<NoContentResult>(result);
+        Assert.Equal(204, noContentResult.StatusCode);
+    }
 
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(404, objectResult.StatusCode);
-  }
+    [Fact]
+    public async Task DeleteTag_WithoutPermission_ReturnsForbidden()
+    {
+        // Arrange
+        _mockTagService
+            .Setup(s => s.DeleteTagAsync(1, 1))
+            .ReturnsAsync(Result<bool>.Forbidden("You don't have permission to delete this tag"));
 
-  [Fact]
-  public async Task DeleteTag_WithValidId_ReturnsNoContent()
-  {
-    // Arrange
-    _mockTagService
-        .Setup(s => s.DeleteTagAsync(1, 1))
-        .ReturnsAsync(Result<bool>.Success(true));
+        // Act
+        var result = await _controller.DeleteTag(1, _mockTagService.Object);
 
-    // Act
-    var result = await _controller.DeleteTag(1, _mockTagService.Object);
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(403, objectResult.StatusCode);
+    }
 
-    // Assert
-    var noContentResult = Assert.IsType<NoContentResult>(result);
-    Assert.Equal(204, noContentResult.StatusCode);
-  }
+    [Fact]
+    public async Task DeleteTag_WithInvalidId_ReturnsNotFound()
+    {
+        // Arrange
+        _mockTagService
+            .Setup(s => s.DeleteTagAsync(999, 1))
+            .ReturnsAsync(Result<bool>.NotFound("Tag not found"));
 
-  [Fact]
-  public async Task DeleteTag_WithoutPermission_ReturnsForbidden()
-  {
-    // Arrange
-    _mockTagService
-        .Setup(s => s.DeleteTagAsync(1, 1))
-        .ReturnsAsync(Result<bool>.Forbidden("You don't have permission to delete this tag"));
+        // Act
+        var result = await _controller.DeleteTag(999, _mockTagService.Object);
 
-    // Act
-    var result = await _controller.DeleteTag(1, _mockTagService.Object);
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(404, objectResult.StatusCode);
+    }
 
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(403, objectResult.StatusCode);
-  }
+    [Fact]
+    public async Task DeleteTag_ThatIsInUse_ReturnsError()
+    {
+        // Arrange
+        _mockTagService
+            .Setup(s => s.DeleteTagAsync(1, 1))
+            .ReturnsAsync(Result<bool>.Failure("Cannot delete tag that is assigned to cards", 400));
 
-  [Fact]
-  public async Task DeleteTag_WithInvalidId_ReturnsNotFound()
-  {
-    // Arrange
-    _mockTagService
-        .Setup(s => s.DeleteTagAsync(999, 1))
-        .ReturnsAsync(Result<bool>.NotFound("Tag not found"));
+        // Act
+        var result = await _controller.DeleteTag(1, _mockTagService.Object);
 
-    // Act
-    var result = await _controller.DeleteTag(999, _mockTagService.Object);
-
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(404, objectResult.StatusCode);
-  }
-
-  [Fact]
-  public async Task DeleteTag_ThatIsInUse_ReturnsError()
-  {
-    // Arrange
-    _mockTagService
-        .Setup(s => s.DeleteTagAsync(1, 1))
-        .ReturnsAsync(Result<bool>.Failure("Cannot delete tag that is assigned to cards", 400));
-
-    // Act
-    var result = await _controller.DeleteTag(1, _mockTagService.Object);
-
-    // Assert
-    var objectResult = Assert.IsType<ObjectResult>(result);
-    Assert.Equal(400, objectResult.StatusCode);
-  }
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(400, objectResult.StatusCode);
+    }
 }

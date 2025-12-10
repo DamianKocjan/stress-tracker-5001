@@ -21,19 +21,19 @@ public class TokenServiceTests : IDisposable
 
         // Create in-memory configuration with test JWT settings
         var configData = new Dictionary<string, string?>
-    {
-      {"Jwt:Secret", "ThisIsAVeryLongSecretKeyForTestingPurposes12345678901234567890"},
-      {"Jwt:Issuer", "TestIssuer"},
-      {"Jwt:Audience", "TestAudience"},
-      {"Jwt:ExpiryMinutes", "60"},
-      {"Jwt:AuthTokenCookieName", "auth-token"},
-      {"Jwt:AuthTokenExpiryHours", "1"},
-      {"Jwt:RefreshTokenCookieName", "refresh-token"},
-      {"Jwt:RefreshTokenExpiryDays", "7"}
-    };
+            {
+                {"Jwt:Secret", "ThisIsAVeryLongSecretKeyForTestingPurposes12345678901234567890"},
+                {"Jwt:Issuer", "TestIssuer"},
+                {"Jwt:Audience", "TestAudience"},
+                {"Jwt:ExpiryMinutes", "60"},
+                {"Jwt:AuthTokenCookieName", "auth-token"},
+                {"Jwt:AuthTokenExpiryHours", "1"},
+                {"Jwt:RefreshTokenCookieName", "refresh-token"},
+                {"Jwt:RefreshTokenExpiryDays", "7"}
+            };
         _configuration = new ConfigurationBuilder()
-          .AddInMemoryCollection(configData)
-          .Build();
+            .AddInMemoryCollection(configData)
+            .Build();
 
         _tokenService = new TokenService(_configuration, _context);
     }
@@ -118,7 +118,7 @@ public class TokenServiceTests : IDisposable
 
         // Verify token was saved
         var savedToken = await _context.RefreshTokens
-          .FirstOrDefaultAsync(rt => rt.Token == refreshToken.Token);
+            .FirstOrDefaultAsync(rt => rt.Token == refreshToken.Token);
         Assert.NotNull(savedToken);
         Assert.Equal(user.Id, savedToken.UserId);
     }
@@ -153,9 +153,9 @@ public class TokenServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         var expiredToken = TestDataFactory.CreateTestRefreshToken(
-          user.Id,
-          "expired-token",
-          DateTime.UtcNow.AddDays(-1));
+            user.Id,
+            "expired-token",
+            DateTime.UtcNow.AddDays(-1));
         _context.RefreshTokens.Add(expiredToken);
         await _context.SaveChangesAsync();
 
@@ -188,7 +188,7 @@ public class TokenServiceTests : IDisposable
 
         // Verify token was revoked
         var revokedToken = await _context.RefreshTokens
-          .FirstOrDefaultAsync(rt => rt.Token == refreshToken.Token);
+            .FirstOrDefaultAsync(rt => rt.Token == refreshToken.Token);
         Assert.NotNull(revokedToken);
         Assert.NotNull(revokedToken.RevokedAt);
     }

@@ -24,9 +24,9 @@ public class CardServiceTests : IDisposable
 
         // Create in-memory configuration
         var configData = new Dictionary<string, string?>
-    {
-      {"Tags:MaxTagsPerCard", "5"}
-    };
+            {
+                {"Tags:MaxTagsPerCard", "5"}
+            };
         _configuration = new ConfigurationBuilder()
           .AddInMemoryCollection(configData)
           .Build();

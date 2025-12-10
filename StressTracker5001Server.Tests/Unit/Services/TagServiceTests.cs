@@ -26,8 +26,8 @@ public class TagServiceTests : IDisposable
       {"Tags:MaxTagsPerBoard", "20"}
     };
         _configuration = new ConfigurationBuilder()
-          .AddInMemoryCollection(configData)
-          .Build();
+            .AddInMemoryCollection(configData)
+            .Build();
 
         _tagService = new TagService(_context, _configuration, _authService);
     }

@@ -21,15 +21,15 @@ public class BoardInviteServiceTests : IDisposable
 
         // Create in-memory configuration
         var configData = new Dictionary<string, string?>
-    {
-      {"BoardInvites:MaxActiveInvitesPerBoard", "10"},
-      {"BoardInvites:DefaultInviteExpiryHours", "48"},
-      {"BoardInvites:InviteChars", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"},
-      {"BoardInvites:InviteTokenLength", "8"}
-    };
+            {
+                {"BoardInvites:MaxActiveInvitesPerBoard", "10"},
+                {"BoardInvites:DefaultInviteExpiryHours", "48"},
+                {"BoardInvites:InviteChars", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"},
+                {"BoardInvites:InviteTokenLength", "8"}
+            };
         _configuration = new ConfigurationBuilder()
-          .AddInMemoryCollection(configData)
-          .Build();
+            .AddInMemoryCollection(configData)
+            .Build();
 
         _inviteService = new BoardInviteService(_context, _configuration, _authService);
     }
