@@ -14,28 +14,28 @@ import { showErrorToast } from "@/utils/handle-error";
 import { useForm } from "@tanstack/react-form";
 import { Calendar, Clock, Pencil, Tag, Trash2, User, X } from "lucide-react";
 import { useState } from "react";
-import { CardComments } from "./card-comments";
-import { FetchingErrorAlert } from "./fetching-error-alert";
-import { TagSelector } from "./tag-selector";
-import { Button } from "./ui/button";
-import { Drawer, DrawerClose, DrawerContent, DrawerFooter } from "./ui/drawer";
+import { FetchingErrorAlert } from "../fetching-error-alert";
+import { TagSelector } from "../tags/tag-selector";
+import { Button } from "../ui/button";
+import { Drawer, DrawerClose, DrawerContent, DrawerFooter } from "../ui/drawer";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "./ui/field";
-import { Input } from "./ui/input";
+} from "../ui/field";
+import { Input } from "../ui/input";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupText,
   InputGroupTextarea,
-} from "./ui/input-group";
-import { ScrollArea } from "./ui/scroll-area";
-import { Separator } from "./ui/separator";
-import { Skeleton } from "./ui/skeleton";
+} from "../ui/input-group";
+import { ScrollArea } from "../ui/scroll-area";
+import { Separator } from "../ui/separator";
+import { Skeleton } from "../ui/skeleton";
+import { CardComments } from "./card-comments";
 
 interface CardDetailsDialogProps {
   boardId: number;

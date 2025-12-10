@@ -1,9 +1,12 @@
-import { BoardKanban, BoardKanbanSkeleton } from "@/components/board-kanban";
-import { BoardUpdateDialog } from "@/components/board-update-dialog";
-import { CardDetailsDialog } from "@/components/card-details-dialog";
-import { ColumnUpdateDialog } from "@/components/column-update-dialog";
+import {
+  BoardKanban,
+  BoardKanbanSkeleton,
+} from "@/components/board/board-kanban";
+import { BoardUpdateDialog } from "@/components/board/board-update-dialog";
+import { CardDetailsDialog } from "@/components/card/card-details-dialog";
+import { ColumnUpdateDialog } from "@/components/column/column-update-dialog";
 import { FetchingErrorAlert } from "@/components/fetching-error-alert";
-import { TagManagementDialog } from "@/components/tag-management-dialog";
+import { TagManagementDialog } from "@/components/tags/tag-management-dialog";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BoardDetailsDto } from "@/dto/board.dto";

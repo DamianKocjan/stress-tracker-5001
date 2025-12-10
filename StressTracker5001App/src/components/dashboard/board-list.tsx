@@ -1,11 +1,11 @@
 import { useBoardsQuery } from "@/hooks/use-boards-query";
 import { useBoardCreateDialogStore } from "@/stores/board-create-dialog-store";
 import { Plus } from "lucide-react";
+import { FetchingErrorAlert } from "../fetching-error-alert";
+import { Button } from "../ui/button";
+import { Skeleton } from "../ui/skeleton";
 import { BoardCard } from "./board-card";
 import { BoardsEmptyState } from "./boards-empty-state";
-import { FetchingErrorAlert } from "./fetching-error-alert";
-import { Button } from "./ui/button";
-import { Skeleton } from "./ui/skeleton";
 
 export function BoardList() {
   const setBoardCreateDialogOpen = useBoardCreateDialogStore(

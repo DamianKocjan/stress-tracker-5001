@@ -1,6 +1,6 @@
-import { BoardCreateDialog } from "@/components/board-create-dialog";
-import { BoardList } from "@/components/board-list";
-import { DashboardWelcome } from "@/components/dashboard-welcome";
+import { BoardCreateDialog } from "@/components/dashboard/board-create-dialog";
+import { BoardList } from "@/components/dashboard/board-list";
+import { DashboardWelcome } from "@/components/dashboard/dashboard-welcome";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({

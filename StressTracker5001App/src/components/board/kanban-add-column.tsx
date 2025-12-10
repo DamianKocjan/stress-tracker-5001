@@ -1,6 +1,6 @@
 import { useKanbanStore } from "@/stores/kanban-store";
 import { Plus } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import {
   Empty,
   EmptyContent,
@@ -8,7 +8,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "./ui/empty";
+} from "../ui/empty";
 
 interface KanbanAddColumnProps {
   hasColumns: boolean;

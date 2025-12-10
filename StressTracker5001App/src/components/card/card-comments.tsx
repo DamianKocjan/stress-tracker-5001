@@ -3,8 +3,8 @@ import { useCommentDeleteMutation } from "@/hooks/use-comment-delete-mutation";
 import { useCardCommentsInfiniteQuery } from "@/hooks/use-comment-infinite-query";
 import { useAuth } from "@/providers/auth";
 import { Fragment } from "react/jsx-runtime";
-import { FetchingErrorAlert } from "./fetching-error-alert";
-import { CommentCard, CommentForm, SkeletonCard } from "./ui/comments";
+import { CommentCard, CommentForm, SkeletonCard } from "../comment/comments";
+import { FetchingErrorAlert } from "../fetching-error-alert";
 
 interface CardCommentsProps {
   cardId: number;

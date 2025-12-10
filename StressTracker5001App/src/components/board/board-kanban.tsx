@@ -27,13 +27,13 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { CardCreateDialog } from "./card-create-dialog";
-import { ColumnCard } from "./column-card";
-import { ColumnCreateDialog } from "./column-create-dialog";
+import { CardCreateDialog } from "../card/card-create-dialog";
+import { ColumnCard } from "../column/column-card";
+import { ColumnCreateDialog } from "../column/column-create-dialog";
+import { ScrollArea, ScrollBar } from "../ui/scroll-area";
+import { Skeleton } from "../ui/skeleton";
 import { KanbanAddColumn } from "./kanban-add-column";
 import { KanbanColumn } from "./kanban-column";
-import { ScrollArea, ScrollBar } from "./ui/scroll-area";
-import { Skeleton } from "./ui/skeleton";
 
 interface BoardKanbanProps {
   board: BoardDetailsDto;

@@ -7,7 +7,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { memo } from "react";
-import { TagBadge } from "./tag-badge";
+import { TagBadge } from "../tags/tag-badge";
 
 type ColumnCardProps = {
   card: CardDto;

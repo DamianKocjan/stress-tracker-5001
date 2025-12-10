@@ -5,14 +5,14 @@ import { BoardFormSchema } from "@/schemas/board";
 import { useBoardCreateDialogStore } from "@/stores/board-create-dialog-store";
 import { showErrorToast } from "@/utils/handle-error";
 import { useForm } from "@tanstack/react-form";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "./ui/dialog";
+} from "../ui/dialog";
 import {
   Drawer,
   DrawerClose,
@@ -21,21 +21,21 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
-} from "./ui/drawer";
+} from "../ui/drawer";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "./ui/field";
-import { Input } from "./ui/input";
+} from "../ui/field";
+import { Input } from "../ui/input";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupText,
   InputGroupTextarea,
-} from "./ui/input-group";
+} from "../ui/input-group";
 
 export function BoardCreateDialog() {
   const { isOpen, setIsOpen } = useBoardCreateDialogStore();

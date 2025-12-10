@@ -8,7 +8,7 @@ import { useKanbanStore } from "@/stores/kanban-store";
 import { showErrorToast } from "@/utils/handle-error";
 import { useForm } from "@tanstack/react-form";
 import { Loader2, Pencil, X } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "./ui/dialog";
+} from "../ui/dialog";
 import {
   Drawer,
   DrawerClose,
@@ -26,16 +26,16 @@ import {
   DrawerHeader,
   DrawerTitle,
   DrawerTrigger,
-} from "./ui/drawer";
+} from "../ui/drawer";
 import {
   Field,
   FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "./ui/field";
-import { Input } from "./ui/input";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+} from "../ui/field";
+import { Input } from "../ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface ColumnUpdateDialogProps {
   boardId: number;

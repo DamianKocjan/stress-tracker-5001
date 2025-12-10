@@ -16,7 +16,7 @@ import { useForm } from "@tanstack/react-form";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { LayoutDashboard } from "lucide-react";
 import { toast } from "sonner";
-import { PasswordInput } from "./ui/input-password";
+import { PasswordInput } from "../ui/input-password";
 
 export function LoginForm({
   className,

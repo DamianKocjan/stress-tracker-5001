@@ -1,6 +1,6 @@
 import { useBoardCreateDialogStore } from "@/stores/board-create-dialog-store";
 import { PlusIcon } from "lucide-react";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import {
   Empty,
   EmptyContent,
@@ -8,7 +8,7 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-} from "./ui/empty";
+} from "../ui/empty";
 
 export function BoardsEmptyState() {
   const setBoardCreateDialogOpen = useBoardCreateDialogStore(

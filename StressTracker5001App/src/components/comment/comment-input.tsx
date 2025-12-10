@@ -8,8 +8,8 @@ import {
   InputGroupAddon,
   InputGroupButton,
   InputGroupTextarea,
-} from "./ui/input-group";
-import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+} from "../ui/input-group";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 interface CommentInputProps
   extends Omit<

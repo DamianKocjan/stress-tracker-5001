@@ -11,8 +11,8 @@ import { CommentSchema } from "@/schemas/comment";
 import { useForm } from "@tanstack/react-form";
 import { CheckIcon, Edit2Icon, TrashIcon, XIcon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { CommentInput } from "../comment-input";
-import { Textarea } from "./textarea";
+import { Textarea } from "../ui/textarea";
+import { CommentInput } from "./comment-input";
 
 type CommentLayoutProps = React.ComponentProps<"div"> & {
   comment: CommentDto;

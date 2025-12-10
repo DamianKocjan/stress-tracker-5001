@@ -1,14 +1,14 @@
 import type { BoardDto } from "@/dto/board.dto";
 import { useAuth } from "@/providers/auth";
 import { Link } from "@tanstack/react-router";
-import { Button } from "./ui/button";
+import { Button } from "../ui/button";
 import {
   Card,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
-} from "./ui/card";
+} from "../ui/card";
 
 type BoardCardProps = BoardDto;
 

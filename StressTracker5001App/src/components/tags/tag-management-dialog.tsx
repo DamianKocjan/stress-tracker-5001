@@ -19,9 +19,9 @@ import { useForm } from "@tanstack/react-form";
 import { Pencil, Tags, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ColorPickerInput } from "./color-picker-input";
+import { ColorPickerInput } from "../color-picker-input";
+import { Field, FieldError, FieldGroup, FieldLabel } from "../ui/field";
 import { TagBadge } from "./tag-badge";
-import { Field, FieldError, FieldGroup, FieldLabel } from "./ui/field";
 
 interface TagManagementDialogProps {
   boardId: number;

@@ -6,11 +6,11 @@ import { SortableContext, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Pencil } from "lucide-react";
 import { useMemo } from "react";
-import { ColumnCard } from "./column-card";
-import { Badge } from "./ui/badge";
-import { Button } from "./ui/button";
-import { Card, CardContent, CardFooter, CardHeader } from "./ui/card";
-import { ScrollArea } from "./ui/scroll-area";
+import { ColumnCard } from "../column/column-card";
+import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
+import { ScrollArea } from "../ui/scroll-area";
 
 export type ColumnType = "Column";
 
