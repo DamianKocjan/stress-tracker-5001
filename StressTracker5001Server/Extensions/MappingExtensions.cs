@@ -1,4 +1,6 @@
 using StressTracker5001Server.DTOs.Board;
+using StressTracker5001Server.DTOs.BoardInvite;
+using StressTracker5001Server.DTOs.BoardMember;
 using StressTracker5001Server.DTOs.Card;
 using StressTracker5001Server.DTOs.Column;
 using StressTracker5001Server.DTOs.Comment;
@@ -14,6 +16,17 @@ namespace StressTracker5001Server.Extensions
         public static UserDto ToDto(this User user)
         {
             return new UserDto
+            {
+                Id = user.Id,
+                Username = user.Username,
+                CreatedAt = user.CreatedAt,
+                UpdatedAt = user.UpdatedAt
+            };
+        }
+
+        public static UserDetailsDto ToDetailsDto(this User user)
+        {
+            return new UserDetailsDto
             {
                 Id = user.Id,
                 Email = user.Email,
@@ -35,7 +48,6 @@ namespace StressTracker5001Server.Extensions
                 Owner = board.Owner?.ToDto() ?? new UserDto
                 {
                     Id = board.OwnerId,
-                    Email = string.Empty,
                     Username = string.Empty,
                     CreatedAt = DateTime.MinValue,
                     UpdatedAt = DateTime.MinValue
@@ -56,7 +68,6 @@ namespace StressTracker5001Server.Extensions
                 Owner = board.Owner?.ToDto() ?? new UserDto
                 {
                     Id = board.OwnerId,
-                    Email = string.Empty,
                     Username = string.Empty,
                     CreatedAt = DateTime.MinValue,
                     UpdatedAt = DateTime.MinValue
@@ -116,7 +127,6 @@ namespace StressTracker5001Server.Extensions
                 CreatedBy = card.CreatedBy?.ToDto() ?? new UserDto
                 {
                     Id = card.CreatedById,
-                    Email = string.Empty,
                     Username = string.Empty,
                     CreatedAt = DateTime.MinValue,
                     UpdatedAt = DateTime.MinValue
@@ -152,7 +162,6 @@ namespace StressTracker5001Server.Extensions
                 User = comment.User?.ToDto() ?? new UserDto
                 {
                     Id = comment.UserId,
-                    Email = string.Empty,
                     Username = string.Empty,
                     CreatedAt = DateTime.MinValue,
                     UpdatedAt = DateTime.MinValue
@@ -162,7 +171,51 @@ namespace StressTracker5001Server.Extensions
             };
         }
 
-        // Note: BoardMember and BoardInvite DTOs will be created when implementing board collaboration endpoints
+        // BoardMember mappings
+        public static BoardMemberDto ToDto(this BoardMember boardMember)
+        {
+            return new BoardMemberDto
+            {
+                Id = boardMember.Id,
+                BoardId = boardMember.BoardId,
+                UserId = boardMember.UserId,
+                User = boardMember.User?.ToDto() ?? new UserDto
+                {
+                    Id = boardMember.UserId,
+                    Username = string.Empty,
+                    CreatedAt = DateTime.MinValue,
+                    UpdatedAt = DateTime.MinValue
+                },
+                Role = (BoardMemberRoleDto)boardMember.Role,
+                CreatedAt = boardMember.CreatedAt,
+                UpdatedAt = boardMember.UpdatedAt
+            };
+        }
+
+        // BoardInvite mappings
+        public static BoardInviteDto ToDto(this BoardInvite boardInvite)
+        {
+            return new BoardInviteDto
+            {
+                Id = boardInvite.Id,
+                BoardId = boardInvite.BoardId,
+                Token = boardInvite.Token,
+                IsRevoked = boardInvite.IsRevoked,
+                HasBeenUsed = boardInvite.HasBeenUsed,
+                Role = (BoardMemberRoleDto)boardInvite.Role,
+                GeneratedByUserId = boardInvite.GeneratedByUserId,
+                GeneratedByUser = boardInvite.GeneratedByUser?.ToDto() ?? new UserDto
+                {
+                    Id = boardInvite.GeneratedByUserId,
+                    Username = string.Empty,
+                    CreatedAt = DateTime.MinValue,
+                    UpdatedAt = DateTime.MinValue
+                },
+                ExpiresAt = boardInvite.ExpiresAt,
+                CreatedAt = boardInvite.CreatedAt,
+                UpdatedAt = boardInvite.UpdatedAt
+            };
+        }
 
         // List mappings
         public static List<BoardDto> ToDto(this IEnumerable<Board> boards)
@@ -188,6 +241,16 @@ namespace StressTracker5001Server.Extensions
         public static List<CommentDto> ToDto(this IEnumerable<Comment> comments)
         {
             return comments.Select(c => c.ToDto()).ToList();
+        }
+
+        public static List<BoardMemberDto> ToDto(this IEnumerable<BoardMember> boardMembers)
+        {
+            return boardMembers.Select(bm => bm.ToDto()).ToList();
+        }
+
+        public static List<BoardInviteDto> ToDto(this IEnumerable<BoardInvite> boardInvites)
+        {
+            return boardInvites.Select(bi => bi.ToDto()).ToList();
         }
     }
 }

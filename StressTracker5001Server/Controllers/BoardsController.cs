@@ -2,10 +2,13 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Board;
+using StressTracker5001Server.DTOs.BoardMember;
+using StressTracker5001Server.DTOs.BoardInvite;
 using StressTracker5001Server.DTOs.Column;
 using StressTracker5001Server.DTOs.Common;
 using StressTracker5001Server.Services;
 using StressTracker5001Server.Extensions;
+using StressTracker5001Server.Models;
 
 namespace StressTracker5001Server.Controllers
 {
@@ -63,7 +66,116 @@ namespace StressTracker5001Server.Controllers
         }
 
         [Authorize]
-        [HttpPost("{boardId}/columns")]
+        [HttpGet("{boardId}/members")]
+        public async Task<IActionResult> GetBoardMembers([FromRoute] int boardId, [FromServices] IBoardAuthorizationService boardAuthorizationService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var result = await boardAuthorizationService.GetMembersAsync(boardId, userId);
+            return result.ToActionResult(members => members.Select(m => m.ToDto()).ToList());
+        }
+
+        [Authorize]
+        [HttpGet("{boardId}/invites")]
+        public async Task<IActionResult> GetBoardInvites([FromRoute] int boardId, [FromServices] IBoardInviteService boardInviteService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var result = await boardInviteService.GetActiveInvitesForBoardAsync(boardId, userId);
+            return result.ToActionResult(invites => invites.Select(i => i.ToDto()).ToList());
+        }
+
+        [Authorize]
+        [HttpPost("{boardId}/members")]
+        public async Task<IActionResult> AddBoardMember([FromRoute] int boardId, [FromBody] BoardMemberCreateDto dto, [FromServices] IBoardAuthorizationService boardAuthorizationService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var result = await boardAuthorizationService.AddMemberAsync(boardId, dto.UserId, userId, (BoardMemberRole)dto.Role);
+            return result.ToActionResult(m => m.ToDto());
+        }
+
+        [Authorize]
+        [HttpPatch("{boardId}/members/{memberId}")]
+        public async Task<IActionResult> UpdateMemberRole([FromRoute] int boardId, [FromRoute] int memberId, [FromBody] BoardMemberUpdateDto dto, [FromServices] IBoardAuthorizationService boardAuthorizationService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var result = await boardAuthorizationService.ChangeMemberRoleAsync(boardId, userId, memberId, (BoardMemberRole)dto.Role);
+            return result.ToActionResult(m => m.ToDto());
+        }
+
+        [Authorize]
+        [HttpDelete("{boardId}/members/{memberId}")]
+        public async Task<IActionResult> RemoveBoardMember([FromRoute] int boardId, [FromRoute] int memberId, [FromServices] IBoardAuthorizationService boardAuthorizationService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var result = await boardAuthorizationService.RemoveMemberAsync(boardId, memberId, userId);
+            if (result.IsSuccess)
+            {
+                return new ObjectResult(ResultDto.CreateSuccess(204)) { StatusCode = 204 };
+            }
+
+            return result.ToActionResult();
+        }
+
+        [Authorize]
+        [HttpPost("{boardId}/invites")]
+        public async Task<IActionResult> GenerateBoardInvite([FromRoute] int boardId, [FromBody] BoardInviteCreateDto dto, [FromServices] IBoardInviteService boardInviteService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var role = (BoardMemberRole)dto.Role;
+            var result = await boardInviteService.GenerateInviteAsync(boardId, userId, role);
+            return result.ToActionResult(i => i.ToDto());
+        }
+
+        [Authorize]
+        [HttpDelete("invites/{inviteId}")]
+        public async Task<IActionResult> RevokeInvite([FromRoute] int inviteId, [FromServices] IBoardInviteService boardInviteService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var result = await boardInviteService.RevokeInviteAsync(inviteId, userId);
+            if (result.IsSuccess)
+            {
+                return new ObjectResult(ResultDto.CreateSuccess(204)) { StatusCode = 204 };
+            }
+
+            return result.ToActionResult();
+        }
+
+        [Authorize]
+        [HttpPost("columns")]
         public async Task<IActionResult> CreateBoardColumn([FromRoute] int boardId, [FromBody] CreateColumnDto dto, [FromServices] IBoardService boardService, [FromServices] IColumnService columnService)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);

@@ -97,6 +97,15 @@ namespace StressTracker5001Server.Data
                 .WithMany(u => u.BoardMemberships)
                 .HasForeignKey(bm => bm.UserId);
 
+            // Enum to string conversion for BoardMemberRole
+            modelBuilder.Entity<BoardMember>()
+                .Property(bm => bm.Role)
+                .HasConversion<string>();
+
+            modelBuilder.Entity<BoardInvite>()
+                .Property(bi => bi.Role)
+                .HasConversion<string>();
+
             modelBuilder.Entity<BoardInvite>()
                 .HasIndex(bi => bi.Token)
                 .IsUnique();

@@ -126,7 +126,7 @@ public class BoardsControllerTests
             Name = "Test Board",
             Description = "Test Description",
             OwnerId = TestUserId,
-            Owner = new UserDto
+            Owner = new UserDetailsDto
             {
                 Id = TestUserId,
                 Email = "test@example.com",

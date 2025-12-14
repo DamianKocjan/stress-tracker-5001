@@ -1,4 +1,13 @@
 import type {
+  BoardInviteCreateDto,
+  BoardInviteDto,
+} from "@/dto/board-invite.dto";
+import type {
+  BoardMemberCreateDto,
+  BoardMemberDto,
+  BoardMemberUpdateDto,
+} from "@/dto/board-member.dto";
+import type {
   BoardCreateDto,
   BoardDetailsDto,
   BoardDto,
@@ -387,5 +396,119 @@ export async function deleteComment(commentId: number): Promise<void> {
   if (!response.ok) {
     const result = (await response.json()) as ResultDto<void>;
     throw new Error(result.errorMessage || "Failed to delete comment");
+  }
+}
+
+// Board Member API Functions
+export async function getBoardMembers(
+  boardId: number
+): Promise<BoardMemberDto[]> {
+  const response = await fetch(`/boards/${boardId}/members`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<BoardMemberDto[]>;
+    throw new Error(result.errorMessage || "Failed to fetch board members");
+  }
+
+  const result = (await response.json()) as ResultDto<BoardMemberDto[]>;
+  return unwrapResult(result);
+}
+
+export async function addBoardMember(
+  boardId: number,
+  data: BoardMemberCreateDto
+): Promise<BoardMemberDto> {
+  const response = await fetch(`/boards/${boardId}/members`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<BoardMemberDto>;
+    throw new Error(result.errorMessage || "Failed to add board member");
+  }
+
+  const result = (await response.json()) as ResultDto<BoardMemberDto>;
+  return unwrapResult(result);
+}
+
+export async function updateMemberRole(
+  boardId: number,
+  memberId: number,
+  data: BoardMemberUpdateDto
+): Promise<BoardMemberDto> {
+  const response = await fetch(`/boards/${boardId}/members/${memberId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<BoardMemberDto>;
+    throw new Error(result.errorMessage || "Failed to update member role");
+  }
+
+  const result = (await response.json()) as ResultDto<BoardMemberDto>;
+  return unwrapResult(result);
+}
+
+export async function removeBoardMember(
+  boardId: number,
+  memberId: number
+): Promise<void> {
+  const response = await fetch(`/boards/${boardId}/members/${memberId}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<void>;
+    throw new Error(result.errorMessage || "Failed to remove board member");
+  }
+}
+
+// Board Invite API Functions
+export async function getBoardInvites(
+  boardId: number
+): Promise<BoardInviteDto[]> {
+  const response = await fetch(`/boards/${boardId}/invites`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<BoardInviteDto[]>;
+    throw new Error(result.errorMessage || "Failed to fetch board invites");
+  }
+
+  const result = (await response.json()) as ResultDto<BoardInviteDto[]>;
+  return unwrapResult(result);
+}
+
+export async function generateBoardInvite(
+  boardId: number,
+  data: BoardInviteCreateDto
+): Promise<BoardInviteDto> {
+  const response = await fetch(`/boards/${boardId}/invites`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<BoardInviteDto>;
+    throw new Error(result.errorMessage || "Failed to generate board invite");
+  }
+
+  const result = (await response.json()) as ResultDto<BoardInviteDto>;
+  return unwrapResult(result);
+}
+
+export async function revokeInvite(inviteId: number): Promise<void> {
+  const response = await fetch(`/invites/${inviteId}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<void>;
+    throw new Error(result.errorMessage || "Failed to revoke invite");
   }
 }

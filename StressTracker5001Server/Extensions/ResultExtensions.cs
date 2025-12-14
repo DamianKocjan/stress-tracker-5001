@@ -160,5 +160,28 @@ namespace StressTracker5001Server.Extensions
 
             return new ObjectResult(errorDto) { StatusCode = result.StatusCode };
         }
+
+        /// <summary>
+        /// Converts a Result<List<T>> to IActionResult without mapper (when T is already suitable for response)
+        /// </summary>
+        public static IActionResult ToActionResult<T>(this Result<List<T>> result)
+        {
+            if (result.IsSuccess && result.Value != null)
+            {
+                var resultDto = ResultDto<List<T>>.CreateSuccessResult(result.Value, result.StatusCode);
+                return new ObjectResult(resultDto) { StatusCode = result.StatusCode };
+            }
+
+            var errorDto = result.StatusCode switch
+            {
+                404 => ResultDto<List<T>>.NotFound(result.Error ?? "Resource not found"),
+                403 => ResultDto<List<T>>.Forbidden(result.Error ?? "Forbidden"),
+                401 => ResultDto<List<T>>.Unauthorized(result.Error ?? "Unauthorized access"),
+                422 => ResultDto<List<T>>.ValidationError(new List<string> { result.Error ?? "Validation error" }),
+                _ => ResultDto<List<T>>.CreateFailureResult(result.Error ?? "An error occurred", result.StatusCode)
+            };
+
+            return new ObjectResult(errorDto) { StatusCode = result.StatusCode };
+        }
     }
 }

@@ -12,7 +12,7 @@ export const Route = createFileRoute("/_auth")({
   component: () => {
     const { isAuthenticated } = useAuth();
     const redirect = useSearch({
-      from: "/_auth/login",
+      from: "/_auth",
       select: (s) => s.redirect,
     });
     const navigate = useNavigate();

@@ -74,7 +74,7 @@ namespace StressTracker5001Server.Controllers
                 return new ObjectResult(ResultDto.Unauthorized("Token is required")) { StatusCode = 401 };
             }
 
-            var isValid = tokenService.ValidateToken(token);
+            var isValid = await tokenService.ValidateTokenAsync(token);
             if (!isValid)
             {
                 return new ObjectResult(ResultDto.Unauthorized("Invalid or expired token")) { StatusCode = 401 };

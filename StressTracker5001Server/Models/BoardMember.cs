@@ -1,4 +1,3 @@
-
 namespace StressTracker5001Server.Models
 {
     public enum BoardMemberRole

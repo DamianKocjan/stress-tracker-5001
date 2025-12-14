@@ -20,8 +20,6 @@ namespace StressTracker5001Server.Models
         [Required(ErrorMessage = "Username is required")]
         [StringLength(50, MinimumLength = 3,
             ErrorMessage = "Username must be between 3 and 50 characters")]
-        [RegularExpression(@"^[a-zA-Z0-9_-\s]+$",
-            ErrorMessage = "Username can only contain letters, numbers, spaces, underscores, and hyphens")]
         public required string Username { get; set; }
 
         [JsonIgnore]

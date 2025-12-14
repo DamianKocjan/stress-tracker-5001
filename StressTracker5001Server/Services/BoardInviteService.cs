@@ -12,9 +12,9 @@ namespace StressTracker5001Server.Services
         Task<Result<bool>> CanGenerateInviteAsync(int boardId, int userId);
         Result<bool> ValidateInviteCodeAsync(BoardInvite invite);
         Task<BoardInvite?> GetInviteByCodeAsync(string code);
-        Task<Result<bool>> RevokeInviteAsync(int inviteId);
-        Task<Result<List<BoardInvite>>> GetActiveInvitesForBoardAsync(int boardId);
-        Task<Result<bool>> RevokeAllInvitesForBoardAsync(int boardId);
+        Task<Result<bool>> RevokeInviteAsync(int inviteId, int userId);
+        Task<Result<List<BoardInvite>>> GetActiveInvitesForBoardAsync(int boardId, int userId);
+        Task<Result<bool>> RevokeAllInvitesForBoardAsync(int boardId, int userId);
     }
 
     public class BoardInviteService : IBoardInviteService
@@ -124,12 +124,18 @@ namespace StressTracker5001Server.Services
                 .FirstOrDefaultAsync(bi => bi.Token == code);
         }
 
-        public async Task<Result<bool>> RevokeInviteAsync(int inviteId)
+        public async Task<Result<bool>> RevokeInviteAsync(int inviteId, int userId)
         {
             var invite = await _context.BoardInvites.FindAsync(inviteId);
             if (invite == null)
             {
                 return Result<bool>.NotFound($"Invite with ID {inviteId} not found");
+            }
+
+            var canRevokeInvite = await _boardAuthorizationService.UserCanAccessBoardAsync(invite.BoardId, userId, BoardMemberRole.Admin);
+            if (!canRevokeInvite)
+            {
+                return Result<bool>.Forbidden("You do not have permission to revoke invites for this board");
             }
 
             if (invite.IsRevoked)
@@ -145,8 +151,14 @@ namespace StressTracker5001Server.Services
             return Result<bool>.Success(true);
         }
 
-        public async Task<Result<List<BoardInvite>>> GetActiveInvitesForBoardAsync(int boardId)
+        public async Task<Result<List<BoardInvite>>> GetActiveInvitesForBoardAsync(int boardId, int userId)
         {
+            var canViewInvites = await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Viewer);
+            if (!canViewInvites)
+            {
+                return Result<List<BoardInvite>>.Forbidden("You do not have permission to view invites for this board");
+            }
+
             var invites = await _context.BoardInvites
                 .Where(bi => bi.BoardId == boardId && !bi.IsRevoked && bi.ExpiresAt > DateTime.UtcNow)
                 .ToListAsync();
@@ -154,8 +166,14 @@ namespace StressTracker5001Server.Services
             return Result<List<BoardInvite>>.Success(invites);
         }
 
-        public async Task<Result<bool>> RevokeAllInvitesForBoardAsync(int boardId)
+        public async Task<Result<bool>> RevokeAllInvitesForBoardAsync(int boardId, int userId)
         {
+            var canRevokeInvites = await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin);
+            if (!canRevokeInvites)
+            {
+                return Result<bool>.Forbidden("You do not have permission to revoke invites for this board");
+            }
+
             var invites = await _context.BoardInvites
                 .Where(bi => bi.BoardId == boardId && !bi.IsRevoked)
                 .ToListAsync();

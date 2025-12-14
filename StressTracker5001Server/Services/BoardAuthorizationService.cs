@@ -168,11 +168,10 @@ namespace StressTracker5001Server.Services
                 return memberResult.Value!.Role >= requiredRole;
             }
 
-            // If not a member, check if they're the board owner (only for basic access)
+            // If not a member, check if they're the board owner
             var board = await _context.Boards.FindAsync(boardId);
-            if (board != null && board.OwnerId == userId && requiredRole == BoardMemberRole.Viewer)
+            if (board != null && board.OwnerId == userId)
             {
-                // Owner has basic view access even without being in members table
                 return true;
             }
 
