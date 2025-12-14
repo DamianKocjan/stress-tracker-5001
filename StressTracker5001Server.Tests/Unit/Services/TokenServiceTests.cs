@@ -74,26 +74,26 @@ public class TokenServiceTests : IDisposable
     }
 
     [Fact]
-    public void ValidateToken_WithValidToken_ReturnsTrue()
+    public async Task ValidateToken_WithValidToken_ReturnsTrue()
     {
         // Arrange
         var token = _tokenService.GenerateToken(1, "test@example.com", "testuser");
 
         // Act
-        var isValid = _tokenService.ValidateToken(token);
+        var isValid = await _tokenService.ValidateTokenAsync(token);
 
         // Assert
         Assert.True(isValid);
     }
 
     [Fact]
-    public void ValidateToken_WithInvalidToken_ReturnsFalse()
+    public async Task ValidateToken_WithInvalidToken_ReturnsFalse()
     {
         // Arrange
         var invalidToken = "invalid.token.here";
 
         // Act
-        var isValid = _tokenService.ValidateToken(invalidToken);
+        var isValid = await _tokenService.ValidateTokenAsync(invalidToken);
 
         // Assert
         Assert.False(isValid);

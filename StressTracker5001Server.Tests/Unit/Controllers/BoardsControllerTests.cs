@@ -126,10 +126,9 @@ public class BoardsControllerTests
             Name = "Test Board",
             Description = "Test Description",
             OwnerId = TestUserId,
-            Owner = new UserDetailsDto
+            Owner = new UserDto
             {
                 Id = TestUserId,
-                Email = "test@example.com",
                 Username = "testuser",
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow

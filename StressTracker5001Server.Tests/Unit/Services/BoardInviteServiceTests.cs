@@ -188,7 +188,7 @@ public class BoardInviteServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _inviteService.RevokeInviteAsync(invite.Id);
+        var result = await _inviteService.RevokeInviteAsync(invite.Id, user.Id);
 
         // Assert
         Assert.True(result.IsSuccess);
