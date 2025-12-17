@@ -172,6 +172,11 @@ public class BoardInviteServiceTests : IDisposable
         _context.Boards.Add(board);
         await _context.SaveChangesAsync();
 
+        // Create user as owner member (has Admin permissions)
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, user.Id, BoardMemberRole.Owner);
+        _context.BoardMembers.Add(ownerMember);
+        await _context.SaveChangesAsync();
+
         var invite = new BoardInvite
         {
             BoardId = board.Id,

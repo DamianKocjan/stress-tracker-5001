@@ -4,13 +4,14 @@ namespace StressTracker5001Server.Models
     {
         Viewer,
         Member,
-        Admin
+        Admin,
+        Owner
     }
 
     public class BoardMember
     {
         public int Id { get; set; }
-        public required int BoardId { get; set; }
+        public int BoardId { get; set; }
         public Board? Board { get; set; }
         public required int UserId { get; set; }
         public User? User { get; set; }

@@ -70,10 +70,8 @@ public class BoardWorkflowIntegrationTests : IDisposable
 
         var boardId = createBoardResult.Value;
 
-        // Act 2 - Owner adds a member to the board (owner needs to be Admin first)
-        var ownerMemberResult = await _authService.AddMemberAsync(boardId, ownerId, ownerId, BoardMemberRole.Admin);
-        Assert.True(ownerMemberResult.IsSuccess);
-
+        // Act 2 - Owner adds a member to the board
+        // Owner is automatically created as a member with Owner role (which has Admin permissions)
         var addMemberResult = await _authService.AddMemberAsync(boardId, memberId, ownerId, BoardMemberRole.Member);
         Assert.True(addMemberResult.IsSuccess);
 
@@ -89,8 +87,12 @@ public class BoardWorkflowIntegrationTests : IDisposable
         // Act 5 - Verify board owner can see the member
         var membersResult = await _authService.GetMembersAsync(boardId, ownerId);
         Assert.True(membersResult.IsSuccess);
-        Assert.Equal(2, membersResult.Value!.Count); // Owner and member
-        Assert.Contains(membersResult.Value, m => m.UserId == memberId);
+        Assert.Equal(2, membersResult.Value!.Count); // Owner (with Owner role) and Member
+
+        // Verify owner role is Owner (not Admin)
+        var ownerRole = membersResult.Value.FirstOrDefault(m => m.UserId == ownerId);
+        Assert.NotNull(ownerRole);
+        Assert.Equal(BoardMemberRole.Owner, ownerRole.Role);
 
         // Act 6 - Update board details
         var updateDto = new UpdateBoardDto
@@ -149,8 +151,10 @@ public class BoardWorkflowIntegrationTests : IDisposable
         _context.Boards.Add(board);
         await _context.SaveChangesAsync();
 
+        // Create owner and member as board members
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Owner);
         var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, member.Id);
-        _context.BoardMembers.Add(boardMember);
+        _context.BoardMembers.AddRange(ownerMember, boardMember);
         await _context.SaveChangesAsync();
 
         var boardColumn = TestDataFactory.CreateTestColumn(board.Id, "To Do");

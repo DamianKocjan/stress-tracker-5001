@@ -41,9 +41,8 @@ namespace StressTracker5001Server.Services
                 return Result<BoardMember>.NotFound($"Board with ID {boardId} not found");
             }
 
-            // Check if user is board owner or has Admin role
-            var isOwner = board.OwnerId == userId;
-            if (!isOwner && !await UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin))
+            // Check if user has Admin role to add members
+            if (!await UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin))
             {
                 return Result<BoardMember>.Forbidden("You do not have permission to add members to this board");
             }
@@ -166,13 +165,6 @@ namespace StressTracker5001Server.Services
             if (memberResult.IsSuccess)
             {
                 return memberResult.Value!.Role >= requiredRole;
-            }
-
-            // If not a member, check if they're the board owner
-            var board = await _context.Boards.FindAsync(boardId);
-            if (board != null && board.OwnerId == userId)
-            {
-                return true;
             }
 
             return false;

@@ -125,7 +125,6 @@ public class BoardsControllerTests
             Id = boardId,
             Name = "Test Board",
             Description = "Test Description",
-            OwnerId = TestUserId,
             Owner = new UserDto
             {
                 Id = TestUserId,

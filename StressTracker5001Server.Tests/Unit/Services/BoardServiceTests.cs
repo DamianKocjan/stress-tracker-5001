@@ -1,4 +1,5 @@
 using Xunit;
+using Microsoft.EntityFrameworkCore;
 using StressTracker5001Server.Services;
 using StressTracker5001Server.Data;
 using StressTracker5001Server.Models;
@@ -36,6 +37,11 @@ public class BoardServiceTests : IDisposable
 
 		var board = TestDataFactory.CreateTestBoard(user.Id);
 		_context.Boards.Add(board);
+		await _context.SaveChangesAsync();
+
+		// Create owner as a board member (simulates what CreateBoardAsync does)
+		var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, user.Id, BoardMemberRole.Owner);
+		_context.BoardMembers.Add(ownerMember);
 		await _context.SaveChangesAsync();
 
 		// Act
@@ -116,10 +122,16 @@ public class BoardServiceTests : IDisposable
 		Assert.NotEqual(0, result.Value);
 
 		// Verify board was created
-		var board = await _context.Boards.FindAsync(result.Value);
+		var board = await _context.Boards
+			.Include(b => b.Members)
+			.FirstOrDefaultAsync(b => b.Id == result.Value);
 		Assert.NotNull(board);
 		Assert.Equal(createDto.Name, board.Name);
-		Assert.Equal(user.Id, board.OwnerId);
+
+		// Verify owner was created as a BoardMember with Owner role
+		var ownerMember = board.Members.FirstOrDefault(m => m.Role == BoardMemberRole.Owner);
+		Assert.NotNull(ownerMember);
+		Assert.Equal(user.Id, ownerMember.UserId);
 	}
 
 	[Fact]
@@ -197,7 +209,8 @@ public class BoardServiceTests : IDisposable
 		_context.Boards.Add(board);
 		await _context.SaveChangesAsync();
 
-		var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, user.Id, BoardMemberRole.Admin);
+		// Owner must have Owner role, not Admin
+		var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, user.Id, BoardMemberRole.Owner);
 		_context.BoardMembers.Add(ownerMember);
 		await _context.SaveChangesAsync();
 
@@ -228,6 +241,16 @@ public class BoardServiceTests : IDisposable
 		_context.Boards.AddRange(board1, board2, board3);
 		await _context.SaveChangesAsync();
 
+		// Create owners as board members
+		var owners = new List<BoardMember>
+		{
+			TestDataFactory.CreateTestBoardMember(board1.Id, user.Id, BoardMemberRole.Owner),
+			TestDataFactory.CreateTestBoardMember(board2.Id, user.Id, BoardMemberRole.Owner),
+			TestDataFactory.CreateTestBoardMember(board3.Id, otherUser.Id, BoardMemberRole.Owner)
+		};
+		_context.BoardMembers.AddRange(owners);
+		await _context.SaveChangesAsync();
+
 		// Act
 		var result = await _boardService.GetOwnedBoardsAsync(user.Id);
 
@@ -235,6 +258,13 @@ public class BoardServiceTests : IDisposable
 		Assert.True(result.IsSuccess);
 		Assert.NotNull(result.Value);
 		Assert.Equal(2, result.Value.Count);
-		Assert.All(result.Value, b => Assert.Equal(user.Id, b.OwnerId));
+
+		// Verify all boards have user as Owner role member
+		foreach (var board in result.Value)
+		{
+			var ownerMember = board.Members.FirstOrDefault(m => m.Role == BoardMemberRole.Owner);
+			Assert.NotNull(ownerMember);
+			Assert.Equal(user.Id, ownerMember.UserId);
+		}
 	}
 }

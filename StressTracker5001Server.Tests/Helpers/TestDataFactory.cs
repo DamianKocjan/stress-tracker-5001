@@ -24,14 +24,18 @@ public static class TestDataFactory
         string name = "Test Board",
         string description = "Test Description")
     {
-        return new Board
+        var now = DateTime.UtcNow;
+        var board = new Board
         {
             Name = name,
             Description = description,
-            OwnerId = userId,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            UpdatedAt = now
         };
+
+        // Note: BoardId will be set by EF after board is saved to database
+        // For now, just return the board and create owner member in tests if needed
+        return board;
     }
 
     public static Column CreateTestColumn(

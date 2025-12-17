@@ -113,7 +113,7 @@ namespace StressTracker5001Server.Services
 
             try
             {
-                await tokenHandler.ValidateTokenAsync(token, new TokenValidationParameters
+                var principal = tokenHandler.ValidateToken(token, new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
                     IssuerSigningKey = new SymmetricSecurityKey(key),
@@ -122,9 +122,9 @@ namespace StressTracker5001Server.Services
                     ValidateAudience = true,
                     ValidAudience = _configuration["Jwt:Audience"],
                     ClockSkew = TimeSpan.Zero
-                });
+                }, out SecurityToken validatedToken);
 
-                return true;
+                return principal != null && validatedToken != null;
             }
             catch
             {

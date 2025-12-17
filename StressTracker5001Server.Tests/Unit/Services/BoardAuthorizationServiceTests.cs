@@ -159,11 +159,10 @@ public class BoardAuthorizationServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task GetBoardUserRoleByIdAsync_AsOwner_ReturnsNotFound()
+    public async Task GetBoardUserRoleByIdAsync_AsOwner_ReturnsOwnerRole()
     {
         // Arrange
-        // Note: The service only checks BoardMembers table, not ownership
-        // This test verifies current behavior - owner is not in members table by default
+        // Owner is now automatically added as a BoardMember with Owner role
         var user = TestDataFactory.CreateTestUser();
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
@@ -172,13 +171,18 @@ public class BoardAuthorizationServiceTests : IDisposable
         _context.Boards.Add(board);
         await _context.SaveChangesAsync();
 
+        // Create owner member (simulates what CreateBoardAsync does in the real service)
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, user.Id, BoardMemberRole.Owner);
+        _context.BoardMembers.Add(ownerMember);
+        await _context.SaveChangesAsync();
+
         // Act
         var result = await _authService.GetBoardUserRoleByIdAsync(board.Id, user.Id);
 
         // Assert
-        // Owner is not automatically a member, so returns NotFound
-        Assert.False(result.IsSuccess);
-        Assert.Equal(404, result.StatusCode);
+        // Owner is now a member with Owner role
+        Assert.True(result.IsSuccess);
+        Assert.Equal(BoardMemberRole.Owner, result.Value);
     }
 
     [Fact]

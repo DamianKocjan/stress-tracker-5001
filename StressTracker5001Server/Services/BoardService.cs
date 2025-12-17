@@ -13,7 +13,7 @@ namespace StressTracker5001Server.Services
         Task<Result<BoardDetailsDto>> GetBoardWithColumnsAndCardsAsync(int boardId, int userId);
         Task<Result<List<Board>>> GetOwnedBoardsAsync(int userId);
         Task<Result<List<Board>>> GetUserMembershipBoardsAsync(int userId);
-        Task<Result<int>> CreateBoardAsync(CreateBoardDto dto, int userId);
+        Task<Result<Board>> CreateBoardAsync(CreateBoardDto dto, int userId);
         Task<Result<Board>> UpdateBoardAsync(int boardId, UpdateBoardDto dto, int userId);
         Task<Result<bool>> DeleteBoardAsync(int boardId, int userId);
     }
@@ -32,7 +32,8 @@ namespace StressTracker5001Server.Services
         public async Task<Result<Board>> GetBoardByIdAsync(int boardId, int userId)
         {
             var board = await _context.Boards
-                .Include(b => b.Owner)
+                .Include(b => b.Members)
+                .ThenInclude(m => m.User)
                 .FirstOrDefaultAsync(b => b.Id == boardId);
 
             if (board == null)
@@ -51,8 +52,9 @@ namespace StressTracker5001Server.Services
         public async Task<Result<BoardDetailsDto>> GetBoardWithColumnsAndCardsAsync(int boardId, int userId)
         {
             var board = await _context.Boards
-                .Where(b => b.Id == boardId && (b.OwnerId == userId || b.Members.Any(m => m.UserId == userId)))
-                .Include(b => b.Owner)
+                .Where(b => b.Id == boardId && b.Members.Any(m => m.UserId == userId))
+                .Include(b => b.Members)
+                .ThenInclude(m => m.User)
                 .Include(b => b.Tags)
                 .Include(b => b.Columns)
                 .ThenInclude(c => c.Cards)
@@ -77,8 +79,9 @@ namespace StressTracker5001Server.Services
         public async Task<Result<List<Board>>> GetOwnedBoardsAsync(int userId)
         {
             var boards = await _context.Boards
-                .Where(b => b.OwnerId == userId)
-                .Include(b => b.Owner)
+                .Where(b => b.Members.Any(m => m.UserId == userId && m.Role == BoardMemberRole.Owner))
+                .Include(b => b.Members)
+                .ThenInclude(m => m.User)
                 .OrderBy(b => b.UpdatedAt)
                 .ToListAsync();
 
@@ -89,30 +92,38 @@ namespace StressTracker5001Server.Services
         {
             var boards = await _context.Boards
                 .Include(b => b.Members)
-                .Where(b => b.Members.Any(m => m.UserId == userId))
-                .Include(b => b.Owner)
+                .Where(b => b.Members.Any(m => m.UserId == userId && m.Role != BoardMemberRole.Owner))
                 .OrderBy(b => b.UpdatedAt)
                 .ToListAsync();
 
             return Result<List<Board>>.Success(boards);
         }
 
-        public async Task<Result<int>> CreateBoardAsync(CreateBoardDto dto, int userId)
+        public async Task<Result<Board>> CreateBoardAsync(CreateBoardDto dto, int userId)
         {
             var now = DateTime.UtcNow;
             var board = new Board
             {
                 Name = dto.Name,
                 Description = dto.Description ?? string.Empty,
-                OwnerId = userId,
                 CreatedAt = now,
                 UpdatedAt = now
             };
 
+            // Create the owner as a BoardMember with Owner role
+            var ownerMember = new BoardMember
+            {
+                UserId = userId,
+                Role = BoardMemberRole.Owner,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+
+            board.Members.Add(ownerMember);
             _context.Boards.Add(board);
             await _context.SaveChangesAsync();
 
-            return Result<int>.Success(board.Id);
+            return Result<Board>.Success(board);
         }
 
         public async Task<Result<Board>> UpdateBoardAsync(int boardId, UpdateBoardDto dto, int userId)
@@ -150,12 +161,19 @@ namespace StressTracker5001Server.Services
         public async Task<Result<bool>> DeleteBoardAsync(int boardId, int userId)
         {
             var board = await _context.Boards
-                .FirstOrDefaultAsync(b => b.Id == boardId && b.OwnerId == userId);
+                .Include(b => b.Members)
+                .FirstOrDefaultAsync(b => b.Id == boardId);
 
-            // Owner can only delete the board
             if (board == null)
             {
-                return Result<bool>.NotFound($"Board with ID {boardId} not found or access denied");
+                return Result<bool>.NotFound($"Board with ID {boardId} not found");
+            }
+
+            // Check if user is owner
+            var isOwner = board.Members.Any(m => m.UserId == userId && m.Role == BoardMemberRole.Owner);
+            if (!isOwner)
+            {
+                return Result<bool>.Forbidden("Only the board owner can delete the board");
             }
 
             _context.Boards.Remove(board);

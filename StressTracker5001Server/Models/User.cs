@@ -26,9 +26,6 @@ namespace StressTracker5001Server.Models
         public List<RefreshToken> RefreshTokens { get; set; } = new();
 
         [JsonIgnore]
-        public List<Board> Boards { get; set; } = new();
-
-        [JsonIgnore]
         public List<Card> CreatedCards { get; set; } = new();
 
         [JsonIgnore]

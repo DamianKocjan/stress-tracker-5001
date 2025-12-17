@@ -1,6 +1,6 @@
 import type { UserDto } from "./user.dto";
 
-export type BoardMemberRole = "Viewer" | "Member" | "Admin";
+export type BoardMemberRole = "Viewer" | "Member" | "Admin" | "Owner";
 
 export interface BoardMemberDto {
   id: number;

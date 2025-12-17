@@ -31,14 +31,6 @@ namespace StressTracker5001Server.Data
                 .WithOne(rt => rt.User)
                 .HasForeignKey(rt => rt.UserId);
 
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.Boards)
-                .WithOne(b => b.Owner)
-                .HasForeignKey(b => b.OwnerId);
-
-            modelBuilder.Entity<Board>()
-                .HasIndex(b => b.OwnerId);
-
             modelBuilder.Entity<Board>()
                 .HasMany(b => b.Columns)
                 .WithOne(c => c.Board)
@@ -119,10 +111,6 @@ namespace StressTracker5001Server.Data
                 .HasOne(bi => bi.GeneratedByUser)
                 .WithMany(u => u.BoardInvites)
                 .HasForeignKey(bi => bi.GeneratedByUserId);
-
-            modelBuilder.Entity<BoardInvite>()
-                .Property(bi => bi.Role)
-                .HasConversion<string>();
         }
     }
 }

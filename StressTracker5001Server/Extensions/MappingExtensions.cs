@@ -39,15 +39,15 @@ namespace StressTracker5001Server.Extensions
         // Board mappings
         public static BoardDto ToDto(this Board board)
         {
+            var owner = board.Members?.FirstOrDefault(m => m.Role == BoardMemberRole.Owner)?.User;
             return new BoardDto
             {
                 Id = board.Id,
                 Name = board.Name,
                 Description = board.Description,
-                OwnerId = board.OwnerId,
-                Owner = board.Owner?.ToDto() ?? new UserDto
+                Owner = owner?.ToDto() ?? new UserDto
                 {
-                    Id = board.OwnerId,
+                    Id = 0,
                     Username = string.Empty,
                     CreatedAt = DateTime.MinValue,
                     UpdatedAt = DateTime.MinValue
@@ -59,15 +59,15 @@ namespace StressTracker5001Server.Extensions
 
         public static BoardDetailsDto ToDetailsDto(this Board board)
         {
+            var owner = board.Members?.FirstOrDefault(m => m.Role == BoardMemberRole.Owner)?.User;
             return new BoardDetailsDto
             {
                 Id = board.Id,
                 Name = board.Name,
                 Description = board.Description,
-                OwnerId = board.OwnerId,
-                Owner = board.Owner?.ToDto() ?? new UserDto
+                Owner = owner?.ToDto() ?? new UserDto
                 {
-                    Id = board.OwnerId,
+                    Id = 0,
                     Username = string.Empty,
                     CreatedAt = DateTime.MinValue,
                     UpdatedAt = DateTime.MinValue

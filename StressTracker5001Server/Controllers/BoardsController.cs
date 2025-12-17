@@ -32,9 +32,7 @@ namespace StressTracker5001Server.Controllers
                 return createResult.ToActionResult();
             }
 
-            var boardId = createResult.Value;
-            var result = await boardService.GetBoardByIdAsync(boardId, userId);
-            return result.ToActionResult(b => b.ToDto());
+            return createResult.ToActionResult(b => b.ToDto());
         }
 
         [Authorize]
@@ -91,20 +89,6 @@ namespace StressTracker5001Server.Controllers
 
             var result = await boardInviteService.GetActiveInvitesForBoardAsync(boardId, userId);
             return result.ToActionResult(invites => invites.Select(i => i.ToDto()).ToList());
-        }
-
-        [Authorize]
-        [HttpPost("{boardId}/members")]
-        public async Task<IActionResult> AddBoardMember([FromRoute] int boardId, [FromBody] BoardMemberCreateDto dto, [FromServices] IBoardAuthorizationService boardAuthorizationService)
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdClaim?.Value, out var userId))
-            {
-                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
-            }
-
-            var result = await boardAuthorizationService.AddMemberAsync(boardId, dto.UserId, userId, (BoardMemberRole)dto.Role);
-            return result.ToActionResult(m => m.ToDto());
         }
 
         [Authorize]
