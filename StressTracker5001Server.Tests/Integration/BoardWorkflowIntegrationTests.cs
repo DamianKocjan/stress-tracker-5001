@@ -68,7 +68,8 @@ public class BoardWorkflowIntegrationTests : IDisposable
         var createBoardResult = await _boardService.CreateBoardAsync(createBoardDto, ownerId);
         Assert.True(createBoardResult.IsSuccess);
 
-        var boardId = createBoardResult.Value;
+        var board = createBoardResult.Value;
+        var boardId = board!.Id;
 
         // Act 2 - Owner adds a member to the board
         // Owner is automatically created as a member with Owner role (which has Admin permissions)

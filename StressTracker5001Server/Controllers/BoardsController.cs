@@ -134,7 +134,7 @@ namespace StressTracker5001Server.Controllers
                 return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var role = (BoardMemberRole)dto.Role;
+            var role = dto.Role;
             var result = await boardInviteService.GenerateInviteAsync(boardId, userId, role);
             return result.ToActionResult(i => i.ToDto());
         }

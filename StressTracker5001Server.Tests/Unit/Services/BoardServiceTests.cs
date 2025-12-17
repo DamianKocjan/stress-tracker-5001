@@ -119,12 +119,12 @@ public class BoardServiceTests : IDisposable
 
 		// Assert
 		Assert.True(result.IsSuccess);
-		Assert.NotEqual(0, result.Value);
+		Assert.NotEqual(0, result.Value!.Id);
 
 		// Verify board was created
 		var board = await _context.Boards
 			.Include(b => b.Members)
-			.FirstOrDefaultAsync(b => b.Id == result.Value);
+			.FirstOrDefaultAsync(b => b.Id == result.Value!.Id);
 		Assert.NotNull(board);
 		Assert.Equal(createDto.Name, board.Name);
 

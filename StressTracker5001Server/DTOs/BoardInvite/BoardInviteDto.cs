@@ -1,5 +1,5 @@
-using StressTracker5001Server.DTOs.BoardMember;
 using StressTracker5001Server.DTOs.User;
+using StressTracker5001Server.Models;
 
 namespace StressTracker5001Server.DTOs.BoardInvite
 {
@@ -10,7 +10,7 @@ namespace StressTracker5001Server.DTOs.BoardInvite
         public required string Token { get; set; }
         public bool IsRevoked { get; set; }
         public bool HasBeenUsed { get; set; }
-        public required BoardMemberRoleDto Role { get; set; }
+        public required BoardMemberRole Role { get; set; }
         public int GeneratedByUserId { get; set; }
         public required UserDto GeneratedByUser { get; set; }
         public DateTime ExpiresAt { get; set; }

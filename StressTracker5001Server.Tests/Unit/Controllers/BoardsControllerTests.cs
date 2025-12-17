@@ -56,7 +56,7 @@ public class BoardsControllerTests
 
         _mockBoardService
             .Setup(s => s.CreateBoardAsync(It.IsAny<CreateBoardDto>(), TestUserId))
-            .ReturnsAsync(Result<int>.Success(board.Id));
+            .Returns(Task.FromResult(Result<Board>.Success(board)));
 
         _mockBoardService
             .Setup(s => s.GetBoardByIdAsync(board.Id, TestUserId))
@@ -82,7 +82,7 @@ public class BoardsControllerTests
 
         _mockBoardService
             .Setup(s => s.CreateBoardAsync(It.IsAny<CreateBoardDto>(), TestUserId))
-            .ReturnsAsync(Result<int>.Failure("Failed to create board", 400));
+            .Returns(Task.FromResult(Result<Board>.Failure("Failed to create board", 400)));
 
         // Act
         var result = await _controller.CreateBoard(createDto, _mockBoardService.Object);
@@ -104,7 +104,7 @@ public class BoardsControllerTests
 
         _mockBoardService
             .Setup(s => s.GetOwnedBoardsAsync(TestUserId))
-            .ReturnsAsync(Result<List<Board>>.Success(boards));
+            .Returns(Task.FromResult(Result<List<Board>>.Success(boards)));
 
         // Act
         var result = await _controller.GetBoards(_mockBoardService.Object);
@@ -141,7 +141,7 @@ public class BoardsControllerTests
 
         _mockBoardService
             .Setup(s => s.GetBoardWithColumnsAndCardsAsync(boardId, TestUserId))
-            .ReturnsAsync(Result<BoardDetailsDto>.Success(boardDetailsDto));
+            .Returns(Task.FromResult(Result<BoardDetailsDto>.Success(boardDetailsDto)));
 
         // Act
         var result = await _controller.GetBoard(boardId, _mockBoardService.Object);
@@ -160,7 +160,7 @@ public class BoardsControllerTests
 
         _mockBoardService
             .Setup(s => s.GetBoardWithColumnsAndCardsAsync(boardId, TestUserId))
-            .ReturnsAsync(Result<BoardDetailsDto>.NotFound($"Board with ID {boardId} not found"));
+            .Returns(Task.FromResult(Result<BoardDetailsDto>.NotFound($"Board with ID {boardId} not found")));
 
         // Act
         var result = await _controller.GetBoard(boardId, _mockBoardService.Object);
@@ -186,7 +186,7 @@ public class BoardsControllerTests
 
         _mockBoardService
             .Setup(s => s.UpdateBoardAsync(boardId, It.IsAny<UpdateBoardDto>(), TestUserId))
-            .ReturnsAsync(Result<Board>.Success(updatedBoard));
+            .Returns(Task.FromResult(Result<Board>.Success(updatedBoard)));
 
         // Act
         var result = await _controller.UpdateBoard(boardId, updateDto, _mockBoardService.Object);
@@ -205,7 +205,7 @@ public class BoardsControllerTests
 
         _mockBoardService
             .Setup(s => s.DeleteBoardAsync(boardId, TestUserId))
-            .ReturnsAsync(Result<bool>.Success(true));
+            .Returns(Task.FromResult(Result<bool>.Success(true)));
 
         // Act
         var result = await _controller.DeleteBoard(boardId, _mockBoardService.Object);
@@ -224,7 +224,7 @@ public class BoardsControllerTests
 
         _mockBoardService
             .Setup(s => s.DeleteBoardAsync(boardId, TestUserId))
-            .ReturnsAsync(Result<bool>.NotFound($"Board with ID {boardId} not found"));
+            .Returns(Task.FromResult(Result<bool>.NotFound($"Board with ID {boardId} not found")));
 
         // Act
         var result = await _controller.DeleteBoard(boardId, _mockBoardService.Object);

@@ -186,7 +186,7 @@ namespace StressTracker5001Server.Extensions
                     CreatedAt = DateTime.MinValue,
                     UpdatedAt = DateTime.MinValue
                 },
-                Role = (BoardMemberRoleDto)boardMember.Role,
+                Role = boardMember.Role,
                 CreatedAt = boardMember.CreatedAt,
                 UpdatedAt = boardMember.UpdatedAt
             };
@@ -202,7 +202,7 @@ namespace StressTracker5001Server.Extensions
                 Token = boardInvite.Token,
                 IsRevoked = boardInvite.IsRevoked,
                 HasBeenUsed = boardInvite.HasBeenUsed,
-                Role = (BoardMemberRoleDto)boardInvite.Role,
+                Role = boardInvite.Role,
                 GeneratedByUserId = boardInvite.GeneratedByUserId,
                 GeneratedByUser = boardInvite.GeneratedByUser?.ToDto() ?? new UserDto
                 {
