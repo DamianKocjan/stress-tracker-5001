@@ -31,7 +31,7 @@ namespace StressTracker5001Server.Services
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                return Result<User>.NotFound($"User with ID {id} not found");
+                return Result<User>.NotFound($"User not found");
             }
             return Result<User>.Success(user);
         }
@@ -41,7 +41,7 @@ namespace StressTracker5001Server.Services
             var user = await _context.Users.FirstOrDefaultAsync(U => U.Email.ToLower() == email.ToLower());
             if (user == null)
             {
-                return Result<User>.NotFound($"User with email {email} not found");
+                return Result<User>.NotFound($"User not found");
             }
             return Result<User>.Success(user);
         }
@@ -56,7 +56,7 @@ namespace StressTracker5001Server.Services
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                return Result<User>.NotFound($"User with ID {id} not found");
+                return Result<User>.NotFound($"User not found");
             }
 
             user.Password = BCrypt.Net.BCrypt.HashPassword(newPassword);
@@ -95,7 +95,7 @@ namespace StressTracker5001Server.Services
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                return Result<User>.NotFound($"User with ID {id} not found");
+                return Result<User>.NotFound($"User not found");
             }
 
             // Check if email is being changed to an existing email
@@ -125,7 +125,7 @@ namespace StressTracker5001Server.Services
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                return Result<bool>.NotFound($"User with ID {id} not found");
+                return Result<bool>.NotFound($"User not found");
             }
 
             _context.Users.Remove(user);
