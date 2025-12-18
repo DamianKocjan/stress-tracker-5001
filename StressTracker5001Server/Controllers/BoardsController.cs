@@ -92,20 +92,6 @@ namespace StressTracker5001Server.Controllers
         }
 
         [Authorize]
-        [HttpGet("{boardId}/invites")]
-        public async Task<IActionResult> GetBoardInvites([FromRoute] int boardId, [FromServices] IBoardInviteService boardInviteService)
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (!int.TryParse(userIdClaim?.Value, out var userId))
-            {
-                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
-            }
-
-            var result = await boardInviteService.GetActiveInvitesForBoardAsync(boardId, userId);
-            return result.ToActionResult(invites => invites.Select(i => i.ToDto()).ToList());
-        }
-
-        [Authorize]
         [HttpPatch("{boardId}/members/{memberId}")]
         public async Task<IActionResult> UpdateMemberRole([FromRoute] int boardId, [FromRoute] int memberId, [FromBody] BoardMemberUpdateDto dto, [FromServices] IBoardAuthorizationService boardAuthorizationService)
         {
@@ -139,6 +125,20 @@ namespace StressTracker5001Server.Controllers
         }
 
         [Authorize]
+        [HttpGet("{boardId}/invites")]
+        public async Task<IActionResult> GetBoardInvites([FromRoute] int boardId, [FromServices] IBoardInviteService boardInviteService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var result = await boardInviteService.GetActiveInvitesForBoardAsync(boardId, userId);
+            return result.ToActionResult(invites => invites.Select(i => i.ToDto()).ToList());
+        }
+
+        [Authorize]
         [HttpPost("{boardId}/invites")]
         public async Task<IActionResult> GenerateBoardInvite([FromRoute] int boardId, [FromBody] BoardInviteCreateDto dto, [FromServices] IBoardInviteService boardInviteService)
         {
@@ -154,8 +154,8 @@ namespace StressTracker5001Server.Controllers
         }
 
         [Authorize]
-        [HttpDelete("invites/{inviteId}")]
-        public async Task<IActionResult> RevokeInvite([FromRoute] int inviteId, [FromServices] IBoardInviteService boardInviteService)
+        [HttpPost("{boardId}/revoke-invites")]
+        public async Task<IActionResult> RevokeAllInvites([FromRoute] int boardId, [FromServices] IBoardInviteService boardInviteService)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
@@ -163,7 +163,7 @@ namespace StressTracker5001Server.Controllers
                 return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var result = await boardInviteService.RevokeInviteAsync(inviteId, userId);
+            var result = await boardInviteService.RevokeAllInvitesForBoardAsync(boardId, userId);
             if (result.IsSuccess)
             {
                 return new ObjectResult(ResultDto.CreateSuccess(204)) { StatusCode = 204 };

@@ -27,5 +27,24 @@ namespace StressTracker5001Server.Controllers
             var result = await boardInviteService.AcceptInviteAsync(userId, dto.Token);
             return result.ToActionResult();
         }
+
+        [Authorize]
+        [HttpPost("{inviteId}")]
+        public async Task<IActionResult> RevokeInvite([FromRoute] int inviteId, [FromServices] IBoardInviteService boardInviteService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var result = await boardInviteService.RevokeInviteAsync(inviteId, userId);
+            if (result.IsSuccess)
+            {
+                return new ObjectResult(ResultDto.CreateSuccess(204)) { StatusCode = 204 };
+            }
+
+            return result.ToActionResult();
+        }
     }
 }

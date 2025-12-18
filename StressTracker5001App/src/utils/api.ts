@@ -529,6 +529,17 @@ export async function revokeInvite(inviteId: number): Promise<void> {
   }
 }
 
+export async function revokeAllBoardInvites(boardId: number): Promise<void> {
+  const response = await fetch(`/boards/${boardId}/revoke-invites`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<void>;
+    throw new Error(result.errorMessage || "Failed to revoke all invites");
+  }
+}
+
 export async function joinBoardWithInvite(
   token: string
 ): Promise<BoardDetailsDto> {
