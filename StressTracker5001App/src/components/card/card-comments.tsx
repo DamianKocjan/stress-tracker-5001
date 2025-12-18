@@ -5,6 +5,7 @@ import { useAuth } from "@/providers/auth";
 import { Fragment } from "react/jsx-runtime";
 import { CommentCard, CommentForm, SkeletonCard } from "../comment/comments";
 import { FetchingErrorAlert } from "../fetching-error-alert";
+import { RoleGuard } from "../role-guard";
 
 interface CardCommentsProps {
   cardId: number;
@@ -46,7 +47,9 @@ export function CardComments({ cardId }: CardCommentsProps) {
         </div>
         <div className="bg-border h-px w-full mb-4" />
         <div className="space-y-3">
-          <CommentForm cardId={cardId} currentUser={user!} />
+          <RoleGuard minRole="Member">
+            <CommentForm cardId={cardId} currentUser={user!} />
+          </RoleGuard>
           {/* {hasAnyComments ? (
             comments.map((comment) => (
               <CommentCard

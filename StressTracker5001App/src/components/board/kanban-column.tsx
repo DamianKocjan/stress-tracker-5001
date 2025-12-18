@@ -7,6 +7,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { GripVertical, Pencil } from "lucide-react";
 import { useMemo } from "react";
 import { ColumnCard } from "../column/column-card";
+import { RoleGuard } from "../role-guard";
 import { Badge } from "../ui/badge";
 import { Button } from "../ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
@@ -90,16 +91,18 @@ export function KanbanColumn({ column, cards }: KanbanColumnProps) {
         )}
       >
         <CardHeader className="font-semibold border-b flex flex-row items-center justify-between">
-          <Button
-            size="icon"
-            variant="ghost"
-            {...attributes}
-            {...listeners}
-            className="-ml-2 cursor-grab text-secondary-foreground/80 hover:text-secondary-foreground"
-          >
-            <span className="sr-only">Move column</span>
-            <GripVertical />
-          </Button>
+          <RoleGuard minRole="Admin">
+            <Button
+              size="icon"
+              variant="ghost"
+              {...attributes}
+              {...listeners}
+              className="-ml-2 cursor-grab text-secondary-foreground/80 hover:text-secondary-foreground"
+            >
+              <span className="sr-only">Move column</span>
+              <GripVertical />
+            </Button>
+          </RoleGuard>
 
           <h1 className="w-full text-center relative">
             {column.name}
@@ -117,17 +120,19 @@ export function KanbanColumn({ column, cards }: KanbanColumnProps) {
             ) : null}
           </h1>
 
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => {
-              setColumnId(column.id);
-              setColumnDialogUpdateOpen(true);
-            }}
-          >
-            <span className="sr-only">Edit column</span>
-            <Pencil className="size-4" />
-          </Button>
+          <RoleGuard minRole="Admin">
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => {
+                setColumnId(column.id);
+                setColumnDialogUpdateOpen(true);
+              }}
+            >
+              <span className="sr-only">Edit column</span>
+              <Pencil className="size-4" />
+            </Button>
+          </RoleGuard>
         </CardHeader>
         <ScrollArea>
           <CardContent className="flex grow flex-col gap-2 p-2">
@@ -142,19 +147,22 @@ export function KanbanColumn({ column, cards }: KanbanColumnProps) {
             </SortableContext>
           </CardContent>
         </ScrollArea>
-        <CardFooter className="px-0 mt-auto">
-          <Button
-            type="button"
-            className="w-full"
-            variant="ghost"
-            onClick={() => {
-              setColumnId(column.id);
-              setCardCreateDialogOpen(true);
-            }}
-          >
-            Create Card
-          </Button>
-        </CardFooter>
+
+        <RoleGuard minRole="Member">
+          <CardFooter className="px-0 mt-auto">
+            <Button
+              type="button"
+              className="w-full"
+              variant="ghost"
+              onClick={() => {
+                setColumnId(column.id);
+                setCardCreateDialogOpen(true);
+              }}
+            >
+              Create Card
+            </Button>
+          </CardFooter>
+        </RoleGuard>
       </Card>
     </div>
   );

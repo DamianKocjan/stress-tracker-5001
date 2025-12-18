@@ -18,6 +18,11 @@ const badgeVariants = cva(
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
       },
+      size: {
+        default: "text-xs",
+        sm: "text-xs",
+        lg: "text-sm",
+      },
     },
     defaultVariants: {
       variant: "default",

@@ -1,3 +1,4 @@
+import { ROLE } from "@/dto/board-member.dto";
 import type { CardDetailsDto } from "@/dto/card.dto";
 import { useCardAssignTagsMutation } from "@/hooks/use-card-assign-tags-mutation";
 import { useCardDeleteMutation } from "@/hooks/use-card-delete-mutation";
@@ -7,6 +8,7 @@ import { useConfirm } from "@/hooks/use-confirm";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useTagDeleteMutation } from "@/hooks/use-tag-delete-mutation";
 import { useTagsQuery } from "@/hooks/use-tags-query";
+import { useUserBoardRole } from "@/hooks/use-user-board-role";
 import { cn } from "@/lib/utils";
 import { CardFormSchema } from "@/schemas/card";
 import { useKanbanStore } from "@/stores/kanban-store";
@@ -15,7 +17,8 @@ import { useForm } from "@tanstack/react-form";
 import { Calendar, Clock, Pencil, Tag, Trash2, User, X } from "lucide-react";
 import { useState } from "react";
 import { FetchingErrorAlert } from "../fetching-error-alert";
-import { TagSelector } from "../tags/tag-selector";
+import { RoleGuard } from "../role-guard";
+import { SelectedTagsDisplay, TagSelector } from "../tags/tag-selector";
 import { Button } from "../ui/button";
 import { Drawer, DrawerClose, DrawerContent, DrawerFooter } from "../ui/drawer";
 import {
@@ -86,6 +89,7 @@ function CardDetailsContent({
 }: CardDetailsContentProps) {
   const { data, status, error, refetch } = useCardDetailsQuery(cardId);
   const [isEditing, setIsEditing] = useState(false);
+  const userRole = useUserBoardRole();
 
   if (status === "pending") {
     return <CardDetailsSkeleton className={className} />;
@@ -102,7 +106,7 @@ function CardDetailsContent({
     );
   }
 
-  if (isEditing) {
+  if (isEditing && userRole !== ROLE.Viewer) {
     return (
       <CardEditForm
         className={className}
@@ -192,21 +196,24 @@ function CardDetailsView({
         <h3 className="text-lg font-semibold leading-tight break-all">
           {title}
         </h3>
-        <div className="flex gap-1">
-          <Button variant="ghost" size="icon" onClick={onEdit}>
-            <Pencil className="h-4 w-4" />
-            <span className="sr-only">Edit</span>
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleDelete}
-            disabled={cardDeleteMutation.isPending}
-          >
-            <Trash2 className="h-4 w-4 text-destructive" />
-            <span className="sr-only">Delete</span>
-          </Button>
-        </div>
+
+        <RoleGuard minRole="Member">
+          <div className="flex gap-1">
+            <Button variant="ghost" size="icon" onClick={onEdit}>
+              <Pencil className="h-4 w-4" />
+              <span className="sr-only">Edit</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleDelete}
+              disabled={cardDeleteMutation.isPending}
+            >
+              <Trash2 className="h-4 w-4 text-destructive" />
+              <span className="sr-only">Delete</span>
+            </Button>
+          </div>
+        </RoleGuard>
       </div>
 
       {description ? (
@@ -224,15 +231,26 @@ function CardDetailsView({
           <Tag className="text-muted-foreground h-4 w-4" />
           <span className="text-sm text-muted-foreground">Tags:</span>
         </div>
-        <TagSelector
-          availableTags={tags}
-          selectedTags={tags.filter((tag) => cardTags.includes(tag.id))}
-          onClose={(tags) =>
-            assignTagMutation.mutateAsync({ tags, cardId: id })
+        <RoleGuard
+          minRole="Member"
+          fallback={
+            <SelectedTagsDisplay
+              selectedTags={tags.filter((tag) => cardTags.includes(tag.id))}
+            />
           }
-          maxTags={5}
-          disabled={assignTagMutation.isPending || removeTagMutation.isPending}
-        />
+        >
+          <TagSelector
+            availableTags={tags}
+            selectedTags={tags.filter((tag) => cardTags.includes(tag.id))}
+            onClose={(tags) =>
+              assignTagMutation.mutateAsync({ tags, cardId: id })
+            }
+            maxTags={5}
+            disabled={
+              assignTagMutation.isPending || removeTagMutation.isPending
+            }
+          />
+        </RoleGuard>
       </div>
 
       <Separator />

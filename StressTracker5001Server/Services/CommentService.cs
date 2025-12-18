@@ -38,7 +38,7 @@ namespace StressTracker5001Server.Services
                 return Result<Comment>.NotFound($"Comment with ID {commentId} not found");
             }
 
-            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(comment.Card.Column.BoardId, userId, requiredRole))
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(comment.Card!.Column!.BoardId, userId, requiredRole))
             {
                 return Result<Comment>.Forbidden("You do not have permission to access this comment");
             }
@@ -52,6 +52,13 @@ namespace StressTracker5001Server.Services
             if (!commentResult.IsSuccess)
             {
                 return commentResult;
+            }
+
+            // Check if user is the author or an admin/owner of the board
+            var userRole = await _boardAuthorizationService.GetMemberAsync(commentResult.Value!.Card!.Column!.BoardId, userId);
+            if (commentResult.Value.UserId != userId && (userRole == null || (userRole.Value!.Role != BoardMemberRole.Admin && userRole.Value.Role != BoardMemberRole.Owner)))
+            {
+                return Result<Comment>.Forbidden("You do not have permission to edit this comment");
             }
 
             var comment = commentResult.Value!;
@@ -68,6 +75,13 @@ namespace StressTracker5001Server.Services
             if (!commentResult.IsSuccess)
             {
                 return Result<bool>.NotFound(commentResult.Error ?? "Comment not found");
+            }
+
+            // Check if user is the author or an admin/owner of the board
+            var userRole = await _boardAuthorizationService.GetMemberAsync(commentResult.Value!.Card!.Column!.BoardId, userId);
+            if (commentResult.Value.UserId != userId && (userRole == null || (userRole.Value!.Role != BoardMemberRole.Admin && userRole.Value.Role != BoardMemberRole.Owner)))
+            {
+                return Result<bool>.Forbidden("You do not have permission to delete this comment");
             }
 
             var comment = commentResult.Value!;

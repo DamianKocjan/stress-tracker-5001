@@ -153,7 +153,7 @@ namespace StressTracker5001Server.Services
 
         public async Task<Result<List<BoardInvite>>> GetActiveInvitesForBoardAsync(int boardId, int userId)
         {
-            var canViewInvites = await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Viewer);
+            var canViewInvites = await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin);
             if (!canViewInvites)
             {
                 return Result<List<BoardInvite>>.Forbidden("You do not have permission to view invites for this board");

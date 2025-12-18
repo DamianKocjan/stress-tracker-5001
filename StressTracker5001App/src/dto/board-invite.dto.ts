@@ -1,4 +1,4 @@
-import type { BoardMemberRole } from "./board-member.dto";
+import type { BoardMemberRoleDto } from "./board-member.dto";
 import type { UserDto } from "./user.dto";
 
 export interface BoardInviteDto {
@@ -7,7 +7,7 @@ export interface BoardInviteDto {
   token: string;
   isRevoked: boolean;
   hasBeenUsed: boolean;
-  role: BoardMemberRole;
+  role: BoardMemberRoleDto;
   generatedByUserId: number;
   generatedByUser: UserDto;
   expiresAt: string;
@@ -16,6 +16,6 @@ export interface BoardInviteDto {
 }
 
 export interface BoardInviteCreateDto {
-  role: BoardMemberRole;
+  role: BoardMemberRoleDto;
   expiresAt: string;
 }

@@ -9,6 +9,7 @@ namespace StressTracker5001Server.Services
     {
         Task<Result<BoardMember>> AddMemberAsync(int boardId, int userMemberId, int userId, BoardMemberRole role);
         Task<Result<bool>> RemoveMemberAsync(int boardId, int userMemberId, int userId);
+        Task<Result<BoardMember>> GetMemberRoleAsync(int boardId, int userId);
         Task<Result<List<BoardMember>>> GetMembersAsync(int boardId, int userId);
         Task<Result<BoardMember>> GetMemberAsync(int boardId, int userId);
         Task<Result<BoardMember>> ChangeMemberRoleAsync(int boardId, int userId, int userMemberId, BoardMemberRole newRole);
@@ -79,6 +80,17 @@ namespace StressTracker5001Server.Services
             _context.BoardMembers.Remove(member);
             await _context.SaveChangesAsync();
             return Result<bool>.Success(true);
+        }
+
+        public async Task<Result<BoardMember>> GetMemberRoleAsync(int boardId, int userId)
+        {
+            var memberResult = await GetMemberAsync(boardId, userId);
+            if (!memberResult.IsSuccess)
+            {
+                return Result<BoardMember>.NotFound("User is not a member of this board");
+            }
+
+            return Result<BoardMember>.Success(memberResult.Value!);
         }
 
         public async Task<Result<List<BoardMember>>> GetMembersAsync(int boardId, int userId)

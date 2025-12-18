@@ -54,7 +54,7 @@ namespace StressTracker5001Server.Services
                 return Result<Column>.NotFound($"Board with ID {boardId} not found");
             }
 
-            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Member))
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin))
             {
                 return Result<Column>.Forbidden("You do not have permission to add columns to this board");
             }
@@ -78,7 +78,7 @@ namespace StressTracker5001Server.Services
 
         public async Task<Result<Column>> UpdateColumnAsync(int columnId, UpdateColumnDto dto, int userId)
         {
-            var columnResult = await GetColumnByIdAsync(columnId, userId, BoardMemberRole.Member);
+            var columnResult = await GetColumnByIdAsync(columnId, userId, BoardMemberRole.Admin);
             if (!columnResult.IsSuccess)
             {
                 return columnResult;
@@ -95,7 +95,7 @@ namespace StressTracker5001Server.Services
 
         public async Task<Result<Column>> MoveColumnAsync(int columnId, int newPosition, int userId)
         {
-            var columnResult = await GetColumnByIdAsync(columnId, userId, BoardMemberRole.Member);
+            var columnResult = await GetColumnByIdAsync(columnId, userId, BoardMemberRole.Admin);
             if (!columnResult.IsSuccess)
             {
                 return Result<Column>.NotFound(columnResult.Error ?? "Column not found");
@@ -124,7 +124,7 @@ namespace StressTracker5001Server.Services
 
         public async Task<Result<bool>> DeleteColumnAsync(int columnId, int userId)
         {
-            var columnResult = await GetColumnByIdAsync(columnId, userId, BoardMemberRole.Member);
+            var columnResult = await GetColumnByIdAsync(columnId, userId, BoardMemberRole.Admin);
             if (!columnResult.IsSuccess)
             {
                 return Result<bool>.NotFound(columnResult.Error ?? "Column not found");

@@ -7,6 +7,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { memo } from "react";
+import { RoleGuard } from "../role-guard";
 import { TagBadge } from "../tags/tag-badge";
 
 type ColumnCardProps = {
@@ -63,16 +64,18 @@ export function ColumnCard({ card }: ColumnCardProps) {
       onClick={() => setCardId(card.id)}
     >
       <CardContent className="p-0 flex items-center gap-2 align-middle text-left whitespace-pre-wrap">
-        <Button
-          size="icon"
-          variant="ghost"
-          {...attributes}
-          {...listeners}
-          className="-ml-2 cursor-grab text-secondary-foreground/80 hover:text-secondary-foreground"
-        >
-          <span className="sr-only">Move card</span>
-          <GripVertical />
-        </Button>
+        <RoleGuard minRole="Member">
+          <Button
+            size="icon"
+            variant="ghost"
+            {...attributes}
+            {...listeners}
+            className="-ml-2 cursor-grab text-secondary-foreground/80 hover:text-secondary-foreground"
+          >
+            <span className="sr-only">Move card</span>
+            <GripVertical />
+          </Button>
+        </RoleGuard>
 
         <div className="grow space-y-2">
           <h2 className="font-medium max-w-sm break-all">{card.title}</h2>

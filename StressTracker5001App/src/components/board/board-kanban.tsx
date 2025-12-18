@@ -30,6 +30,7 @@ import { createPortal } from "react-dom";
 import { CardCreateDialog } from "../card/card-create-dialog";
 import { ColumnCard } from "../column/column-card";
 import { ColumnCreateDialog } from "../column/column-create-dialog";
+import { RoleGuard } from "../role-guard";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 import { Skeleton } from "../ui/skeleton";
 import { KanbanAddColumn } from "./kanban-add-column";
@@ -326,12 +327,18 @@ export function BoardKanban({ board }: BoardKanbanProps) {
       onDragEnd={onDragEnd}
     >
       <div className="grid size-full min-h-120 w-full max-h-[calc(100vh-8rem)]">
-        <ColumnCreateDialog boardId={board.id} />
-        <CardCreateDialog boardId={board.id} />
+        <RoleGuard minRole="Admin">
+          <ColumnCreateDialog boardId={board.id} />
+        </RoleGuard>
+        <RoleGuard minRole="Member">
+          <CardCreateDialog boardId={board.id} />
+        </RoleGuard>
 
         <ScrollArea className="size-full max-w-dvw overflow-hidden">
           <div className="flex gap-4 py-4 px-6 min-h-[75dvh]">
-            <KanbanAddColumn hasColumns={columns.length > 0} />
+            <RoleGuard minRole="Admin">
+              <KanbanAddColumn hasColumns={columns.length > 0} />
+            </RoleGuard>
 
             <SortableContext items={columnIds}>
               {columns.map((column) => (

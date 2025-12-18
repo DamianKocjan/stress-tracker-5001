@@ -1,11 +1,13 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ROLE } from "@/dto/board-member.dto";
 import type { CommentDto } from "@/dto/comment.dto";
 import type { UserDto } from "@/dto/user.dto";
 import { useCommentCreateMutation } from "@/hooks/use-comment-create-mutation";
 import { useCommentQuery } from "@/hooks/use-comment-query";
 import { useCommentUpdateMutation } from "@/hooks/use-comment-update-mutation";
+import { useUserBoardRole } from "@/hooks/use-user-board-role";
 import { cn } from "@/lib/utils";
 import { CommentSchema } from "@/schemas/comment";
 import { useForm } from "@tanstack/react-form";
@@ -43,7 +45,7 @@ function CommentLayout({
       )}
       {...props}
     >
-      <Avatar className="h-9 w-9">
+      <Avatar className="size-9">
         <AvatarFallback className="text-xs">
           {getInitials(comment.user.username)}
         </AvatarFallback>
@@ -54,7 +56,7 @@ function CommentLayout({
             <p className="font-semibold text-foreground">
               {comment.user.username}
             </p>
-            <div className="bg-muted h-1 w-1 rounded-full" />
+            <div className="bg-muted size-1 rounded-full" />
             <p
               className="text-muted-foreground text-xs"
               title={new Date(comment.createdAt).toLocaleString()}
@@ -78,7 +80,7 @@ function CommentLayout({
                   onClick={onEdit}
                 >
                   <span className="sr-only">Edit comment</span>
-                  <Edit2Icon className="h-3.5 w-3.5" />
+                  <Edit2Icon className="size-3.5" />
                 </Button>
               )}
               <Button
@@ -89,7 +91,7 @@ function CommentLayout({
                 onClick={() => onDelete(comment.id)}
               >
                 <span className="sr-only">Delete comment</span>
-                <TrashIcon className="h-3.5 w-3.5" />
+                <TrashIcon className="size-3.5" />
               </Button>
             </div>
           )}
@@ -108,6 +110,8 @@ type CommentCardProps = CommentLayoutProps & {
 export function CommentCard({ comment, cardId, ...props }: CommentCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const updateCommentMutation = useCommentUpdateMutation(cardId);
+  const userRole = useUserBoardRole();
+  const canEdit = userRole !== ROLE.Viewer;
 
   const form = useForm({
     defaultValues: {
@@ -133,11 +137,11 @@ export function CommentCard({ comment, cardId, ...props }: CommentCardProps) {
   return (
     <CommentLayout
       comment={comment}
-      isEditing={isEditing}
+      isEditing={isEditing && canEdit}
       onEdit={() => setIsEditing(true)}
       {...props}
     >
-      {isEditing ? (
+      {isEditing && canEdit ? (
         <form
           className="mt-2 space-y-2"
           onSubmit={(e) => {
@@ -166,7 +170,7 @@ export function CommentCard({ comment, cardId, ...props }: CommentCardProps) {
               onClick={handleCancel}
               disabled={updateCommentMutation.isPending}
             >
-              <XIcon className="h-4 w-4 mr-1" />
+              <XIcon className="size-4 mr-1" />
               Cancel
             </Button>
             <Button
@@ -177,7 +181,7 @@ export function CommentCard({ comment, cardId, ...props }: CommentCardProps) {
                 !form.state.values.content.trim()
               }
             >
-              <CheckIcon className="h-4 w-4 mr-1" />
+              <CheckIcon className="size-4 mr-1" />
               {updateCommentMutation.isPending ? "Saving..." : "Save"}
             </Button>
           </div>
@@ -250,7 +254,7 @@ export function CommentForm({
   return (
     <form className="my-5 w-full space-y-2" onSubmit={handleSubmit}>
       <div className="flex w-full gap-x-3">
-        <Avatar className="h-9 w-9">
+        <Avatar className="size-9">
           <AvatarFallback className="text-xs">
             {getInitials(currentUser.username)}
           </AvatarFallback>
@@ -285,7 +289,7 @@ export function SkeletonCard({
       {...props}
     >
       <div>
-        <Skeleton className="h-9 w-9 rounded-full" />
+        <Skeleton className="size-9 rounded-full" />
       </div>
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-center gap-2">
@@ -294,8 +298,8 @@ export function SkeletonCard({
           <Skeleton className="h-3 w-16" />
         </div>
         <div className="space-y-1.5">
-          <Skeleton className="h-3.5 w-full" />
-          <Skeleton className="h-3.5 w-4/5" />
+          <Skeleton className="size-full" />
+          <Skeleton className="size-4/5" />
         </div>
       </div>
     </div>

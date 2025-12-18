@@ -12,6 +12,7 @@ import {
 import type { TagDto } from "@/dto/tag.dto";
 import { CheckIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "../ui/button";
 
 interface TagSelectorProps {
   availableTags: TagDto[];
@@ -117,5 +118,27 @@ export function TagSelector({
         </TagsList>
       </TagsContent>
     </Tags>
+  );
+}
+
+export function SelectedTagsDisplay({
+  selectedTags,
+}: Pick<TagSelectorProps, "selectedTags">) {
+  return (
+    <Button className="h-auto w-full justify-between p-2" variant="outline">
+      <div className="flex flex-wrap items-center gap-1">
+        {selectedTags.length > 0 ? (
+          selectedTags.map((tag) => (
+            <TagsValue key={tag.id} color={tag.color}>
+              {tag.name}
+            </TagsValue>
+          ))
+        ) : (
+          <span className="px-2 py-px text-muted-foreground">
+            No tags selected...
+          </span>
+        )}
+      </div>
+    </Button>
   );
 }

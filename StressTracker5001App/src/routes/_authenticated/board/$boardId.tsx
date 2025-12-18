@@ -6,6 +6,8 @@ import { BoardUpdateDialog } from "@/components/board/board-update-dialog";
 import { CardDetailsDialog } from "@/components/card/card-details-dialog";
 import { ColumnUpdateDialog } from "@/components/column/column-update-dialog";
 import { FetchingErrorAlert } from "@/components/fetching-error-alert";
+import { MembersDialog } from "@/components/member/members-dialog";
+import { RoleGuard } from "@/components/role-guard";
 import { TagManagementDialog } from "@/components/tags/tag-management-dialog";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -61,13 +63,16 @@ function BoardDetails({ board }: BoardDetailsProps) {
           <div className="flex justify-between items-center w-full">
             <h2 className="text-lg font-medium">{board.name}</h2>
             <div className="flex gap-2">
-              <TagManagementDialog boardId={board.id} tags={board.tags} />
-              <BoardUpdateDialog
-                defaultValues={{
-                  name: board.name,
-                  description: board.description,
-                }}
-              />
+              <RoleGuard minRole="Admin">
+                <MembersDialog boardId={board.id} />
+                <TagManagementDialog boardId={board.id} tags={board.tags} />
+                <BoardUpdateDialog
+                  defaultValues={{
+                    name: board.name,
+                    description: board.description,
+                  }}
+                />
+              </RoleGuard>
             </div>
           </div>
         </CardHeader>
@@ -75,13 +80,16 @@ function BoardDetails({ board }: BoardDetailsProps) {
 
       <BoardKanban board={board} />
       <CardDetailsDialog boardId={board.id} />
-      {board.columns.map((column) => (
-        <ColumnUpdateDialog
-          key={column.id}
-          boardId={board.id}
-          column={column}
-        />
-      ))}
+
+      <RoleGuard minRole="Admin">
+        {board.columns.map((column) => (
+          <ColumnUpdateDialog
+            key={column.id}
+            boardId={board.id}
+            column={column}
+          />
+        ))}
+      </RoleGuard>
     </div>
   );
 }

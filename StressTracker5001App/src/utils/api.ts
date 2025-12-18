@@ -81,6 +81,22 @@ export async function getBoard(boardId: number): Promise<BoardDetailsDto> {
   return unwrapResult(result);
 }
 
+export async function getBoardMembership(
+  boardId: number
+): Promise<BoardMemberDto> {
+  const response = await fetch(`/boards/${boardId}/membership`, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<BoardMemberDto>;
+    throw new Error(result.errorMessage || "Failed to fetch board membership");
+  }
+
+  const result = (await response.json()) as ResultDto<BoardMemberDto>;
+  return unwrapResult(result);
+}
+
 export async function updateBoard(
   boardId: number,
   data: BoardUpdateDto
