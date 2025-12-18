@@ -1,3 +1,4 @@
+import type { CardAssignmentDto } from "./card-assignment.dto";
 import type { UserDto } from "./user.dto";
 
 export interface CardDetailsDto {
@@ -9,6 +10,7 @@ export interface CardDetailsDto {
   dueDate: string | null;
   createdById: number;
   tags: number[];
+  assignments: CardAssignmentDto[];
   createdBy: UserDto;
   createdAt: string;
   updatedAt: string;
@@ -25,6 +27,7 @@ export interface CardDto {
   createdAt: string;
   updatedAt: string;
   tags: number[];
+  assignments: CardAssignmentDto[];
 }
 
 export interface CardCreateDto {

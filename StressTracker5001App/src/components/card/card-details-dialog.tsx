@@ -14,7 +14,16 @@ import { CardFormSchema } from "@/schemas/card";
 import { useKanbanStore } from "@/stores/kanban-store";
 import { showErrorToast } from "@/utils/handle-error";
 import { useForm } from "@tanstack/react-form";
-import { Calendar, Clock, Pencil, Tag, Trash2, User, X } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Pencil,
+  Tag,
+  Trash2,
+  User,
+  UsersIcon,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { FetchingErrorAlert } from "../fetching-error-alert";
 import { RoleGuard } from "../role-guard";
@@ -38,6 +47,7 @@ import {
 import { ScrollArea } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
 import { Skeleton } from "../ui/skeleton";
+import { AssignedUsersDisplay } from "./card-assigned-users-display";
 import { CardComments } from "./card-comments";
 
 interface CardDetailsDialogProps {
@@ -163,6 +173,7 @@ function CardDetailsView({
   dueDate,
   createdBy,
   tags: cardTags,
+  assignments,
   createdAt,
   updatedAt,
   onEdit,
@@ -200,7 +211,7 @@ function CardDetailsView({
         <RoleGuard minRole="Member">
           <div className="flex gap-1">
             <Button variant="ghost" size="icon" onClick={onEdit}>
-              <Pencil className="h-4 w-4" />
+              <Pencil className="size-4" />
               <span className="sr-only">Edit</span>
             </Button>
             <Button
@@ -209,7 +220,7 @@ function CardDetailsView({
               onClick={handleDelete}
               disabled={cardDeleteMutation.isPending}
             >
-              <Trash2 className="h-4 w-4 text-destructive" />
+              <Trash2 className="size-4 text-destructive" />
               <span className="sr-only">Delete</span>
             </Button>
           </div>
@@ -228,9 +239,10 @@ function CardDetailsView({
 
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <Tag className="text-muted-foreground h-4 w-4" />
+          <Tag className="text-muted-foreground size-4" />
           <span className="text-sm text-muted-foreground">Tags:</span>
         </div>
+
         <RoleGuard
           minRole="Member"
           fallback={
@@ -255,9 +267,20 @@ function CardDetailsView({
 
       <Separator />
 
+      <div className="space-y-2">
+        <div className="flex items-center gap-2">
+          <UsersIcon className="text-muted-foreground size-4" />
+          <span className="text-sm text-muted-foreground">Assignees:</span>
+        </div>
+
+        <AssignedUsersDisplay assignments={assignments} boardId={boardId} />
+      </div>
+
+      <Separator />
+
       <div className="space-y-2 text-sm">
         <div className="flex items-center gap-2">
-          <Calendar className="text-muted-foreground h-4 w-4" />
+          <Calendar className="text-muted-foreground size-4" />
           <span className="text-muted-foreground">Due date:</span>
           {dueDate ? (
             <span>
@@ -269,19 +292,19 @@ function CardDetailsView({
         </div>
 
         <div className="flex items-center gap-2">
-          <User className="text-muted-foreground h-4 w-4" />
+          <User className="text-muted-foreground size-4" />
           <span className="text-muted-foreground">Created by:</span>
           <span>{createdBy.username}</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <Clock className="text-muted-foreground h-4 w-4" />
+          <Clock className="text-muted-foreground size-4" />
           <span className="text-muted-foreground">Created:</span>
           <span>{formatDateTime(createdAt)}</span>
         </div>
 
         <div className="flex items-center gap-2">
-          <Clock className="text-muted-foreground h-4 w-4" />
+          <Clock className="text-muted-foreground size-4" />
           <span className="text-muted-foreground">Updated:</span>
           <span>{formatDateTime(updatedAt)}</span>
         </div>
@@ -464,7 +487,7 @@ function CardEditForm({
             onClick={handleCancel}
             className="flex-1"
           >
-            <X className="mr-2 h-4 w-4" />
+            <X className="mr-2 size-4" />
             Cancel
           </Button>
           <form.Subscribe selector={(s) => !s.canSubmit || s.isSubmitting}>
