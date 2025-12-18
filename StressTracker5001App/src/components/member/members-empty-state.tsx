@@ -1,20 +1,13 @@
-import { PlusIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Button } from "../ui/button";
 import {
   Empty,
-  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
 } from "../ui/empty";
 
-interface MembersEmptyStateProps {
-  inviteMembers: () => void;
-}
-
-export function MembersEmptyState({ inviteMembers }: MembersEmptyStateProps) {
+export function MembersEmptyState() {
   return (
     <Empty>
       <EmptyHeader>
@@ -45,12 +38,6 @@ export function MembersEmptyState({ inviteMembers }: MembersEmptyStateProps) {
           Invite your team to collaborate on this board.
         </EmptyDescription>
       </EmptyHeader>
-      <EmptyContent>
-        <Button size="sm" onClick={inviteMembers}>
-          <PlusIcon />
-          Invite Members
-        </Button>
-      </EmptyContent>
     </Empty>
   );
 }

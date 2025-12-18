@@ -195,26 +195,7 @@ namespace StressTracker5001Server.Extensions
         // BoardInvite mappings
         public static BoardInviteDto ToDto(this BoardInvite boardInvite)
         {
-            return new BoardInviteDto
-            {
-                Id = boardInvite.Id,
-                BoardId = boardInvite.BoardId,
-                Token = boardInvite.Token,
-                IsRevoked = boardInvite.IsRevoked,
-                HasBeenUsed = boardInvite.HasBeenUsed,
-                Role = boardInvite.Role,
-                GeneratedByUserId = boardInvite.GeneratedByUserId,
-                GeneratedByUser = boardInvite.GeneratedByUser?.ToDto() ?? new UserDto
-                {
-                    Id = boardInvite.GeneratedByUserId,
-                    Username = string.Empty,
-                    CreatedAt = DateTime.MinValue,
-                    UpdatedAt = DateTime.MinValue
-                },
-                ExpiresAt = boardInvite.ExpiresAt,
-                CreatedAt = boardInvite.CreatedAt,
-                UpdatedAt = boardInvite.UpdatedAt
-            };
+            return new BoardInviteDto { Token = boardInvite.Token };
         }
 
         // List mappings

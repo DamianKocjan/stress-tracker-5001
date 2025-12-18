@@ -2,6 +2,7 @@ import { useBoardMembersQuery } from "@/hooks/use-board-members-query";
 import { UsersIcon } from "lucide-react";
 import React from "react";
 import { FetchingErrorAlert } from "../fetching-error-alert";
+import { CreateInvite } from "../invite/create-invite";
 import { RoleGuard } from "../role-guard";
 import { Button } from "../ui/button";
 import {
@@ -93,6 +94,7 @@ export function MembersDialog({ boardId }: MembersDialogProps) {
           )}
 
           <DialogFooter>
+            <CreateInvite boardId={boardId} />
           </DialogFooter>
         </DialogContent>
       </Dialog>
