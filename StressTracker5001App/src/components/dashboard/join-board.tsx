@@ -5,6 +5,7 @@ import { JoinBoardSchema } from "@/schemas/invite";
 import { useJoinBoardDialogStore } from "@/stores/join-board-dialog-store";
 import { showErrorToast } from "@/utils/handle-error";
 import { useForm } from "@tanstack/react-form";
+import { redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { Button } from "../ui/button";
 import {
@@ -91,8 +92,17 @@ function JoinBoardForm({ className }: JoinBoardFormProps) {
       setIsSubmitting(true);
       try {
         await joinBoardMutation.mutateAsync(value.token);
+
         form.reset();
         useJoinBoardDialogStore.getState().setIsOpen(false);
+
+        // Redirect to the newly joined board
+        redirect({
+          to: "/board/$boardId",
+          params: {
+            boardId: joinBoardMutation.data!.id.toString(),
+          },
+        });
       } catch (error) {
         console.error(error);
         showErrorToast(error);
