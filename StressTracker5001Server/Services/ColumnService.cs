@@ -54,6 +54,21 @@ namespace StressTracker5001Server.Services
                 return Result<Column>.NotFound($"Board with ID {boardId} not found");
             }
 
+            if (string.IsNullOrWhiteSpace(dto.Name))
+            {
+                return Result<Column>.Failure("Column name is required", 400);
+            }
+
+            if (dto.Position < 0)
+            {
+                return Result<Column>.Failure("Position must be greater than or equal to 0", 400);
+            }
+
+            if (dto.WipLimit.HasValue && dto.WipLimit.Value < 0)
+            {
+                return Result<Column>.Failure("WIP limit must be greater than or equal to 0", 400);
+            }
+
             if (!await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin))
             {
                 return Result<Column>.Forbidden("You do not have permission to add columns to this board");
@@ -84,6 +99,16 @@ namespace StressTracker5001Server.Services
                 return columnResult;
             }
 
+            if (string.IsNullOrWhiteSpace(dto.Name))
+            {
+                return Result<Column>.Failure("Column name is required", 400);
+            }
+
+            if (dto.WipLimit.HasValue && dto.WipLimit.Value < 0)
+            {
+                return Result<Column>.Failure("WIP limit must be greater than or equal to 0", 400);
+            }
+
             var column = columnResult.Value!;
             column.Name = dto.Name;
             column.WipLimit = dto.WipLimit;
@@ -98,12 +123,28 @@ namespace StressTracker5001Server.Services
             var columnResult = await GetColumnByIdAsync(columnId, userId, BoardMemberRole.Admin);
             if (!columnResult.IsSuccess)
             {
-                return Result<Column>.NotFound(columnResult.Error ?? "Column not found");
+                return columnResult.StatusCode switch
+                {
+                    403 => Result<Column>.Forbidden(columnResult.Error ?? "Forbidden"),
+                    404 => Result<Column>.NotFound(columnResult.Error ?? "Not found"),
+                    _ => Result<Column>.Failure(columnResult.Error ?? "Error", columnResult.StatusCode)
+                };
+            }
+
+            if (newPosition < 0)
+            {
+                return Result<Column>.Failure("New position must be greater than or equal to 0", 400);
             }
 
             var column = columnResult.Value!;
             column.Position = newPosition;
             column.UpdatedAt = DateTime.UtcNow;
+
+            var totalColumns = await _context.Columns.CountAsync(c => c.BoardId == column.BoardId);
+            if (newPosition >= totalColumns)
+            {
+                return Result<Column>.Failure("New position is out of range", 400);
+            }
 
             // Get all columns in the same board to adjust their positions
             var columns = await _context.Columns
@@ -127,7 +168,12 @@ namespace StressTracker5001Server.Services
             var columnResult = await GetColumnByIdAsync(columnId, userId, BoardMemberRole.Admin);
             if (!columnResult.IsSuccess)
             {
-                return Result<bool>.NotFound(columnResult.Error ?? "Column not found");
+                return columnResult.StatusCode switch
+                {
+                    403 => Result<bool>.Forbidden(columnResult.Error ?? "Forbidden"),
+                    404 => Result<bool>.NotFound(columnResult.Error ?? "Not found"),
+                    _ => Result<bool>.Failure(columnResult.Error ?? "Error", columnResult.StatusCode)
+                };
             }
 
             var column = columnResult.Value!;

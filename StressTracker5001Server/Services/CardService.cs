@@ -145,7 +145,12 @@ namespace StressTracker5001Server.Services
             var cardResult = await GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
             if (!cardResult.IsSuccess)
             {
-                return Result<Card>.NotFound(cardResult.Error ?? "Card not found");
+                return cardResult.StatusCode switch
+                {
+                    403 => Result<Card>.Forbidden(cardResult.Error ?? "Forbidden"),
+                    404 => Result<Card>.NotFound(cardResult.Error ?? "Not found"),
+                    _ => Result<Card>.Failure(cardResult.Error ?? "Error", cardResult.StatusCode)
+                };
             }
 
             var card = cardResult.Value!;
@@ -350,7 +355,12 @@ namespace StressTracker5001Server.Services
             var cardResult = await GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
             if (!cardResult.IsSuccess)
             {
-                return Result<bool>.NotFound(cardResult.Error ?? "Card not found");
+                return cardResult.StatusCode switch
+                {
+                    403 => Result<bool>.Forbidden(cardResult.Error ?? "Forbidden"),
+                    404 => Result<bool>.NotFound(cardResult.Error ?? "Not found"),
+                    _ => Result<bool>.Failure(cardResult.Error ?? "Error", cardResult.StatusCode)
+                };
             }
 
             var card = cardResult.Value!;

@@ -267,4 +267,126 @@ public class BoardServiceTests : IDisposable
 			Assert.Equal(user.Id, ownerMember.UserId);
 		}
 	}
+
+	[Fact]
+	public async Task GetBoardByIdAsync_WhenBoardNotFound_ReturnsNotFound()
+	{
+		// Arrange
+		var user = TestDataFactory.CreateTestUser();
+		_context.Users.Add(user);
+		await _context.SaveChangesAsync();
+
+		// Act
+		var result = await _boardService.GetBoardByIdAsync(boardId: 9999, user.Id);
+
+		// Assert
+		Assert.False(result.IsSuccess);
+		Assert.Equal(404, result.StatusCode);
+	}
+
+	[Fact]
+	public async Task UpdateBoardAsync_WhenBoardNotFound_ReturnsNotFound()
+	{
+		// Arrange
+		var user = TestDataFactory.CreateTestUser();
+		_context.Users.Add(user);
+		await _context.SaveChangesAsync();
+
+		var updateDto = new UpdateBoardDto
+		{
+			Name = "Updated Name"
+		};
+
+		// Act
+		var result = await _boardService.UpdateBoardAsync(boardId: 9999, updateDto, user.Id);
+
+		// Assert
+		Assert.False(result.IsSuccess);
+		Assert.Equal(404, result.StatusCode);
+	}
+
+	[Fact]
+	public async Task UpdateBoardAsync_AsViewer_ReturnsForbidden()
+	{
+		// Arrange
+		var owner = TestDataFactory.CreateTestUser(email: "owner@example.com");
+		var viewer = TestDataFactory.CreateTestUser(email: "viewer@example.com");
+		_context.Users.AddRange(owner, viewer);
+		await _context.SaveChangesAsync();
+
+		var board = TestDataFactory.CreateTestBoard(owner.Id);
+		_context.Boards.Add(board);
+		await _context.SaveChangesAsync();
+
+		var viewerMember = TestDataFactory.CreateTestBoardMember(board.Id, viewer.Id, BoardMemberRole.Viewer);
+		_context.BoardMembers.Add(viewerMember);
+		await _context.SaveChangesAsync();
+
+		var updateDto = new UpdateBoardDto
+		{
+			Name = "Updated Name"
+		};
+
+		// Act
+		var result = await _boardService.UpdateBoardAsync(board.Id, updateDto, viewer.Id);
+
+		// Assert
+		Assert.False(result.IsSuccess);
+		Assert.Equal(403, result.StatusCode);
+	}
+
+	[Fact]
+	public async Task DeleteBoardAsync_AsNonOwner_ReturnsForbidden()
+	{
+		// Arrange
+		var owner = TestDataFactory.CreateTestUser(email: "owner@example.com");
+		var member = TestDataFactory.CreateTestUser(email: "member@example.com");
+		_context.Users.AddRange(owner, member);
+		await _context.SaveChangesAsync();
+
+		var board = TestDataFactory.CreateTestBoard(owner.Id);
+		_context.Boards.Add(board);
+		await _context.SaveChangesAsync();
+
+		var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Owner);
+		var memberMember = TestDataFactory.CreateTestBoardMember(board.Id, member.Id, BoardMemberRole.Member);
+		_context.BoardMembers.AddRange(ownerMember, memberMember);
+		await _context.SaveChangesAsync();
+
+		// Act - Member (not Owner) tries to delete
+		var result = await _boardService.DeleteBoardAsync(board.Id, member.Id);
+
+		// Assert
+		Assert.False(result.IsSuccess);
+		Assert.Equal(403, result.StatusCode);
+	}
+
+	[Fact]
+	public async Task GetUserMembershipBoardsAsync_ReturnsNonOwnedBoards()
+	{
+		// Arrange
+		var owner = TestDataFactory.CreateTestUser(email: "owner@example.com");
+		var member = TestDataFactory.CreateTestUser(email: "member@example.com");
+		_context.Users.AddRange(owner, member);
+		await _context.SaveChangesAsync();
+
+		var ownedBoard = TestDataFactory.CreateTestBoard(owner.Id, "Owned Board");
+		var membershipBoard = TestDataFactory.CreateTestBoard(owner.Id, "Membership Board");
+		_context.Boards.AddRange(ownedBoard, membershipBoard);
+		await _context.SaveChangesAsync();
+
+		var ownedMember = TestDataFactory.CreateTestBoardMember(ownedBoard.Id, member.Id, BoardMemberRole.Owner);
+		var membershipMember = TestDataFactory.CreateTestBoardMember(membershipBoard.Id, member.Id, BoardMemberRole.Member);
+		_context.BoardMembers.AddRange(ownedMember, membershipMember);
+		await _context.SaveChangesAsync();
+
+		// Act
+		var result = await _boardService.GetUserMembershipBoardsAsync(member.Id);
+
+		// Assert
+		Assert.True(result.IsSuccess);
+		Assert.NotNull(result.Value);
+		Assert.Single(result.Value);
+		Assert.Equal(membershipBoard.Id, result.Value[0].Id);
+	}
 }

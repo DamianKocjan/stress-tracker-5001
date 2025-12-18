@@ -284,4 +284,624 @@ public class BoardAuthorizationServiceTests : IDisposable
         Assert.NotNull(result.Value);
         Assert.Equal(role, result.Value.Role);
     }
+
+    #region Permission Tests - AddMember
+
+    [Fact]
+    public async Task AddMemberAsync_AsMember_ReturnsForbidden()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var memberUser = TestDataFactory.CreateTestMemberUser();
+        var newMember = TestDataFactory.CreateTestUser(email: "newmember@example.com");
+        _context.Users.AddRange(owner, memberUser, newMember);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, memberUser.Id, BoardMemberRole.Member);
+        _context.BoardMembers.AddRange(ownerMember, boardMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.AddMemberAsync(board.Id, newMember.Id, memberUser.Id, BoardMemberRole.Member);
+
+        // Assert
+        result.AssertForbidden("permission");
+    }
+
+    [Fact]
+    public async Task AddMemberAsync_AsViewer_ReturnsForbidden()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var viewerUser = TestDataFactory.CreateTestViewerUser();
+        var newMember = TestDataFactory.CreateTestUser(email: "newmember@example.com");
+        _context.Users.AddRange(owner, viewerUser, newMember);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, viewerUser.Id, BoardMemberRole.Viewer);
+        _context.BoardMembers.AddRange(ownerMember, boardMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.AddMemberAsync(board.Id, newMember.Id, viewerUser.Id, BoardMemberRole.Member);
+
+        // Assert
+        result.AssertForbidden("permission");
+    }
+
+    [Fact]
+    public async Task AddMemberAsync_AsNonMember_ReturnsForbidden()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var nonMember = TestDataFactory.CreateTestNonMemberUser();
+        var newMember = TestDataFactory.CreateTestUser(email: "newmember@example.com");
+        _context.Users.AddRange(owner, nonMember, newMember);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        _context.BoardMembers.Add(ownerMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.AddMemberAsync(board.Id, newMember.Id, nonMember.Id, BoardMemberRole.Member);
+
+        // Assert
+        result.AssertForbidden("permission");
+    }
+
+    #endregion
+
+    #region Permission Tests - RemoveMember
+
+    [Fact]
+    public async Task RemoveMemberAsync_AsMember_ReturnsForbidden()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var memberUser = TestDataFactory.CreateTestMemberUser();
+        var targetMember = TestDataFactory.CreateTestUser(email: "target@example.com");
+        _context.Users.AddRange(owner, memberUser, targetMember);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, memberUser.Id, BoardMemberRole.Member);
+        var targetBoardMember = TestDataFactory.CreateTestBoardMember(board.Id, targetMember.Id, BoardMemberRole.Member);
+        _context.BoardMembers.AddRange(ownerMember, boardMember, targetBoardMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.RemoveMemberAsync(board.Id, targetMember.Id, memberUser.Id);
+
+        // Assert
+        result.AssertForbidden("permission");
+    }
+
+    [Fact]
+    public async Task RemoveMemberAsync_AsViewer_ReturnsForbidden()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var viewerUser = TestDataFactory.CreateTestViewerUser();
+        var targetMember = TestDataFactory.CreateTestUser(email: "target@example.com");
+        _context.Users.AddRange(owner, viewerUser, targetMember);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, viewerUser.Id, BoardMemberRole.Viewer);
+        var targetBoardMember = TestDataFactory.CreateTestBoardMember(board.Id, targetMember.Id, BoardMemberRole.Viewer);
+        _context.BoardMembers.AddRange(ownerMember, boardMember, targetBoardMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.RemoveMemberAsync(board.Id, targetMember.Id, viewerUser.Id);
+
+        // Assert
+        result.AssertForbidden("permission");
+    }
+
+    [Fact]
+    public async Task RemoveMemberAsync_NonExistentMember_ReturnsNotFound()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        _context.Users.Add(owner);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        _context.BoardMembers.Add(ownerMember);
+        await _context.SaveChangesAsync();
+
+        var nonExistentMemberId = 999;
+
+        // Act
+        var result = await _authService.RemoveMemberAsync(board.Id, nonExistentMemberId, owner.Id);
+
+        // Assert
+        result.AssertNotFound();
+    }
+
+    #endregion
+
+    #region Permission Tests - GetMembers
+
+    [Fact]
+    public async Task GetMembersAsync_AsMember_ReturnsForbidden()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var memberUser = TestDataFactory.CreateTestMemberUser();
+        _context.Users.AddRange(owner, memberUser);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, memberUser.Id, BoardMemberRole.Member);
+        _context.BoardMembers.AddRange(ownerMember, boardMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.GetMembersAsync(board.Id, memberUser.Id);
+
+        // Assert
+        result.AssertForbidden("permission");
+    }
+
+    [Fact]
+    public async Task GetMembersAsync_AsViewer_ReturnsForbidden()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var viewerUser = TestDataFactory.CreateTestViewerUser();
+        _context.Users.AddRange(owner, viewerUser);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, viewerUser.Id, BoardMemberRole.Viewer);
+        _context.BoardMembers.AddRange(ownerMember, boardMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.GetMembersAsync(board.Id, viewerUser.Id);
+
+        // Assert
+        result.AssertForbidden("permission");
+    }
+
+    [Fact]
+    public async Task GetMembersAsync_NonExistentBoard_ReturnsNotFound()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        _context.Users.Add(owner);
+        await _context.SaveChangesAsync();
+
+        var nonExistentBoardId = 999;
+
+        // Act
+        var result = await _authService.GetMembersAsync(nonExistentBoardId, owner.Id);
+
+        // Assert
+        result.AssertNotFound();
+    }
+
+    #endregion
+
+    #region ChangeMemberRole Tests
+
+    [Fact]
+    public async Task ChangeMemberRoleAsync_FromViewerToMember_Succeeds()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var memberUser = TestDataFactory.CreateTestViewerUser();
+        _context.Users.AddRange(owner, memberUser);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, memberUser.Id, BoardMemberRole.Viewer);
+        _context.BoardMembers.AddRange(ownerMember, boardMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.ChangeMemberRoleAsync(board.Id, owner.Id, memberUser.Id, BoardMemberRole.Member);
+
+        // Assert
+        var updatedMember = result.AssertSuccess();
+        Assert.Equal(BoardMemberRole.Member, updatedMember.Role);
+    }
+
+    [Fact]
+    public async Task ChangeMemberRoleAsync_FromMemberToAdmin_Succeeds()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var memberUser = TestDataFactory.CreateTestMemberUser();
+        _context.Users.AddRange(owner, memberUser);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, memberUser.Id, BoardMemberRole.Member);
+        _context.BoardMembers.AddRange(ownerMember, boardMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.ChangeMemberRoleAsync(board.Id, owner.Id, memberUser.Id, BoardMemberRole.Admin);
+
+        // Assert
+        var updatedMember = result.AssertSuccess();
+        Assert.Equal(BoardMemberRole.Admin, updatedMember.Role);
+    }
+
+    [Fact]
+    public async Task ChangeMemberRoleAsync_FromAdminToViewer_Succeeds()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var adminUser = TestDataFactory.CreateTestAdminUser("admin2@test.com");
+        _context.Users.AddRange(owner, adminUser);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, adminUser.Id, BoardMemberRole.Admin);
+        _context.BoardMembers.AddRange(ownerMember, boardMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.ChangeMemberRoleAsync(board.Id, owner.Id, adminUser.Id, BoardMemberRole.Viewer);
+
+        // Assert
+        var updatedMember = result.AssertSuccess();
+        Assert.Equal(BoardMemberRole.Viewer, updatedMember.Role);
+    }
+
+    [Fact]
+    public async Task ChangeMemberRoleAsync_AsMember_ReturnsForbidden()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var memberUser = TestDataFactory.CreateTestMemberUser();
+        var targetUser = TestDataFactory.CreateTestViewerUser();
+        _context.Users.AddRange(owner, memberUser, targetUser);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, memberUser.Id, BoardMemberRole.Member);
+        var targetMember = TestDataFactory.CreateTestBoardMember(board.Id, targetUser.Id, BoardMemberRole.Viewer);
+        _context.BoardMembers.AddRange(ownerMember, boardMember, targetMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.ChangeMemberRoleAsync(board.Id, memberUser.Id, targetUser.Id, BoardMemberRole.Member);
+
+        // Assert
+        result.AssertForbidden("permission");
+    }
+
+    [Fact]
+    public async Task ChangeMemberRoleAsync_NonExistentMember_ReturnsNotFound()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        _context.Users.Add(owner);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        _context.BoardMembers.Add(ownerMember);
+        await _context.SaveChangesAsync();
+
+        var nonExistentMemberId = 999;
+
+        // Act
+        var result = await _authService.ChangeMemberRoleAsync(board.Id, owner.Id, nonExistentMemberId, BoardMemberRole.Member);
+
+        // Assert
+        result.AssertNotFound();
+    }
+
+    [Theory]
+    [InlineData(BoardMemberRole.Viewer)]
+    [InlineData(BoardMemberRole.Member)]
+    [InlineData(BoardMemberRole.Admin)]
+    [InlineData(BoardMemberRole.Owner)]
+    public async Task ChangeMemberRoleAsync_ToAnyRole_Succeeds(BoardMemberRole targetRole)
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var memberUser = TestDataFactory.CreateTestMemberUser();
+        _context.Users.AddRange(owner, memberUser);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, memberUser.Id, BoardMemberRole.Member);
+        _context.BoardMembers.AddRange(ownerMember, boardMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.ChangeMemberRoleAsync(board.Id, owner.Id, memberUser.Id, targetRole);
+
+        // Assert
+        var updatedMember = result.AssertSuccess();
+        Assert.Equal(targetRole, updatedMember.Role);
+    }
+
+    #endregion
+
+    #region UserCanAccessBoardAsync Tests
+
+    [Theory]
+    [InlineData(BoardMemberRole.Admin, BoardMemberRole.Admin, true)]
+    [InlineData(BoardMemberRole.Admin, BoardMemberRole.Member, true)]
+    [InlineData(BoardMemberRole.Admin, BoardMemberRole.Viewer, true)]
+    [InlineData(BoardMemberRole.Member, BoardMemberRole.Admin, false)]
+    [InlineData(BoardMemberRole.Member, BoardMemberRole.Member, true)]
+    [InlineData(BoardMemberRole.Member, BoardMemberRole.Viewer, true)]
+    [InlineData(BoardMemberRole.Viewer, BoardMemberRole.Admin, false)]
+    [InlineData(BoardMemberRole.Viewer, BoardMemberRole.Member, false)]
+    [InlineData(BoardMemberRole.Viewer, BoardMemberRole.Viewer, true)]
+    public async Task UserCanAccessBoardAsync_WithDifferentRoleRequirements_ReturnsCorrect(
+        BoardMemberRole userRole,
+        BoardMemberRole requiredRole,
+        bool expectedAccess)
+    {
+        // Arrange
+        var user = TestDataFactory.CreateTestUser();
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(user.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, user.Id, userRole);
+        _context.BoardMembers.Add(boardMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.UserCanAccessBoardAsync(board.Id, user.Id, requiredRole);
+
+        // Assert
+        Assert.Equal(expectedAccess, result);
+    }
+
+    [Fact]
+    public async Task UserCanAccessBoardAsync_NonMember_ReturnsFalse()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var nonMember = TestDataFactory.CreateTestNonMemberUser();
+        _context.Users.AddRange(owner, nonMember);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        _context.BoardMembers.Add(ownerMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.UserCanAccessBoardAsync(board.Id, nonMember.Id, BoardMemberRole.Viewer);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    [Fact]
+    public async Task UserCanAccessBoardAsync_DefaultRoleViewer_ReturnsTrueForAllRoles()
+    {
+        // Arrange
+        var user = TestDataFactory.CreateTestAdminUser();
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(user.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, user.Id, BoardMemberRole.Admin);
+        _context.BoardMembers.Add(boardMember);
+        await _context.SaveChangesAsync();
+
+        // Act - without specifying requiredRole (defaults to Viewer)
+        var result = await _authService.UserCanAccessBoardAsync(board.Id, user.Id);
+
+        // Assert
+        Assert.True(result);
+    }
+
+    #endregion
+
+    #region Edge Cases
+
+    [Fact]
+    public async Task AddMemberAsync_WithOwnerRole_Succeeds()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var newMember = TestDataFactory.CreateTestUser(email: "newowner@example.com");
+        _context.Users.AddRange(owner, newMember);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        _context.BoardMembers.Add(ownerMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.AddMemberAsync(board.Id, newMember.Id, owner.Id, BoardMemberRole.Owner);
+
+        // Assert
+        var member = result.AssertSuccess();
+        Assert.Equal(BoardMemberRole.Owner, member.Role);
+    }
+
+    [Fact]
+    public async Task GetMemberRoleAsync_WithValidMember_ReturnsRole()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        var member = TestDataFactory.CreateTestMemberUser();
+        _context.Users.AddRange(owner, member);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        var boardMember = TestDataFactory.CreateTestBoardMember(board.Id, member.Id, BoardMemberRole.Member);
+        _context.BoardMembers.AddRange(ownerMember, boardMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.GetMemberRoleAsync(board.Id, member.Id);
+
+        // Assert
+        var returnedMember = result.AssertSuccess();
+        Assert.Equal(BoardMemberRole.Member, returnedMember.Role);
+    }
+
+    [Fact]
+    public async Task GetMemberRoleAsync_NonExistentMember_ReturnsNotFound()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        _context.Users.Add(owner);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        _context.BoardMembers.Add(ownerMember);
+        await _context.SaveChangesAsync();
+
+        var nonExistentMemberId = 999;
+
+        // Act
+        var result = await _authService.GetMemberRoleAsync(board.Id, nonExistentMemberId);
+
+        // Assert
+        result.AssertNotFound();
+    }
+
+    [Fact]
+    public async Task GetMembersAsync_EmptyBoard_ReturnsEmptyList()
+    {
+        // Arrange
+        var owner = TestDataFactory.CreateTestAdminUser();
+        _context.Users.Add(owner);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(owner.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var ownerMember = TestDataFactory.CreateTestBoardMember(board.Id, owner.Id, BoardMemberRole.Admin);
+        _context.BoardMembers.Add(ownerMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.GetMembersAsync(board.Id, owner.Id);
+
+        // Assert
+        var members = result.AssertSuccess();
+        Assert.Single(members); // Only the owner
+    }
+
+    [Fact]
+    public async Task GetMembersAsync_WithMultipleRoles_ReturnsAllMembers()
+    {
+        // Arrange
+        var admin = TestDataFactory.CreateTestAdminUser();
+        var member = TestDataFactory.CreateTestMemberUser();
+        var viewer = TestDataFactory.CreateTestViewerUser();
+        _context.Users.AddRange(admin, member, viewer);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(admin.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var adminMember = TestDataFactory.CreateTestBoardMember(board.Id, admin.Id, BoardMemberRole.Admin);
+        var memberMember = TestDataFactory.CreateTestBoardMember(board.Id, member.Id, BoardMemberRole.Member);
+        var viewerMember = TestDataFactory.CreateTestBoardMember(board.Id, viewer.Id, BoardMemberRole.Viewer);
+        _context.BoardMembers.AddRange(adminMember, memberMember, viewerMember);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _authService.GetMembersAsync(board.Id, admin.Id);
+
+        // Assert
+        var members = result.AssertSuccess();
+        Assert.Equal(3, members.Count);
+        Assert.Single(members, m => m.Role == BoardMemberRole.Admin);
+        Assert.Single(members, m => m.Role == BoardMemberRole.Member);
+        Assert.Single(members, m => m.Role == BoardMemberRole.Viewer);
+    }
+
+    #endregion
 }

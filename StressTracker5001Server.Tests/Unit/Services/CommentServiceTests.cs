@@ -178,4 +178,250 @@ public class CommentServiceTests : IDisposable
         Assert.False(result.IsSuccess);
         Assert.Equal(403, result.StatusCode);
     }
+
+    [Fact]
+    public async Task UpdateCommentAsync_ByNonAuthor_ReturnsForbidden()
+    {
+        // Arrange - Only the author or board admin can edit a comment
+        var author = TestDataFactory.CreateTestUser(email: "author@example.com");
+        var otherMember = TestDataFactory.CreateTestUser(email: "other@example.com");
+        _context.Users.AddRange(author, otherMember);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(author.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var boardMemberAuthor = TestDataFactory.CreateTestBoardMember(board.Id, author.Id, BoardMemberRole.Member);
+        var boardMemberOther = TestDataFactory.CreateTestBoardMember(board.Id, otherMember.Id, BoardMemberRole.Member);
+        _context.BoardMembers.AddRange(boardMemberAuthor, boardMemberOther);
+        await _context.SaveChangesAsync();
+
+        var column = TestDataFactory.CreateTestColumn(board.Id, "To Do");
+        _context.Columns.Add(column);
+        await _context.SaveChangesAsync();
+
+        var card = TestDataFactory.CreateTestCard(column.Id, "Test Card", createdById: author.Id);
+        _context.Cards.Add(card);
+        await _context.SaveChangesAsync();
+
+        var comment = TestDataFactory.CreateTestComment(card.Id, author.Id, "Original");
+        _context.Comments.Add(comment);
+        await _context.SaveChangesAsync();
+
+        var updateDto = new UpdateCommentDto { Content = "Updated by Other" };
+
+        // Act
+        var result = await _commentService.UpdateCommentAsync(comment.Id, updateDto, otherMember.Id);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.Equal(403, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteCommentAsync_ByNonAuthor_ReturnsForbidden()
+    {
+        // Arrange - Only the author or board admin can delete a comment
+        var author = TestDataFactory.CreateTestUser(email: "author@example.com");
+        var otherMember = TestDataFactory.CreateTestUser(email: "other@example.com");
+        _context.Users.AddRange(author, otherMember);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(author.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var boardMemberAuthor = TestDataFactory.CreateTestBoardMember(board.Id, author.Id, BoardMemberRole.Member);
+        var boardMemberOther = TestDataFactory.CreateTestBoardMember(board.Id, otherMember.Id, BoardMemberRole.Member);
+        _context.BoardMembers.AddRange(boardMemberAuthor, boardMemberOther);
+        await _context.SaveChangesAsync();
+
+        var column = TestDataFactory.CreateTestColumn(board.Id, "To Do");
+        _context.Columns.Add(column);
+        await _context.SaveChangesAsync();
+
+        var card = TestDataFactory.CreateTestCard(column.Id, "Test Card", createdById: author.Id);
+        _context.Cards.Add(card);
+        await _context.SaveChangesAsync();
+
+        var comment = TestDataFactory.CreateTestComment(card.Id, author.Id, "To Delete");
+        _context.Comments.Add(comment);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _commentService.DeleteCommentAsync(comment.Id, otherMember.Id);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.Equal(403, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetCommentByIdAsync_WhenNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var user = TestDataFactory.CreateTestUser();
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _commentService.GetCommentByIdAsync(commentId: 9999, userId: user.Id);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+        Assert.Equal(404, result.StatusCode);
+    }
+
+    #region Additional Author Tests
+    [Fact]
+    public async Task DeleteCommentAsync_ByAuthor_Succeeds()
+    {
+        // Arrange
+        var author = TestDataFactory.CreateTestUser(email: "author@example.com");
+        _context.Users.Add(author);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(author.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var authorMember = TestDataFactory.CreateTestBoardMember(board.Id, author.Id, BoardMemberRole.Member);
+        _context.BoardMembers.Add(authorMember);
+        await _context.SaveChangesAsync();
+
+        var column = TestDataFactory.CreateTestColumn(board.Id, "To Do");
+        _context.Columns.Add(column);
+        await _context.SaveChangesAsync();
+
+        var card = TestDataFactory.CreateTestCard(column.Id, "Test Card", createdById: author.Id);
+        _context.Cards.Add(card);
+        await _context.SaveChangesAsync();
+
+        var comment = TestDataFactory.CreateTestComment(card.Id, author.Id, "My Comment");
+        _context.Comments.Add(comment);
+        await _context.SaveChangesAsync();
+
+        // Act
+        var result = await _commentService.DeleteCommentAsync(comment.Id, author.Id);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.True(result.Value);
+    }
+
+    [Fact]
+    public async Task UpdateCommentAsync_ByAuthor_Succeeds()
+    {
+        // Arrange
+        var author = TestDataFactory.CreateTestUser(email: "author@example.com");
+        _context.Users.Add(author);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(author.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var authorMember = TestDataFactory.CreateTestBoardMember(board.Id, author.Id, BoardMemberRole.Member);
+        _context.BoardMembers.Add(authorMember);
+        await _context.SaveChangesAsync();
+
+        var column = TestDataFactory.CreateTestColumn(board.Id, "To Do");
+        _context.Columns.Add(column);
+        await _context.SaveChangesAsync();
+
+        var card = TestDataFactory.CreateTestCard(column.Id, "Test Card", createdById: author.Id);
+        _context.Cards.Add(card);
+        await _context.SaveChangesAsync();
+
+        var comment = TestDataFactory.CreateTestComment(card.Id, author.Id, "Original");
+        _context.Comments.Add(comment);
+        await _context.SaveChangesAsync();
+
+        var updateDto = new UpdateCommentDto { Content = "Updated by Author" };
+
+        // Act
+        var result = await _commentService.UpdateCommentAsync(comment.Id, updateDto, author.Id);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value);
+        Assert.Equal("Updated by Author", result.Value.Content);
+    }
+
+    [Fact]
+    public async Task UpdateCommentAsync_ByNonAuthor_ReturnsNull()
+    {
+        // Arrange
+        var author = TestDataFactory.CreateTestUser(email: "author@example.com");
+        var otherUser = TestDataFactory.CreateTestUser(email: "other@example.com");
+        _context.Users.AddRange(author, otherUser);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(author.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var authorMember = TestDataFactory.CreateTestBoardMember(board.Id, author.Id, BoardMemberRole.Member);
+        var otherMember = TestDataFactory.CreateTestBoardMember(board.Id, otherUser.Id, BoardMemberRole.Member);
+        _context.BoardMembers.AddRange(authorMember, otherMember);
+        await _context.SaveChangesAsync();
+
+        var column = TestDataFactory.CreateTestColumn(board.Id, "To Do");
+        _context.Columns.Add(column);
+        await _context.SaveChangesAsync();
+
+        var card = TestDataFactory.CreateTestCard(column.Id, "Test Card", createdById: author.Id);
+        _context.Cards.Add(card);
+        await _context.SaveChangesAsync();
+
+        var comment = TestDataFactory.CreateTestComment(card.Id, author.Id, "Original");
+        _context.Comments.Add(comment);
+        await _context.SaveChangesAsync();
+
+        var updateDto = new UpdateCommentDto { Content = "Unauthorized Update" };
+
+        // Act
+        var result = await _commentService.UpdateCommentAsync(comment.Id, updateDto, otherUser.Id);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+    }
+
+    [Fact]
+    public async Task DeleteCommentAsync_ByNonAuthor_ReturnsFalse()
+    {
+        // Arrange
+        var author = TestDataFactory.CreateTestUser(email: "author@example.com");
+        var otherUser = TestDataFactory.CreateTestUser(email: "other@example.com");
+        _context.Users.AddRange(author, otherUser);
+        await _context.SaveChangesAsync();
+
+        var board = TestDataFactory.CreateTestBoard(author.Id);
+        _context.Boards.Add(board);
+        await _context.SaveChangesAsync();
+
+        var authorMember = TestDataFactory.CreateTestBoardMember(board.Id, author.Id, BoardMemberRole.Member);
+        var otherMember = TestDataFactory.CreateTestBoardMember(board.Id, otherUser.Id, BoardMemberRole.Member);
+        _context.BoardMembers.AddRange(authorMember, otherMember);
+        await _context.SaveChangesAsync();
+
+        var column = TestDataFactory.CreateTestColumn(board.Id, "To Do");
+        _context.Columns.Add(column);
+        await _context.SaveChangesAsync();
+
+        var card = TestDataFactory.CreateTestCard(column.Id, "Test Card", createdById: author.Id);
+        _context.Cards.Add(card);
+        await _context.SaveChangesAsync();
+
+        var comment = TestDataFactory.CreateTestComment(card.Id, author.Id, "To Delete");
+        _context.Comments.Add(comment);
+        await _context.SaveChangesAsync();
+        // Act
+        var result = await _commentService.DeleteCommentAsync(comment.Id, otherUser.Id);
+
+        // Assert
+        Assert.False(result.IsSuccess);
+    }
+    #endregion
 }
