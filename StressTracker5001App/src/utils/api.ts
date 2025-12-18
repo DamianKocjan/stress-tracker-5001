@@ -528,3 +528,20 @@ export async function revokeInvite(inviteId: number): Promise<void> {
     throw new Error(result.errorMessage || "Failed to revoke invite");
   }
 }
+
+export async function joinBoardWithInvite(
+  token: string
+): Promise<BoardDetailsDto> {
+  const response = await fetch(`/api/boardinvite/join`, {
+    method: "POST",
+    body: JSON.stringify({ token }),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<BoardDetailsDto>;
+    throw new Error(result.errorMessage || "Failed to join board");
+  }
+
+  const result = (await response.json()) as ResultDto<BoardDetailsDto>;
+  return unwrapResult(result);
+}

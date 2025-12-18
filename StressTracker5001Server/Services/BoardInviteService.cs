@@ -11,6 +11,7 @@ namespace StressTracker5001Server.Services
         Task<Result<BoardInvite>> GenerateInviteAsync(int boardId, int userId, BoardMemberRole role = BoardMemberRole.Member);
         Task<Result<bool>> CanGenerateInviteAsync(int boardId, int userId);
         Result<bool> ValidateInviteCodeAsync(BoardInvite invite);
+        Task<Result<Board>> AcceptInviteAsync(int userId, string token);
         Task<BoardInvite?> GetInviteByCodeAsync(string code);
         Task<Result<bool>> RevokeInviteAsync(int inviteId, int userId);
         Task<Result<List<BoardInvite>>> GetActiveInvitesForBoardAsync(int boardId, int userId);
@@ -116,6 +117,54 @@ namespace StressTracker5001Server.Services
             }
 
             return Result<bool>.Success(true);
+        }
+
+        public async Task<Result<Board>> AcceptInviteAsync(int userId, string token)
+        {
+            var invite = await GetInviteByCodeAsync(token);
+
+            if (invite == null)
+            {
+                return Result<Board>.NotFound("Invite not found");
+            }
+
+            var validationResult = ValidateInviteCodeAsync(invite);
+            if (!validationResult.IsSuccess)
+            {
+                return Result<Board>.Failure(validationResult.Error ?? "Invalid invite", validationResult.StatusCode);
+            }
+
+            var membershipExists = _context.BoardMembers
+                .Any(bm => bm.BoardId == invite.BoardId && bm.UserId == userId);
+
+            if (membershipExists)
+            {
+                return Result<Board>.Failure("User is already a member of the board", 400);
+            }
+
+            var boardMember = new BoardMember
+            {
+                BoardId = invite.BoardId,
+                UserId = userId,
+                Role = invite.Role,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.BoardMembers.Add(boardMember);
+
+            invite.HasBeenUsed = true;
+            invite.UpdatedAt = DateTime.UtcNow;
+            _context.BoardInvites.Update(invite);
+
+            await _context.SaveChangesAsync();
+
+            var board = await _context.Boards.FindAsync(invite.BoardId);
+            if (board == null)
+            {
+                return Result<Board>.NotFound("Board not found");
+            }
+            return Result<Board>.Success(board);
         }
 
         public async Task<BoardInvite?> GetInviteByCodeAsync(string code)

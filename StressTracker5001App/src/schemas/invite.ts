@@ -14,3 +14,11 @@ export const InviteSchema = z.object({
       message: `Role must be at most ${ROLE_NAMES[maxRole as keyof typeof ROLE_NAMES]}`,
     }),
 });
+
+export const JoinBoardSchema = z.object({
+  token: z
+    .string()
+    .trim()
+    .min(1, { message: "Invite token is required" })
+    .min(10, { message: "Invalid invite token format" }),
+});

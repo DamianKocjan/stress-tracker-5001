@@ -1,6 +1,7 @@
 import { useBoardsQuery } from "@/hooks/use-boards-query";
 import { useBoardCreateDialogStore } from "@/stores/board-create-dialog-store";
-import { Plus } from "lucide-react";
+import { useJoinBoardDialogStore } from "@/stores/join-board-dialog-store";
+import { LogIn, Plus } from "lucide-react";
 import { FetchingErrorAlert } from "../fetching-error-alert";
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
@@ -9,6 +10,9 @@ import { BoardsEmptyState } from "./boards-empty-state";
 
 export function BoardList() {
   const setBoardCreateDialogOpen = useBoardCreateDialogStore(
+    (state) => state.setIsOpen
+  );
+  const setJoinBoardDialogOpen = useJoinBoardDialogStore(
     (state) => state.setIsOpen
   );
   const { data: boards, status, error, refetch } = useBoardsQuery();
@@ -44,14 +48,24 @@ export function BoardList() {
       {boards.map((board) => (
         <BoardCard {...board} key={board.id} />
       ))}
-      <Button
-        variant="outline"
-        className="h-auto min-h-[180px] flex-col gap-2 border-dashed hover:border-primary hover:bg-muted/50"
-        onClick={() => setBoardCreateDialogOpen(true)}
-      >
-        <Plus className="h-8 w-8" />
-        <span>Create New Board</span>
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          className="h-auto min-h-[180px] flex-1 flex-col gap-2 border-dashed hover:border-primary hover:bg-muted/50"
+          onClick={() => setBoardCreateDialogOpen(true)}
+        >
+          <Plus className="h-8 w-8" />
+          <span>Create New Board</span>
+        </Button>
+        <Button
+          variant="outline"
+          className="h-auto min-h-[180px] flex-1 flex-col gap-2 border-dashed hover:border-primary hover:bg-muted/50"
+          onClick={() => setJoinBoardDialogOpen(true)}
+        >
+          <LogIn className="h-8 w-8" />
+          <span>Join Board</span>
+        </Button>
+      </div>
     </div>
   );
 }

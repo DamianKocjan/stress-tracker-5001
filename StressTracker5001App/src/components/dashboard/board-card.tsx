@@ -16,7 +16,6 @@ export function BoardCard({
   id,
   name,
   description,
-  ownerId,
   owner,
   updatedAt,
 }: BoardCardProps) {
@@ -30,7 +29,7 @@ export function BoardCard({
       </CardHeader>
       <CardFooter className="flex flex-col items-start gap-2">
         <div className="flex w-full justify-between text-xs text-muted-foreground">
-          {ownerId !== user?.id && <span>By {owner.username}</span>}
+          {owner.id !== user?.id && <span>By {owner.username}</span>}
           <span>{new Date(updatedAt).toLocaleDateString()}</span>
         </div>
         <Button variant="ghost" className="w-full justify-start p-0" asChild>
