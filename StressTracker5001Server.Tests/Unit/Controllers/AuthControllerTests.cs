@@ -216,7 +216,7 @@ public class AuthControllerTests
         var result = await _controller.Logout(_mockTokenService.Object);
 
         // Assert
-        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.IsType<OkObjectResult>(result);
         _mockTokenService.Verify(s => s.RevokeRefreshTokenAsync(It.IsAny<string>()), Times.Never);
     }
 
