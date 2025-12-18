@@ -51,6 +51,20 @@ namespace StressTracker5001Server.Data
                 .WithMany(u => u.CreatedCards)
                 .HasForeignKey(c => c.CreatedById);
 
+            modelBuilder.Entity<Card>()
+                .HasMany(c => c.CardAssignments)
+                .WithOne(ca => ca.Card)
+                .HasForeignKey(ca => ca.CardId);
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.CardAssignments)
+                .WithOne(ca => ca.User)
+                .HasForeignKey(ca => ca.UserId);
+
+            modelBuilder.Entity<CardAssignment>()
+                .HasIndex(ca => new { ca.CardId, ca.UserId })
+                .IsUnique();
+
             // Many-to-Many relationship between Card and Tag via CardTag
             modelBuilder.Entity<CardTag>()
                 .HasKey(ct => new { ct.CardId, ct.TagId });
