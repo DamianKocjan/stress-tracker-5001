@@ -44,7 +44,7 @@ export function useCardAssignTagsMutation(boardId: number) {
         queryClient.setQueryData(boardQueryKey(boardId), context.previousBoard);
       }
     },
-    onSuccess(data, { cardId, tags }) {
+    onSuccess(_data, { cardId, tags }) {
       // Update the board's cards to reflect the assigned tags
       queryClient.setQueryData(
         boardQueryKey(boardId),

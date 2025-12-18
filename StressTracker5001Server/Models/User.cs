@@ -20,21 +20,22 @@ namespace StressTracker5001Server.Models
         [Required(ErrorMessage = "Username is required")]
         [StringLength(50, MinimumLength = 3,
             ErrorMessage = "Username must be between 3 and 50 characters")]
-        [RegularExpression(@"^[a-zA-Z0-9_-\s]+$",
-            ErrorMessage = "Username can only contain letters, numbers, spaces, underscores, and hyphens")]
         public required string Username { get; set; }
 
         [JsonIgnore]
         public List<RefreshToken> RefreshTokens { get; set; } = new();
 
         [JsonIgnore]
-        public List<Board> Boards { get; set; } = new();
-
-        [JsonIgnore]
         public List<Card> CreatedCards { get; set; } = new();
 
         [JsonIgnore]
         public List<Comment> Comments { get; set; } = new();
+
+        [JsonIgnore]
+        public List<BoardMember> BoardMemberships { get; set; } = new();
+
+        [JsonIgnore]
+        public List<BoardInvite> BoardInvites { get; set; } = new();
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

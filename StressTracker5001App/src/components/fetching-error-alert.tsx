@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
-import { AlertCircleIcon } from "lucide-react";
+import { AlertCircleIcon, Loader2Icon } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Button } from "./ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface FetchingErrorAlertProps {
   title: string;
@@ -24,13 +25,20 @@ export function FetchingErrorAlert({
         {error instanceof Error ? error.message : "An unknown error occurred."}
       </AlertDescription>
 
-      <Button
-        variant="outline"
-        className="absolute top-4 right-4 text-accent-foreground"
-        onClick={() => refetch()}
-      >
-        Retry
-      </Button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="outline"
+            size="icon-sm"
+            className="absolute top-3 right-3 text-accent-foreground group"
+            onClick={() => refetch()}
+          >
+            <span className="sr-only">Retry</span>
+            <Loader2Icon className="group-hover:animate-spin size-3" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Retry</TooltipContent>
+      </Tooltip>
     </Alert>
   );
 }

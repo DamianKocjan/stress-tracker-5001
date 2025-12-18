@@ -3,73 +3,104 @@ using StressTracker5001Server.Data;
 using StressTracker5001Server.DTOs.Card;
 using StressTracker5001Server.DTOs.Comment;
 using StressTracker5001Server.Models;
+using StressTracker5001Server.Common;
 
 namespace StressTracker5001Server.Services
 {
     public interface ICardService
     {
-        Task<Card?> GetCardByIdAsync(int cardId, int ownerId);
-        Task<Card?> GetCardDetailsByIdAsync(int cardId, int ownerId);
-        Task<List<Card>> GetCardsByColumnIdAsync(int columnId, int ownerId);
-        Task<Card> CreateCardAsync(int columnId, CreateCardDto dto, int userId);
-        Task<Card?> UpdateCardAsync(int cardId, UpdateCardDto dto, int ownerId);
-        Task<bool> MoveCardAsync(int cardId, MoveCardDto dto, int ownerId);
-        Task<bool> AssignTagsToCardAsync(int cardId, List<int> tagIds, int ownerId);
-        Task<List<Comment>?> GetCommentsByCardIdAsync(int cardId, int ownerId, int page, int pageSize);
-        Task<bool> HasMoreCommentsAsync(int cardId, int ownerId, int page, int pageSize);
-        Task<int?> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId);
-        Task<bool> DeleteCardAsync(int cardId, int ownerId);
+        Task<Result<Card>> GetCardByIdAsync(int cardId, int userId, BoardMemberRole requiredRole = BoardMemberRole.Viewer);
+        Task<Result<Card>> GetCardDetailsByIdAsync(int cardId, int userId);
+        Task<Result<Card>> CreateCardAsync(int columnId, CreateCardDto dto, int userId);
+        Task<Result<Card>> UpdateCardAsync(int cardId, UpdateCardDto dto, int userId);
+        Task<Result<Card>> MoveCardAsync(int cardId, MoveCardDto dto, int userId);
+        Task<Result<Card>> AssignTagsToCardAsync(int cardId, List<int> tagIds, int userId);
+        Task<Result<List<Comment>>> GetCommentsByCardIdAsync(int cardId, int userId, int page, int pageSize);
+        Task<Result<bool>> HasMoreCommentsAsync(int cardId, int userId, int page, int pageSize);
+        Task<Result<Comment>> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId);
+        Task<Result<bool>> DeleteCardAsync(int cardId, int userId);
     }
 
     public class CardService : ICardService
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly IBoardAuthorizationService _boardAuthorizationService;
+        private readonly IColumnService _columnService;
+
         private readonly int _maxTagsPerCard;
 
-        public CardService(AppDbContext context, IConfiguration configuration)
+        public CardService(AppDbContext context, IConfiguration configuration, IBoardAuthorizationService boardAuthorizationService, IColumnService columnService)
         {
             _context = context;
             _configuration = configuration;
+            _boardAuthorizationService = boardAuthorizationService;
+            _columnService = columnService;
+
             _maxTagsPerCard = _configuration.GetValue("Tags:MaxTagsPerCard", 5);
         }
 
-        public async Task<Card?> GetCardByIdAsync(int cardId, int ownerId)
+        public async Task<Result<Card>> GetCardByIdAsync(int cardId, int userId, BoardMemberRole requiredRole = BoardMemberRole.Viewer)
         {
-            return await _context.Cards
+            var card = await _context.Cards
                 .Include(c => c.Column)
                 .ThenInclude(c => c.Board)
                 .Include(c => c.CardTags)
-                .FirstOrDefaultAsync(c => c.Id == cardId && c.Column.Board.OwnerId == ownerId);
+                .FirstOrDefaultAsync(c => c.Id == cardId);
+
+            if (card == null)
+            {
+                return Result<Card>.NotFound($"Card with ID {cardId} not found");
+            }
+
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(card.Column.BoardId, userId, requiredRole))
+            {
+                return Result<Card>.Forbidden("You do not have permission to access this card");
+            }
+
+            return Result<Card>.Success(card);
         }
 
-        public async Task<Card?> GetCardDetailsByIdAsync(int cardId, int ownerId)
+        public async Task<Result<Card>> GetCardDetailsByIdAsync(int cardId, int userId)
         {
-            return await _context.Cards
+            var card = await _context.Cards
                 .Include(c => c.Column)
                 .ThenInclude(c => c.Board)
                 .Include(c => c.CreatedBy)
                 .Include(c => c.CardTags)
-                .FirstOrDefaultAsync(c => c.Id == cardId && c.Column.Board.OwnerId == ownerId);
+                .FirstOrDefaultAsync(c => c.Id == cardId);
+
+            if (card == null)
+            {
+                return Result<Card>.NotFound($"Card with ID {cardId} not found");
+            }
+
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(card.Column.BoardId, userId))
+            {
+                return Result<Card>.Forbidden("You do not have permission to access this card");
+            }
+
+            return Result<Card>.Success(card);
         }
 
-        public async Task<List<Card>> GetCardsByColumnIdAsync(int columnId, int ownerId)
+        public async Task<Result<Card>> CreateCardAsync(int columnId, CreateCardDto dto, int userId)
         {
-            return await _context.Cards
-                .Include(c => c.Column)
-                .ThenInclude(c => c.Board)
-                .Where(c => c.ColumnId == columnId && c.Column.Board.OwnerId == ownerId)
-                .OrderBy(c => c.Position)
-                .ToListAsync();
-        }
+            // Validate column exists and user has access
+            var columnResult = await _columnService.GetColumnByIdAsync(columnId, userId, BoardMemberRole.Member);
 
-        public async Task<Card> CreateCardAsync(int columnId, CreateCardDto dto, int userId)
-        {
-            var cardCount = _context.Cards
-                .Include(c => c.Column)
-                .ThenInclude(c => c.Board)
-                .Where(c => c.ColumnId == columnId && c.Column.Board.OwnerId == userId)
-                .Count();
+            if (!columnResult.IsSuccess)
+            {
+                return Result<Card>.NotFound(columnResult.Error ?? "Column not found");
+            }
+
+            var column = columnResult.Value!;
+            var cardCount = await _context.Cards.CountAsync(c => c.ColumnId == columnId);
+
+            // Check WIP limit
+            if (column.WipLimit != null && cardCount >= column.WipLimit)
+            {
+                return Result<Card>.Failure($"Cannot create card. Column '{column.Name}' has reached WIP limit of {column.WipLimit}", 400);
+            }
 
             var now = DateTime.UtcNow;
 
@@ -86,49 +117,56 @@ namespace StressTracker5001Server.Services
             };
 
             _context.Cards.Add(card);
-
             await _context.SaveChangesAsync();
-            return card;
+
+            return Result<Card>.Success(card);
         }
 
-        public async Task<Card?> UpdateCardAsync(int cardId, UpdateCardDto dto, int ownerId)
+        public async Task<Result<Card>> UpdateCardAsync(int cardId, UpdateCardDto dto, int userId)
         {
-            var card = await GetCardByIdAsync(cardId, ownerId);
-            if (card == null)
+            var cardResult = await GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
+            if (!cardResult.IsSuccess)
             {
-                return null;
+                return cardResult;
             }
 
+            var card = cardResult.Value!;
             card.Title = dto.Title;
             card.Description = dto.Description ?? string.Empty;
             card.DueDate = dto.DueDate;
             card.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            return card;
+            return Result<Card>.Success(card);
         }
 
-        public async Task<bool> MoveCardAsync(int cardId, MoveCardDto dto, int ownerId)
+        public async Task<Result<Card>> MoveCardAsync(int cardId, MoveCardDto dto, int userId)
         {
-            var card = await GetCardByIdAsync(cardId, ownerId);
-            if (card == null)
+            var cardResult = await GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
+            if (!cardResult.IsSuccess)
             {
-                return false;
+                return cardResult.StatusCode switch
+                {
+                    403 => Result<Card>.Forbidden(cardResult.Error ?? "Forbidden"),
+                    404 => Result<Card>.NotFound(cardResult.Error ?? "Not found"),
+                    _ => Result<Card>.Failure(cardResult.Error ?? "Error", cardResult.StatusCode)
+                };
             }
 
+            var card = cardResult.Value!;
             var oldColumnId = card.ColumnId;
             var oldPosition = card.Position;
 
             if (oldColumnId == dto.NewColumnId && oldPosition == dto.NewPosition)
             {
-                return true; // No change needed
+                return Result<Card>.Success(card); // No change needed
             }
 
             if (oldColumnId == dto.NewColumnId)
             {
                 // Moving within the same column
                 var cardsInColumn = await _context.Cards
-                    .Where(c => c.ColumnId == oldColumnId && c.Id != cardId)
+                    .Where(c => c.ColumnId == oldColumnId && c.Id != card.Id)
                     .OrderBy(c => c.Position)
                     .ToListAsync();
 
@@ -140,28 +178,28 @@ namespace StressTracker5001Server.Services
                 }
 
                 await _context.SaveChangesAsync();
-                return true;
+                return Result<Card>.Success(card);
             }
 
-            // Moving to a different column
-            var column = await _context.Columns
-                .Include(c => c.Board)
-                .FirstOrDefaultAsync(c => c.Id == dto.NewColumnId && c.Board.OwnerId == ownerId);
-
-            if (column == null)
+            // Moving to a different column - validate target column
+            var columnResult = await _columnService.GetColumnByIdAsync(dto.NewColumnId, userId, BoardMemberRole.Member);
+            if (!columnResult.IsSuccess)
             {
-                return false;
+                return Result<Card>.NotFound(columnResult.Error ?? "Target column not found");
             }
 
+            var column = columnResult.Value!;
+
+            // Check WIP limit
             if (column.WipLimit != null)
             {
                 var cardCountInTargetColumn = await _context.Cards
-                    .Where(c => c.ColumnId == dto.NewColumnId && c.Id != cardId)
+                    .Where(c => c.ColumnId == dto.NewColumnId && c.Id != card.Id)
                     .CountAsync();
 
                 if (cardCountInTargetColumn >= column.WipLimit)
                 {
-                    return false; // Exceeds WIP limit
+                    return Result<Card>.Failure($"Cannot move card. Column '{column.Name}' has reached WIP limit of {column.WipLimit}", 400);
                 }
             }
 
@@ -171,7 +209,7 @@ namespace StressTracker5001Server.Services
 
             // Update the positions of cards in the old column
             var oldColumnCards = await _context.Cards
-                .Where(c => c.ColumnId == oldColumnId && c.Id != cardId)
+                .Where(c => c.ColumnId == oldColumnId && c.Id != card.Id)
                 .OrderBy(c => c.Position)
                 .ToListAsync();
             for (int i = 0; i < oldColumnCards.Count; i++)
@@ -182,7 +220,7 @@ namespace StressTracker5001Server.Services
 
             // Update the positions of other cards in the new column
             var newColumnCards = await _context.Cards
-                .Where(c => c.ColumnId == dto.NewColumnId && c.Id != cardId)
+                .Where(c => c.ColumnId == dto.NewColumnId && c.Id != card.Id)
                 .OrderBy(c => c.Position)
                 .ToListAsync();
 
@@ -194,16 +232,18 @@ namespace StressTracker5001Server.Services
             }
 
             await _context.SaveChangesAsync();
-            return true;
+            return Result<Card>.Success(card);
         }
 
-        public async Task<bool> AssignTagsToCardAsync(int cardId, List<int> tagIds, int ownerId)
+        public async Task<Result<Card>> AssignTagsToCardAsync(int cardId, List<int> tagIds, int userId)
         {
-            var card = await GetCardByIdAsync(cardId, ownerId);
-            if (card == null)
+            var cardResult = await GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
+            if (!cardResult.IsSuccess)
             {
-                return false;
+                return Result<Card>.NotFound(cardResult.Error ?? "Card not found");
             }
+
+            var card = cardResult.Value!;
 
             // Get existing tag IDs
             var existingTagIds = card.CardTags.Select(ct => ct.TagId).ToHashSet();
@@ -212,7 +252,7 @@ namespace StressTracker5001Server.Services
             var totalTagsCount = tagIds.Union(existingTagIds).Count();
             if (totalTagsCount > _maxTagsPerCard)
             {
-                return false;
+                return Result<Card>.Failure($"Cannot assign tags. Maximum {_maxTagsPerCard} tags per card allowed", 400);
             }
 
             // Add new tags
@@ -220,7 +260,7 @@ namespace StressTracker5001Server.Services
             {
                 card.CardTags.Add(new CardTag
                 {
-                    CardId = cardId,
+                    CardId = card.Id,
                     TagId = tagId
                 });
             }
@@ -242,34 +282,36 @@ namespace StressTracker5001Server.Services
             card.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            return true;
+            return Result<Card>.Success(card);
         }
 
-        public async Task<List<Comment>?> GetCommentsByCardIdAsync(int cardId, int ownerId, int page, int pageSize)
+        public async Task<Result<List<Comment>>> GetCommentsByCardIdAsync(int cardId, int userId, int page, int pageSize)
         {
-            var card = await GetCardByIdAsync(cardId, ownerId);
-            if (card == null)
+            var cardResult = await GetCardByIdAsync(cardId, userId);
+            if (!cardResult.IsSuccess)
             {
-                return null;
+                return Result<List<Comment>>.NotFound(cardResult.Error ?? "Card not found");
             }
 
             var offset = (page - 1) * pageSize;
 
-            return await _context.Comments
+            var comments = await _context.Comments
                 .Include(c => c.User)
                 .Where(c => c.CardId == cardId)
                 .OrderBy(c => c.CreatedAt)
                 .Skip(offset)
                 .Take(pageSize)
                 .ToListAsync();
+
+            return Result<List<Comment>>.Success(comments);
         }
 
-        public async Task<bool> HasMoreCommentsAsync(int cardId, int ownerId, int page, int pageSize)
+        public async Task<Result<bool>> HasMoreCommentsAsync(int cardId, int userId, int page, int pageSize)
         {
-            var card = await GetCardByIdAsync(cardId, ownerId);
-            if (card == null)
+            var cardResult = await GetCardByIdAsync(cardId, userId);
+            if (!cardResult.IsSuccess)
             {
-                return false;
+                return Result<bool>.NotFound(cardResult.Error ?? "Card not found");
             }
 
             var totalComments = await _context.Comments
@@ -277,27 +319,26 @@ namespace StressTracker5001Server.Services
                 .CountAsync();
 
             var fetchedComments = page * pageSize;
-            return fetchedComments < totalComments;
+            var hasMore = fetchedComments < totalComments;
+
+            return Result<bool>.Success(hasMore);
         }
 
-        public async Task<int?> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId)
+        public async Task<Result<Comment>> AddCommentToCardAsync(int cardId, CreateCommentDto dto, int userId)
         {
-            var card = await _context.Cards
-                .Include(c => c.Column)
-                .ThenInclude(c => c.Board)
-                .FirstOrDefaultAsync(c => c.Id == cardId && c.Column.Board.OwnerId == userId);
+            var cardResult = await GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
 
-            if (card == null)
+            if (!cardResult.IsSuccess)
             {
-                return null;
+                return Result<Comment>.NotFound($"Card with ID {cardId} not found or access denied");
             }
 
             var now = DateTime.UtcNow;
-
             var comment = new Comment
             {
                 CardId = cardId,
                 UserId = userId,
+                User = _context.Users.Find(userId)!,
                 Content = dto.Content,
                 CreatedAt = now,
                 UpdatedAt = now
@@ -305,20 +346,28 @@ namespace StressTracker5001Server.Services
 
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
-            return comment.Id;
+
+            return Result<Comment>.Success(comment);
         }
 
-        public async Task<bool> DeleteCardAsync(int cardId, int ownerId)
+        public async Task<Result<bool>> DeleteCardAsync(int cardId, int userId)
         {
-            var card = await GetCardByIdAsync(cardId, ownerId);
-            if (card == null)
+            var cardResult = await GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
+            if (!cardResult.IsSuccess)
             {
-                return false;
+                return cardResult.StatusCode switch
+                {
+                    403 => Result<bool>.Forbidden(cardResult.Error ?? "Forbidden"),
+                    404 => Result<bool>.NotFound(cardResult.Error ?? "Not found"),
+                    _ => Result<bool>.Failure(cardResult.Error ?? "Error", cardResult.StatusCode)
+                };
             }
 
+            var card = cardResult.Value!;
             _context.Cards.Remove(card);
             await _context.SaveChangesAsync();
-            return true;
+
+            return Result<bool>.Success(true);
         }
     }
 }

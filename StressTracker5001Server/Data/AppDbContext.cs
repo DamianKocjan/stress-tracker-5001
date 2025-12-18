@@ -14,6 +14,8 @@ namespace StressTracker5001Server.Data
         public DbSet<Tag> Tags { get; set; }
         public DbSet<CardTag> CardTags { get; set; }
         public DbSet<Comment> Comments { get; set; }
+        public DbSet<BoardMember> BoardMembers { get; set; }
+        public DbSet<BoardInvite> BoardInvites { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
             => options.UseSqlite("Data Source=db.sqlite");
@@ -28,14 +30,6 @@ namespace StressTracker5001Server.Data
                 .HasMany(u => u.RefreshTokens)
                 .WithOne(rt => rt.User)
                 .HasForeignKey(rt => rt.UserId);
-
-            modelBuilder.Entity<User>()
-                .HasMany(u => u.Boards)
-                .WithOne(b => b.Owner)
-                .HasForeignKey(b => b.OwnerId);
-
-            modelBuilder.Entity<Board>()
-                .HasIndex(b => b.OwnerId);
 
             modelBuilder.Entity<Board>()
                 .HasMany(b => b.Columns)
@@ -80,6 +74,34 @@ namespace StressTracker5001Server.Data
                 .HasOne(c => c.Card)
                 .WithMany(c => c.Comments)
                 .HasForeignKey(c => c.CardId);
+
+            modelBuilder.Entity<BoardMember>()
+                .HasOne(bm => bm.Board)
+                .WithMany(b => b.Members)
+                .HasForeignKey(bm => bm.BoardId);
+
+            modelBuilder.Entity<BoardMember>()
+                .HasIndex(bm => new { bm.BoardId, bm.UserId })
+                .IsUnique();
+
+            modelBuilder.Entity<BoardMember>()
+                .HasOne(bm => bm.User)
+                .WithMany(u => u.BoardMemberships)
+                .HasForeignKey(bm => bm.UserId);
+
+            modelBuilder.Entity<BoardInvite>()
+                .HasIndex(bi => bi.Token)
+                .IsUnique();
+
+            modelBuilder.Entity<BoardInvite>()
+                .HasOne(bi => bi.Board)
+                .WithMany(b => b.Invites)
+                .HasForeignKey(bi => bi.BoardId);
+
+            modelBuilder.Entity<BoardInvite>()
+                .HasOne(bi => bi.GeneratedByUser)
+                .WithMany(u => u.BoardInvites)
+                .HasForeignKey(bi => bi.GeneratedByUserId);
         }
     }
 }

@@ -7,3 +7,17 @@ export const cardCommentsQueryKey = (cardId: number, pageSize: number) => [
   cardId,
   pageSize,
 ];
+
+export const boardMembershipQueryKey = (boardId: number) => [
+  "board-membership",
+  boardId,
+];
+
+export const boardMembersQueryKey = (boardId: number) => [
+  "board-members",
+  boardId,
+];
+export const boardInvitesQueryKey = (boardId: number) => [
+  "board-invites",
+  boardId,
+];

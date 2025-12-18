@@ -17,7 +17,6 @@ export interface BoardDto {
   id: number;
   name: string;
   description: string;
-  ownerId: number;
   owner: UserDto;
   createdAt: string;
   updatedAt: string;

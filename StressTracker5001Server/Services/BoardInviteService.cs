@@ -1,0 +1,246 @@
+using Microsoft.EntityFrameworkCore;
+using StressTracker5001Server.Data;
+using StressTracker5001Server.Models;
+using StressTracker5001Server.Common;
+using System.Security.Cryptography;
+
+namespace StressTracker5001Server.Services
+{
+    public interface IBoardInviteService
+    {
+        Task<Result<BoardInvite>> GenerateInviteAsync(int boardId, int userId, BoardMemberRole role = BoardMemberRole.Member);
+        Task<Result<bool>> CanGenerateInviteAsync(int boardId, int userId);
+        Result<bool> ValidateInviteCodeAsync(BoardInvite invite);
+        Task<Result<Board>> AcceptInviteAsync(int userId, string token);
+        Task<BoardInvite?> GetInviteByCodeAsync(string code);
+        Task<Result<bool>> RevokeInviteAsync(int inviteId, int userId);
+        Task<Result<List<BoardInvite>>> GetActiveInvitesForBoardAsync(int boardId, int userId);
+        Task<Result<bool>> RevokeAllInvitesForBoardAsync(int boardId, int userId);
+    }
+
+    public class BoardInviteService : IBoardInviteService
+    {
+        private readonly AppDbContext _context;
+        private readonly IConfiguration _configuration;
+        private readonly IBoardAuthorizationService _boardAuthorizationService;
+
+        private readonly int MaxActiveInvitesPerBoard;
+        private readonly int DefaultInviteExpiryHours;
+        private readonly string InviteChars;
+        private readonly int InviteTokenLength;
+        private readonly RandomNumberGenerator random;
+
+        public BoardInviteService(AppDbContext context, IConfiguration configuration, IBoardAuthorizationService boardAuthorizationService)
+        {
+            _context = context;
+            _configuration = configuration;
+            _boardAuthorizationService = boardAuthorizationService;
+
+            MaxActiveInvitesPerBoard = _configuration.GetValue<int>("BoardInvites:MaxActiveInvitesPerBoard");
+            DefaultInviteExpiryHours = _configuration.GetValue<int>("BoardInvites:DefaultInviteExpiryHours");
+            InviteChars = _configuration.GetValue<string>("BoardInvites:InviteChars");
+            InviteTokenLength = _configuration.GetValue<int>("BoardInvites:InviteTokenLength");
+
+            random = RandomNumberGenerator.Create();
+        }
+
+        public async Task<Result<BoardInvite>> GenerateInviteAsync(int boardId, int userId, BoardMemberRole role = BoardMemberRole.Member)
+        {
+            var canGenerateResult = await CanGenerateInviteAsync(boardId, userId);
+            if (!canGenerateResult.IsSuccess || !canGenerateResult.Value)
+            {
+                return Result<BoardInvite>.Forbidden("You do not have permission to generate invites for this board");
+            }
+
+            var activeInvitesCount = await _context.BoardInvites
+                .CountAsync(bi => bi.BoardId == boardId && !bi.IsRevoked && bi.ExpiresAt > DateTime.UtcNow);
+
+            if (activeInvitesCount >= MaxActiveInvitesPerBoard)
+            {
+                return Result<BoardInvite>.Failure($"Board has reached maximum active invite limit of {MaxActiveInvitesPerBoard}", 400);
+            }
+
+            var token = new char[InviteTokenLength];
+            var tokenBytes = new byte[InviteTokenLength];
+
+            random.GetBytes(tokenBytes);
+            for (int i = 0; i < token.Length; i++)
+            {
+                token[i] = InviteChars[tokenBytes[i] % InviteChars.Length];
+            }
+
+            var now = DateTime.UtcNow;
+
+            var invite = new BoardInvite
+            {
+                BoardId = boardId,
+                Token = new string(token),
+                ExpiresAt = now.AddHours(DefaultInviteExpiryHours),
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsRevoked = false,
+                HasBeenUsed = false,
+                GeneratedByUserId = userId,
+                Role = role
+            };
+
+            _context.BoardInvites.Add(invite);
+            await _context.SaveChangesAsync();
+            return Result<BoardInvite>.Success(invite);
+        }
+
+        public async Task<Result<bool>> CanGenerateInviteAsync(int boardId, int userId)
+        {
+            var isBoardMemberResult = await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin);
+            if (!isBoardMemberResult)
+            {
+                return Result<bool>.Forbidden("User does not have permission to generate invites for this board");
+            }
+            return Result<bool>.Success(true);
+        }
+
+        public Result<bool> ValidateInviteCodeAsync(BoardInvite invite)
+        {
+            if (invite.IsRevoked)
+            {
+                return Result<bool>.Failure("Invite has been revoked", 400);
+            }
+
+            if (invite.HasBeenUsed)
+            {
+                return Result<bool>.Failure("Invite has already been used", 400);
+            }
+
+            if (invite.ExpiresAt <= DateTime.UtcNow)
+            {
+                return Result<bool>.Failure("Invite has expired", 400);
+            }
+
+            return Result<bool>.Success(true);
+        }
+
+        public async Task<Result<Board>> AcceptInviteAsync(int userId, string token)
+        {
+            var invite = await GetInviteByCodeAsync(token);
+
+            if (invite == null)
+            {
+                return Result<Board>.NotFound("Invite not found");
+            }
+
+            var validationResult = ValidateInviteCodeAsync(invite);
+            if (!validationResult.IsSuccess)
+            {
+                return Result<Board>.Failure(validationResult.Error ?? "Invalid invite", validationResult.StatusCode);
+            }
+
+            var membershipExists = _context.BoardMembers
+                .Any(bm => bm.BoardId == invite.BoardId && bm.UserId == userId);
+
+            if (membershipExists)
+            {
+                return Result<Board>.Failure("User is already a member of the board", 400);
+            }
+
+            var boardMember = new BoardMember
+            {
+                BoardId = invite.BoardId,
+                UserId = userId,
+                Role = invite.Role,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            _context.BoardMembers.Add(boardMember);
+
+            invite.HasBeenUsed = true;
+            invite.UpdatedAt = DateTime.UtcNow;
+            _context.BoardInvites.Update(invite);
+
+            await _context.SaveChangesAsync();
+
+            var board = await _context.Boards.FindAsync(invite.BoardId);
+            if (board == null)
+            {
+                return Result<Board>.NotFound("Board not found");
+            }
+            return Result<Board>.Success(board);
+        }
+
+        public async Task<BoardInvite?> GetInviteByCodeAsync(string code)
+        {
+            return await _context.BoardInvites
+                .FirstOrDefaultAsync(bi => bi.Token == code);
+        }
+
+        public async Task<Result<bool>> RevokeInviteAsync(int inviteId, int userId)
+        {
+            var invite = await _context.BoardInvites.FindAsync(inviteId);
+            if (invite == null)
+            {
+                return Result<bool>.NotFound($"Invite with ID {inviteId} not found");
+            }
+
+            var canRevokeInvite = await _boardAuthorizationService.UserCanAccessBoardAsync(invite.BoardId, userId, BoardMemberRole.Admin);
+            if (!canRevokeInvite)
+            {
+                return Result<bool>.Forbidden("You do not have permission to revoke invites for this board");
+            }
+
+            if (invite.IsRevoked)
+            {
+                return Result<bool>.Failure("Invite has already been revoked", 400);
+            }
+
+            invite.IsRevoked = true;
+            invite.UpdatedAt = DateTime.UtcNow;
+
+            _context.BoardInvites.Update(invite);
+            await _context.SaveChangesAsync();
+            return Result<bool>.Success(true);
+        }
+
+        public async Task<Result<List<BoardInvite>>> GetActiveInvitesForBoardAsync(int boardId, int userId)
+        {
+            var canViewInvites = await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin);
+            if (!canViewInvites)
+            {
+                return Result<List<BoardInvite>>.Forbidden("You do not have permission to view invites for this board");
+            }
+
+            var invites = await _context.BoardInvites
+                .Where(bi => bi.BoardId == boardId && !bi.IsRevoked && bi.ExpiresAt > DateTime.UtcNow)
+                .ToListAsync();
+
+            return Result<List<BoardInvite>>.Success(invites);
+        }
+
+        public async Task<Result<bool>> RevokeAllInvitesForBoardAsync(int boardId, int userId)
+        {
+            var canRevokeInvites = await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin);
+            if (!canRevokeInvites)
+            {
+                return Result<bool>.Forbidden("You do not have permission to revoke invites for this board");
+            }
+
+            var invites = await _context.BoardInvites
+                .Where(bi => bi.BoardId == boardId && !bi.IsRevoked)
+                .ToListAsync();
+
+            if (invites.Count == 0)
+            {
+                return Result<bool>.Failure("No active invites found for this board", 400);
+            }
+
+            foreach (var invite in invites)
+            {
+                invite.IsRevoked = true;
+                invite.UpdatedAt = DateTime.UtcNow;
+            }
+
+            _context.BoardInvites.UpdateRange(invites);
+            await _context.SaveChangesAsync();
+            return Result<bool>.Success(true);
+        }
+    }
+}
