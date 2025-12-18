@@ -186,7 +186,7 @@ namespace StressTracker5001Server.Migrations
                     b.HasIndex("CardId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("CardAssignment");
+                    b.ToTable("CardAssignments");
                 });
 
             modelBuilder.Entity("StressTracker5001Server.Models.CardTag", b =>

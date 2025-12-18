@@ -11,8 +11,8 @@ using StressTracker5001Server.Data;
 namespace StressTracker5001Server.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251218124519_CardAssigmentMigration")]
-    partial class CardAssigmentMigration
+    [Migration("20251218172011_CardAssignmentMigration")]
+    partial class CardAssignmentMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -189,7 +189,7 @@ namespace StressTracker5001Server.Migrations
                     b.HasIndex("CardId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("CardAssignment");
+                    b.ToTable("CardAssignments");
                 });
 
             modelBuilder.Entity("StressTracker5001Server.Models.CardTag", b =>

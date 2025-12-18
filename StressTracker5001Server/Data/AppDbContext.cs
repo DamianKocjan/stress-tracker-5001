@@ -11,6 +11,7 @@ namespace StressTracker5001Server.Data
         public DbSet<Board> Boards { get; set; }
         public DbSet<Column> Columns { get; set; }
         public DbSet<Card> Cards { get; set; }
+        public DbSet<CardAssignment> CardAssignments { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<CardTag> CardTags { get; set; }
         public DbSet<Comment> Comments { get; set; }

@@ -6,13 +6,13 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace StressTracker5001Server.Migrations
 {
     /// <inheritdoc />
-    public partial class CardAssigmentMigration : Migration
+    public partial class CardAssignmentMigration : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "CardAssignment",
+                name: "CardAssignments",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "INTEGER", nullable: false)
@@ -23,15 +23,15 @@ namespace StressTracker5001Server.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CardAssignment", x => x.Id);
+                    table.PrimaryKey("PK_CardAssignments", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_CardAssignment_Cards_CardId",
+                        name: "FK_CardAssignments_Cards_CardId",
                         column: x => x.CardId,
                         principalTable: "Cards",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_CardAssignment_Users_UserId",
+                        name: "FK_CardAssignments_Users_UserId",
                         column: x => x.UserId,
                         principalTable: "Users",
                         principalColumn: "Id",
@@ -39,14 +39,14 @@ namespace StressTracker5001Server.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_CardAssignment_CardId_UserId",
-                table: "CardAssignment",
+                name: "IX_CardAssignments_CardId_UserId",
+                table: "CardAssignments",
                 columns: new[] { "CardId", "UserId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_CardAssignment_UserId",
-                table: "CardAssignment",
+                name: "IX_CardAssignments_UserId",
+                table: "CardAssignments",
                 column: "UserId");
         }
 
@@ -54,7 +54,7 @@ namespace StressTracker5001Server.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "CardAssignment");
+                name: "CardAssignments");
         }
     }
 }

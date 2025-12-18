@@ -70,6 +70,34 @@ namespace StressTracker5001Server.Controllers
         }
 
         [Authorize]
+        [HttpPost("{id}/assign-user")]
+        public async Task<IActionResult> AssignUserToCard(int id, [FromBody] CardAssignUserDto dto, [FromServices] ICardAssignmentService cardAssignmentService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var result = await cardAssignmentService.AssignCardToUserAsync(id, dto.UserId, userId);
+            return result.ToActionResult();
+        }
+
+        [Authorize]
+        [HttpDelete("{id}/assign-user")]
+        public async Task<IActionResult> UnassignUserFromCard(int id, [FromBody] CardAssignUserDto dto, [FromServices] ICardAssignmentService cardAssignmentService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var result = await cardAssignmentService.UnassignCardFromUserAsync(id, dto.UserId, userId);
+            return result.ToActionResult();
+        }
+
+        [Authorize]
         [HttpGet("{id}/comments")]
         public async Task<IActionResult> GetCardComments(int id, [FromServices] ICardService cardService, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {

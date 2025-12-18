@@ -12,5 +12,6 @@ namespace StressTracker5001Server.DTOs.Card
         public required DateTime CreatedAt { get; set; }
         public required DateTime UpdatedAt { get; set; }
         public List<int> Tags { get; set; } = new();
+        public List<CardAssignmentDto> Assignments { get; set; } = new();
     }
 }

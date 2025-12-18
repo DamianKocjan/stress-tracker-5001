@@ -20,6 +20,7 @@ public class CardsControllerTests
 {
     private readonly Mock<ICardService> _mockCardService;
     private readonly Mock<ICommentService> _mockCommentService;
+    private readonly Mock<ICardAssignmentService> _mockCardAssignmentService;
     private readonly CardsController _controller;
     private readonly ClaimsPrincipal _userPrincipal;
 
@@ -27,6 +28,7 @@ public class CardsControllerTests
     {
         _mockCardService = new Mock<ICardService>();
         _mockCommentService = new Mock<ICommentService>();
+        _mockCardAssignmentService = new Mock<ICardAssignmentService>();
         _controller = new CardsController();
 
         var claims = new List<Claim>
@@ -189,6 +191,132 @@ public class CardsControllerTests
         // Assert
         var okResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(200, okResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task AssignUserToCard_WithValidUser_ReturnsSuccess()
+    {
+        // Arrange
+        var assignDto = new CardAssignUserDto
+        {
+            UserId = 2
+        };
+
+        _mockCardAssignmentService
+            .Setup(s => s.AssignCardToUserAsync(1, 2, 1))
+            .ReturnsAsync(Result<bool>.Success(true));
+
+        // Act
+        var result = await _controller.AssignUserToCard(1, assignDto, _mockCardAssignmentService.Object);
+
+        // Assert
+        var okResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(200, okResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task AssignUserToCard_WithoutPermission_ReturnsForbidden()
+    {
+        // Arrange
+        var assignDto = new CardAssignUserDto
+        {
+            UserId = 2
+        };
+
+        _mockCardAssignmentService
+            .Setup(s => s.AssignCardToUserAsync(1, 2, 1))
+            .ReturnsAsync(Result<bool>.Forbidden("You don't have permission to assign users to this card"));
+
+        // Act
+        var result = await _controller.AssignUserToCard(1, assignDto, _mockCardAssignmentService.Object);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(403, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task AssignUserToCard_WithNonExistentCard_ReturnsNotFound()
+    {
+        // Arrange
+        var assignDto = new CardAssignUserDto
+        {
+            UserId = 2
+        };
+
+        _mockCardAssignmentService
+            .Setup(s => s.AssignCardToUserAsync(999, 2, 1))
+            .ReturnsAsync(Result<bool>.NotFound("Card not found"));
+
+        // Act
+        var result = await _controller.AssignUserToCard(999, assignDto, _mockCardAssignmentService.Object);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(404, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task UnassignUserFromCard_WithValidUser_ReturnsSuccess()
+    {
+        // Arrange
+        var assignDto = new CardAssignUserDto
+        {
+            UserId = 2
+        };
+
+        _mockCardAssignmentService
+            .Setup(s => s.UnassignCardFromUserAsync(1, 2, 1))
+            .ReturnsAsync(Result<bool>.Success(true));
+
+        // Act
+        var result = await _controller.UnassignUserFromCard(1, assignDto, _mockCardAssignmentService.Object);
+
+        // Assert
+        var okResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(200, okResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task UnassignUserFromCard_WithoutPermission_ReturnsForbidden()
+    {
+        // Arrange
+        var assignDto = new CardAssignUserDto
+        {
+            UserId = 2
+        };
+
+        _mockCardAssignmentService
+            .Setup(s => s.UnassignCardFromUserAsync(1, 2, 1))
+            .ReturnsAsync(Result<bool>.Forbidden("You don't have permission to unassign users from this card"));
+
+        // Act
+        var result = await _controller.UnassignUserFromCard(1, assignDto, _mockCardAssignmentService.Object);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(403, objectResult.StatusCode);
+    }
+
+    [Fact]
+    public async Task UnassignUserFromCard_WithNonExistentAssignment_ReturnsNotFound()
+    {
+        // Arrange
+        var assignDto = new CardAssignUserDto
+        {
+            UserId = 2
+        };
+
+        _mockCardAssignmentService
+            .Setup(s => s.UnassignCardFromUserAsync(1, 2, 1))
+            .ReturnsAsync(Result<bool>.NotFound("Card assignment not found"));
+
+        // Act
+        var result = await _controller.UnassignUserFromCard(1, assignDto, _mockCardAssignmentService.Object);
+
+        // Assert
+        var objectResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(404, objectResult.StatusCode);
     }
 
     [Fact]
