@@ -1,4 +1,3 @@
-import { useBoardInvitesQuery } from "@/hooks/use-board-invites-query";
 import { useBoardMembersQuery } from "@/hooks/use-board-members-query";
 import { UsersIcon } from "lucide-react";
 import React from "react";
@@ -24,7 +23,6 @@ import {
   ItemMedia,
   ItemSeparator,
 } from "../ui/item";
-import { Separator } from "../ui/separator";
 import { Skeleton } from "../ui/skeleton";
 import { Member } from "./member-item";
 import { MembersEmptyState } from "./members-empty-state";
@@ -35,12 +33,6 @@ interface MembersDialogProps {
 
 export function MembersDialog({ boardId }: MembersDialogProps) {
   const { data, status, error, refetch } = useBoardMembersQuery(boardId);
-  const {
-    data: invites = [],
-    isPending: invitesLoading,
-    error: invitesError,
-    refetch: refetchInvites,
-  } = useBoardInvitesQuery(boardId);
 
   return (
     <RoleGuard minRole="Member">
@@ -102,22 +94,13 @@ export function MembersDialog({ boardId }: MembersDialogProps) {
             </div>
           )}
 
-          {invites.length > 0 && (
-            <>
-              <Separator />
-              <BoardInvitesSection
-                invites={invites}
-                boardId={boardId}
-                isLoading={invitesLoading}
-                error={invitesError}
-                refetch={refetchInvites}
-              />
-            </>
-          )}
+          <RoleGuard minRole="Admin">
+            <BoardInvitesSection boardId={boardId} />
 
-          <DialogFooter>
-            <CreateInvite boardId={boardId} />
-          </DialogFooter>
+            <DialogFooter>
+              <CreateInvite boardId={boardId} />
+            </DialogFooter>
+          </RoleGuard>
         </DialogContent>
       </Dialog>
     </RoleGuard>
