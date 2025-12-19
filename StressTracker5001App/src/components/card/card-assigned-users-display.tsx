@@ -3,8 +3,7 @@ import type { CardAssignmentDto } from "@/dto/card-assignment.dto";
 import { useBoardMembersQuery } from "@/hooks/use-board-members-query";
 import { useCardAssignUserMutation } from "@/hooks/use-card-assign-user-mutation";
 import { useCardUnassignUserMutation } from "@/hooks/use-card-unassign-user-mutation";
-import { useKanbanStore } from "@/stores/kanban-store";
-import { Loader2Icon } from "lucide-react";
+import { CheckIcon, Loader2Icon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { RoleGuard } from "../role-guard";
 import { Avatar, AvatarFallback, AvatarGroup } from "../ui/avatar";
@@ -23,18 +22,24 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 interface AssignedUsersDisplayProps {
   assignments: CardAssignmentDto[];
   boardId: number;
+  cardId: number;
 }
 
 export function AssignedUsersDisplay({
   assignments,
   boardId,
+  cardId,
 }: AssignedUsersDisplayProps) {
   return (
     <RoleGuard
       minRole="Member"
       fallback={<AssignedUsers assignments={assignments} />}
     >
-      <AssigneeSelector assignments={assignments} boardId={boardId} />
+      <AssigneeSelector
+        assignments={assignments}
+        boardId={boardId}
+        cardId={cardId}
+      />
     </RoleGuard>
   );
 }
@@ -42,12 +47,13 @@ export function AssignedUsersDisplay({
 function AssigneeSelector({
   assignments,
   boardId,
+  cardId,
 }: {
   assignments: CardAssignmentDto[];
   boardId: number;
+  cardId: number;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const cardId = useKanbanStore((state) => state.cardId);
 
   const { data: boardMembers } = useBoardMembersQuery(boardId);
   const assignUserMutation = useCardAssignUserMutation(boardId);
@@ -58,13 +64,7 @@ function AssigneeSelector({
     [assignments]
   );
 
-  const availableUsers = useMemo(
-    () => boardMembers?.filter((m) => !assignedUserIds.has(m.user.id)) ?? [],
-    [boardMembers, assignedUserIds]
-  );
-
   const handleAssignUser = (userId: number) => {
-    if (!cardId) return;
     assignUserMutation.mutate(
       { cardId, userId },
       {
@@ -109,13 +109,24 @@ function AssigneeSelector({
           <CommandList>
             <CommandEmpty>No users available to assign.</CommandEmpty>
             <CommandGroup>
-              {availableUsers.map((member: BoardMemberDto) => (
+              {boardMembers?.map((member: BoardMemberDto) => (
                 <CommandItem
                   key={member.user.id}
                   value={member.user.id.toString()}
-                  onSelect={() => handleAssignUser(member.user.id)}
+                  onSelect={() =>
+                    assignedUserIds.has(member.user.id)
+                      ? handleUnassignUser(member.user.id)
+                      : handleAssignUser(member.user.id)
+                  }
                 >
                   <div className="flex items-center gap-2">
+                    <CheckIcon
+                      className="size-4 text-secondary-foreground data-assigned:opacity-100 opacity-0"
+                      data-assigned={
+                        assignedUserIds.has(member.user.id) ? true : undefined
+                      }
+                    />
+
                     <Avatar className="size-6">
                       <AvatarFallback className="text-xs">
                         {member.user.username.charAt(0).toUpperCase()}
@@ -128,40 +139,6 @@ function AssigneeSelector({
             </CommandGroup>
           </CommandList>
         </Command>
-
-        {assignments.length > 0 && (
-          <>
-            <div className="border-t border-border" />
-            <CommandGroup className="p-2">
-              <p className="mb-2 text-xs font-semibold text-muted-foreground">
-                Assigned Users
-              </p>
-              {assignments.map((assignment) => (
-                <div
-                  key={assignment.id}
-                  className="flex items-center justify-between gap-2 rounded px-2 py-1.5 text-sm hover:bg-accent"
-                >
-                  <div className="flex items-center gap-2">
-                    <Avatar className="size-5">
-                      <AvatarFallback className="text-xs">
-                        {assignment.user.username.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    {assignment.user.username}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleUnassignUser(assignment.user.id)}
-                    className="text-muted-foreground hover:text-foreground"
-                    disabled={isLoading}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
-            </CommandGroup>
-          </>
-        )}
       </PopoverContent>
     </Popover>
   );

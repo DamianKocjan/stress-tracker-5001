@@ -273,7 +273,11 @@ function CardDetailsView({
           <span className="text-sm text-muted-foreground">Assignees:</span>
         </div>
 
-        <AssignedUsersDisplay assignments={assignments} boardId={boardId} />
+        <AssignedUsersDisplay
+          assignments={assignments}
+          boardId={boardId}
+          cardId={id}
+        />
       </div>
 
       <Separator />
