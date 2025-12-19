@@ -79,7 +79,7 @@ namespace StressTracker5001Server.Controllers
                 return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var result = await cardAssignmentService.AssignCardToUserAsync(id, dto.UserId, userId);
+            var result = await cardAssignmentService.AssignCardToUserAsync(id, userId, dto.UserId);
             return result.ToActionResult();
         }
 
@@ -93,7 +93,7 @@ namespace StressTracker5001Server.Controllers
                 return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
             }
 
-            var result = await cardAssignmentService.UnassignCardFromUserAsync(id, dto.UserId, userId);
+            var result = await cardAssignmentService.UnassignCardFromUserAsync(id, userId, dto.UserId);
             return result.ToActionResult();
         }
 

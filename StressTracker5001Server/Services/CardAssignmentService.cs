@@ -27,22 +27,16 @@ namespace StressTracker5001Server.Services
 
         public async Task<Result<bool>> AssignCardToUserAsync(int cardId, int userId, int assignedUserId)
         {
-            var cardResult = await _cardService.GetCardByIdAsync(cardId, userId);
+            var cardResult = await _cardService.GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
             if (!cardResult.IsSuccess)
             {
                 return Result<bool>.Failure(cardResult.Error!, cardResult.StatusCode);
             }
 
             var card = cardResult.Value;
-            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(cardId, userId, BoardMemberRole.Member))
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(cardId, assignedUserId, BoardMemberRole.Member))
             {
-                return Result<bool>.Forbidden("User is not authorized to assign cards on this board");
-            }
-
-            var user = await _context.Users.FindAsync(assignedUserId);
-            if (user == null)
-            {
-                return Result<bool>.NotFound("Assigned user not found");
+                return Result<bool>.Forbidden("User you are trying to assign the card to is not authorized to access this board");
             }
 
             var existingAssignment = await _context.CardAssignments
@@ -64,16 +58,16 @@ namespace StressTracker5001Server.Services
 
         public async Task<Result<bool>> UnassignCardFromUserAsync(int cardId, int userId, int assignedUserId)
         {
-            var cardResult = await _cardService.GetCardByIdAsync(cardId, userId);
+            var cardResult = await _cardService.GetCardByIdAsync(cardId, userId, BoardMemberRole.Member);
             if (!cardResult.IsSuccess)
             {
                 return Result<bool>.Failure(cardResult.Error!, cardResult.StatusCode);
             }
 
             var card = cardResult.Value;
-            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(cardId, userId, BoardMemberRole.Member))
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(cardId, assignedUserId, BoardMemberRole.Member))
             {
-                return Result<bool>.Forbidden("User is not authorized to unassign cards on this board");
+                return Result<bool>.Forbidden("User you are trying to unassign the card from is not authorized to access this board");
             }
 
             var assignment = await _context.CardAssignments
