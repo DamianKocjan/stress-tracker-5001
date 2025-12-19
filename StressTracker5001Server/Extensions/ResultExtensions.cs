@@ -68,6 +68,52 @@ namespace StressTracker5001Server.Extensions
         }
 
         /// <summary>
+        /// Converts a Result<bool> directly to IActionResult for operations that don't return data
+        /// </summary>
+        public static IActionResult ToActionResult(this Result<bool> result)
+        {
+            if (result.IsSuccess)
+            {
+                var resultDto = ResultDto.CreateSuccess(result.StatusCode);
+                return new ObjectResult(resultDto) { StatusCode = result.StatusCode };
+            }
+
+            var errorDto = result.StatusCode switch
+            {
+                404 => ResultDto.NotFound(result.Error ?? "Resource not found"),
+                403 => ResultDto.Forbidden(result.Error ?? "Forbidden"),
+                401 => ResultDto.Unauthorized(result.Error ?? "Unauthorized access"),
+                422 => ResultDto.CreateFailureResult(result.Error ?? "Validation error", result.StatusCode),
+                _ => ResultDto.CreateFailureResult(result.Error ?? "An error occurred", result.StatusCode)
+            };
+
+            return new ObjectResult(errorDto) { StatusCode = result.StatusCode };
+        }
+
+        /// <summary>
+        /// Converts a non-generic Result to IActionResult for operations that don't return data
+        /// </summary>
+        public static IActionResult ToActionResult(this Result<object> result)
+        {
+            if (result.IsSuccess)
+            {
+                var resultDto = ResultDto.CreateSuccess(result.StatusCode);
+                return new ObjectResult(resultDto) { StatusCode = result.StatusCode };
+            }
+
+            var errorDto = result.StatusCode switch
+            {
+                404 => ResultDto.NotFound(result.Error ?? "Resource not found"),
+                403 => ResultDto.Forbidden(result.Error ?? "Forbidden"),
+                401 => ResultDto.Unauthorized(result.Error ?? "Unauthorized access"),
+                422 => ResultDto.CreateFailureResult(result.Error ?? "Validation error", result.StatusCode),
+                _ => ResultDto.CreateFailureResult(result.Error ?? "An error occurred", result.StatusCode)
+            };
+
+            return new ObjectResult(errorDto) { StatusCode = result.StatusCode };
+        }
+
+        /// <summary>
         /// Converts a Result<T> directly to IActionResult with proper HTTP status codes
         /// </summary>
         public static IActionResult ToActionResult<T>(this Result<T> result, Func<T, object> mapper)
@@ -94,7 +140,7 @@ namespace StressTracker5001Server.Extensions
         /// <summary>
         /// Converts a Result<T> directly to IActionResult (when T is already suitable for response)
         /// </summary>
-        public static IActionResult ToActionResult<T>(this Result<T> result)
+        public static IActionResult ToActionResult<T>(this Result<T> result) where T : notnull
         {
             if (result.IsSuccess && result.Value != null)
             {
@@ -109,29 +155,6 @@ namespace StressTracker5001Server.Extensions
                 401 => ResultDto<T>.Unauthorized(result.Error ?? "Unauthorized access"),
                 422 => ResultDto<T>.ValidationError(new List<string> { result.Error ?? "Validation error" }),
                 _ => ResultDto<T>.CreateFailureResult(result.Error ?? "An error occurred", result.StatusCode)
-            };
-
-            return new ObjectResult(errorDto) { StatusCode = result.StatusCode };
-        }
-
-        /// <summary>
-        /// Converts a non-generic Result to IActionResult for operations that don't return data
-        /// </summary>
-        public static IActionResult ToActionResult(this Result<object> result)
-        {
-            if (result.IsSuccess)
-            {
-                var resultDto = ResultDto.CreateSuccess(result.StatusCode);
-                return new ObjectResult(resultDto) { StatusCode = result.StatusCode };
-            }
-
-            var errorDto = result.StatusCode switch
-            {
-                404 => ResultDto.NotFound(result.Error ?? "Resource not found"),
-                403 => ResultDto.Forbidden(result.Error ?? "Forbidden"),
-                401 => ResultDto.Unauthorized(result.Error ?? "Unauthorized access"),
-                422 => ResultDto.ValidationError(new List<string> { result.Error ?? "Validation error" }),
-                _ => ResultDto.CreateFailureResult(result.Error ?? "An error occurred", result.StatusCode)
             };
 
             return new ObjectResult(errorDto) { StatusCode = result.StatusCode };

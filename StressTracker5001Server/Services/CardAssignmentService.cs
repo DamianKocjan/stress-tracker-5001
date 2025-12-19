@@ -34,6 +34,14 @@ namespace StressTracker5001Server.Services
             }
 
             var card = cardResult.Value;
+
+            // Check if the assigned user exists
+            var userExists = await _context.Users.AnyAsync(u => u.Id == assignedUserId);
+            if (!userExists)
+            {
+                return Result<bool>.NotFound("User to assign the card to was not found");
+            }
+
             if (!await _boardAuthorizationService.UserCanAccessBoardAsync(cardId, assignedUserId, BoardMemberRole.Member))
             {
                 return Result<bool>.Forbidden("User you are trying to assign the card to is not authorized to access this board");
@@ -65,6 +73,14 @@ namespace StressTracker5001Server.Services
             }
 
             var card = cardResult.Value;
+
+            // Check if the assigned user exists
+            var userExists = await _context.Users.AnyAsync(u => u.Id == assignedUserId);
+            if (!userExists)
+            {
+                return Result<bool>.NotFound("User to unassign the card from was not found");
+            }
+
             if (!await _boardAuthorizationService.UserCanAccessBoardAsync(cardId, assignedUserId, BoardMemberRole.Member))
             {
                 return Result<bool>.Forbidden("User you are trying to unassign the card from is not authorized to access this board");

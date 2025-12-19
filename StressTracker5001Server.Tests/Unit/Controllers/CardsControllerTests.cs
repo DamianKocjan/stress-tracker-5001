@@ -203,7 +203,7 @@ public class CardsControllerTests
         };
 
         _mockCardAssignmentService
-            .Setup(s => s.AssignCardToUserAsync(1, 2, 1))
+            .Setup(s => s.AssignCardToUserAsync(1, 1, 2))
             .ReturnsAsync(Result<bool>.Success(true));
 
         // Act
@@ -224,7 +224,7 @@ public class CardsControllerTests
         };
 
         _mockCardAssignmentService
-            .Setup(s => s.AssignCardToUserAsync(1, 2, 1))
+            .Setup(s => s.AssignCardToUserAsync(1, 1, 2))
             .ReturnsAsync(Result<bool>.Forbidden("You don't have permission to assign users to this card"));
 
         // Act
@@ -245,7 +245,7 @@ public class CardsControllerTests
         };
 
         _mockCardAssignmentService
-            .Setup(s => s.AssignCardToUserAsync(999, 2, 1))
+            .Setup(s => s.AssignCardToUserAsync(999, 1, 2))
             .ReturnsAsync(Result<bool>.NotFound("Card not found"));
 
         // Act
@@ -266,7 +266,7 @@ public class CardsControllerTests
         };
 
         _mockCardAssignmentService
-            .Setup(s => s.UnassignCardFromUserAsync(1, 2, 1))
+            .Setup(s => s.UnassignCardFromUserAsync(1, 1, 2))
             .ReturnsAsync(Result<bool>.Success(true));
 
         // Act
@@ -287,7 +287,7 @@ public class CardsControllerTests
         };
 
         _mockCardAssignmentService
-            .Setup(s => s.UnassignCardFromUserAsync(1, 2, 1))
+            .Setup(s => s.UnassignCardFromUserAsync(1, 1, 2))
             .ReturnsAsync(Result<bool>.Forbidden("You don't have permission to unassign users from this card"));
 
         // Act
@@ -308,7 +308,7 @@ public class CardsControllerTests
         };
 
         _mockCardAssignmentService
-            .Setup(s => s.UnassignCardFromUserAsync(1, 2, 1))
+            .Setup(s => s.UnassignCardFromUserAsync(1, 1, 2))
             .ReturnsAsync(Result<bool>.NotFound("Card assignment not found"));
 
         // Act
