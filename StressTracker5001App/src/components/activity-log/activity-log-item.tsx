@@ -14,7 +14,9 @@ import {
   UserCheckIcon,
   UsersIcon,
 } from "lucide-react";
+import { useMemo } from "react";
 import { Avatar, AvatarFallback } from "../ui/avatar";
+import { ActivityLogDiff } from "./activity-log-diff";
 
 const ENTITY_ICONS: Record<string, React.ReactNode> = {
   Comment: <MessageSquareIcon className="size-4" />,
@@ -67,6 +69,32 @@ export function ActivityLogItem({ activity }: ActivityLogItemProps) {
   const colors = ACTION_COLORS[activity.actionType] || ACTION_COLORS[0];
   const createdAtDate = new Date(activity.createdAt);
 
+  const changes = useMemo((): Record<
+    string,
+    { Old: unknown; New: unknown }
+  > | null => {
+    if (!activity.description) {
+      return null;
+    }
+
+    try {
+      const parsed = JSON.parse(activity.description);
+      // Only treat it as changes if it looks like a diff object
+      if (
+        typeof parsed === "object" &&
+        Object.values(parsed).some(
+          (v) => typeof v === "object" && v !== null && "Old" in v && "New" in v
+        )
+      ) {
+        return parsed;
+      }
+    } catch {
+      // Not JSON, treat as plain text description
+    }
+
+    return null;
+  }, [activity.description]);
+
   return (
     <div
       className={cn(
@@ -101,9 +129,13 @@ export function ActivityLogItem({ activity }: ActivityLogItemProps) {
           </div>
         </div>
 
-        <p className="text-sm text-foreground/80 line-clamp-2">
-          {activity.description}
-        </p>
+        {changes ? (
+          <ActivityLogDiff changes={changes} />
+        ) : (
+          <p className="text-sm text-foreground/80 line-clamp-2">
+            {activity.description}
+          </p>
+        )}
 
         <div className="flex items-center gap-2 pt-1">
           {ENTITY_ICONS[entityName] && (
