@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth";
 import { Link } from "@tanstack/react-router";
 import { LayoutDashboard } from "lucide-react";
+import { ThemeSwitcher } from "./theme-switcher";
 import { Button } from "./ui/button";
 
 export function AppNav() {
@@ -48,29 +49,33 @@ export function AppNav() {
             </Link>
           </div>
 
-          {isAuthenticated ? (
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/dashboard">Dashboard</Link>
-              </Button>
-              <Button
-                size="sm"
-                disabled={logout.isPending}
-                onClick={() => logout.mutateAsync()}
-              >
-                Logout
-              </Button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/login" search={{ redirect: "/" }}>
-                  Sign In
-                </Link>
-              </Button>
-              <Button size="sm">Get Started</Button>
-            </div>
-          )}
+          <div className="flex items-center gap-3">
+            <ThemeSwitcher />
+
+            {isAuthenticated ? (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/dashboard">Dashboard</Link>
+                </Button>
+                <Button
+                  size="sm"
+                  disabled={logout.isPending}
+                  onClick={() => logout.mutateAsync()}
+                >
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" asChild>
+                  <Link to="/login" search={{ redirect: "/" }}>
+                    Sign In
+                  </Link>
+                </Button>
+                <Button size="sm">Get Started</Button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </nav>

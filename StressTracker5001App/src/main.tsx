@@ -9,6 +9,7 @@ import { createRoot } from "react-dom/client";
 
 import { Toaster } from "./components/ui/sonner";
 import { AuthProvider, useAuth } from "./providers/auth";
+import { ThemeProvider } from "./providers/theme";
 import { routeTree } from "./routeTree.gen";
 
 export const queryClient = new QueryClient();
@@ -51,8 +52,10 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <App />
-        <Toaster />
+        <ThemeProvider>
+          <App />
+          <Toaster />
+        </ThemeProvider>
       </AuthProvider>
     </QueryClientProvider>
   </StrictMode>
