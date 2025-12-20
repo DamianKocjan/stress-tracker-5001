@@ -15,12 +15,14 @@ namespace StressTracker5001Server.Tests.Unit.Controllers;
 public class BoardInviteControllerTests
 {
     private readonly Mock<IBoardInviteService> _mockBoardInviteService;
+    private readonly Mock<IActivityLogService> _mockActivityLogService;
     private readonly BoardInviteController _controller;
     private readonly UserDto _testUserDto;
 
     public BoardInviteControllerTests()
     {
         _mockBoardInviteService = new Mock<IBoardInviteService>();
+        _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
         _controller = new BoardInviteController();
 
         // Setup User claim for authenticated requests

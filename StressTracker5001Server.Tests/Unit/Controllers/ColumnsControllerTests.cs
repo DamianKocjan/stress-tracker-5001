@@ -16,12 +16,14 @@ public class ColumnsControllerTests
 {
     private readonly Mock<IColumnService> _mockColumnService;
     private readonly Mock<ICardService> _mockCardService;
+    private readonly Mock<IActivityLogService> _mockActivityLogService;
     private readonly ColumnsController _controller;
 
     public ColumnsControllerTests()
     {
         _mockColumnService = new Mock<IColumnService>();
         _mockCardService = new Mock<ICardService>();
+        _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
         _controller = new ColumnsController();
 
         // Setup User claim for authenticated requests

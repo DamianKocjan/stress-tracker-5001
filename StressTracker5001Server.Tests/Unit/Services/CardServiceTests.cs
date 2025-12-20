@@ -141,6 +141,11 @@ public class CardServiceTests : IDisposable
         Assert.Equal("New Card", result.Value.Title);
         Assert.Equal("New card description", result.Value.Description);
         Assert.Equal(column.Id, result.Value.ColumnId);
+
+        // Verify activity logging was called
+        _mockActivityLogService.Verify(
+            s => s.LogCardCreatedAsync(result.Value.Id, board.Id, user.Id, It.IsAny<string>()),
+            Times.Once);
     }
 
     [Fact]
@@ -219,6 +224,11 @@ public class CardServiceTests : IDisposable
         Assert.NotNull(result.Value);
         Assert.Equal("Updated Title", result.Value.Title);
         Assert.Equal("Updated Description", result.Value.Description);
+
+        // Verify activity logging was called with diff
+        _mockActivityLogService.Verify(
+            s => s.LogCardUpdatedAsync(card.Id, board.Id, user.Id, It.IsAny<object>(), It.IsAny<object>()),
+            Times.Once);
     }
 
     [Fact]
@@ -255,6 +265,11 @@ public class CardServiceTests : IDisposable
         // Verify card was deleted
         var deletedCard = await _context.Cards.FindAsync(card.Id);
         Assert.Null(deletedCard);
+
+        // Verify activity logging was called
+        _mockActivityLogService.Verify(
+            s => s.LogCardDeletedAsync(card.Id, board.Id, user.Id, It.IsAny<string>()),
+            Times.Once);
     }
 
     [Fact]

@@ -135,6 +135,11 @@ public class BoardServiceTests : IDisposable
         var ownerMember = board.Members.FirstOrDefault(m => m.Role == BoardMemberRole.Owner);
         Assert.NotNull(ownerMember);
         Assert.Equal(user.Id, ownerMember.UserId);
+
+        // Verify activity logging was called
+        _mockActivityLogService.Verify(
+            s => s.LogBoardCreatedAsync(result.Value!.Id, user.Id, createDto.Name),
+            Times.Once);
     }
 
     [Fact]
@@ -167,6 +172,15 @@ public class BoardServiceTests : IDisposable
         Assert.NotNull(result.Value);
         Assert.Equal(updateDto.Name, result.Value.Name);
         Assert.Equal(updateDto.Description, result.Value.Description);
+
+        // Verify activity logging was called with diff
+        _mockActivityLogService.Verify(
+            s => s.LogBoardUpdatedAsync(
+                board.Id,
+                user.Id,
+                It.IsAny<object>(),
+                It.IsAny<object>()),
+            Times.Once);
     }
 
     [Fact]
@@ -227,6 +241,11 @@ public class BoardServiceTests : IDisposable
         // Verify board is deleted
         var deletedBoard = await _context.Boards.FindAsync(board.Id);
         Assert.Null(deletedBoard);
+
+        // Verify activity logging was called
+        _mockActivityLogService.Verify(
+            s => s.LogBoardDeletedAsync(board.Id, user.Id, It.IsAny<string>()),
+            Times.Once);
     }
 
     [Fact]
