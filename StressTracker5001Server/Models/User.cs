@@ -33,7 +33,7 @@ namespace StressTracker5001Server.Models
 
         public bool EmailVerified { get; set; } = false;
         public string? PendingEmail { get; set; }
-        public bool IsAccountActive { get; set; } = true;
+        public bool IsAccountActive { get; set; } = false;
         public DateTime? DeletedAt { get; set; }
 
         public DateTime CreatedAt { get; set; }

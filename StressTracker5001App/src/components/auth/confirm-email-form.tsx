@@ -7,6 +7,8 @@ import { useNavigate } from "@tanstack/react-router";
 import { AlertCircle, CheckCircle, Loader2Icon } from "lucide-react";
 import { useEffect } from "react";
 
+const REDIRECT_DELAY_MS = 2000;
+
 export function ConfirmEmailForm({
   token,
   className,
@@ -35,7 +37,7 @@ export function ConfirmEmailForm({
     if (isSuccess) {
       setTimeout(() => {
         navigate({ to: "/dashboard" });
-      }, 2000);
+      }, REDIRECT_DELAY_MS);
     }
   }, [isSuccess, navigate]);
 

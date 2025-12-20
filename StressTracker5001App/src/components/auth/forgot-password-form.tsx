@@ -18,7 +18,7 @@ export function ForgotPasswordForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const { mutate, isPending } = useRequestPasswordResetMutation();
+  const requestPasswordResetMutation = useRequestPasswordResetMutation();
 
   const form = useForm({
     defaultValues: {
@@ -28,7 +28,8 @@ export function ForgotPasswordForm({
       onSubmit: ForgotPasswordFormSchema,
     },
     async onSubmit({ value }) {
-      mutate(value);
+      await requestPasswordResetMutation.mutateAsync(value);
+      form.reset();
     },
   });
 
@@ -73,7 +74,6 @@ export function ForgotPasswordForm({
                         onBlur={field.handleBlur}
                         onChange={(e) => field.handleChange(e.target.value)}
                         aria-invalid={isInvalid}
-                        disabled={isPending}
                       />
                       {isInvalid && (
                         <FieldError errors={field.state.meta.errors} />
@@ -85,12 +85,10 @@ export function ForgotPasswordForm({
 
               <form.Subscribe selector={(s) => !s.canSubmit && s.isSubmitting}>
                 {(disabled) => (
-                  <Button
-                    type="submit"
-                    disabled={disabled || isPending}
-                    className="w-full"
-                  >
-                    {isPending ? "Sending..." : "Send Reset Link"}
+                  <Button type="submit" disabled={disabled} className="w-full">
+                    {requestPasswordResetMutation.isPending
+                      ? "Sending..."
+                      : "Send Reset Link"}
                   </Button>
                 )}
               </form.Subscribe>

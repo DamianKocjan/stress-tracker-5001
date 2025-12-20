@@ -140,6 +140,12 @@ namespace StressTracker5001Server.Data
                 .HasOne(al => al.User)
                 .WithMany(u => u.ActivityLogs)
                 .HasForeignKey(al => al.UserId);
+
+            modelBuilder.Entity<PasswordResetToken>()
+                .HasIndex(prt => prt.TokenHash);
+
+            modelBuilder.Entity<EmailVerificationToken>()
+                .HasIndex(evt => evt.TokenHash);
         }
     }
 }

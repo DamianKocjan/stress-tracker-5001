@@ -7,7 +7,6 @@ import {
   useQueryClient,
   type InfiniteData,
 } from "@tanstack/react-query";
-import { COMMENTS_PAGE_SIZE } from "./use-comment-infinite-query";
 
 export function useCommentUpdateMutation(cardId: number) {
   const queryClient = useQueryClient();
@@ -18,7 +17,7 @@ export function useCommentUpdateMutation(cardId: number) {
     onSuccess(data) {
       // Update the comments in its card
       queryClient.setQueryData(
-        cardCommentsQueryKey(cardId, COMMENTS_PAGE_SIZE),
+        cardCommentsQueryKey(cardId),
         (
           oldData: InfiniteData<PagedResultDto<CommentDto>> | undefined
         ): InfiniteData<PagedResultDto<CommentDto>> | undefined => {

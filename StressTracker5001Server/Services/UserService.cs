@@ -17,12 +17,12 @@ namespace StressTracker5001Server.Services
         Task<Result<User>> CreateUserAsync(CreateUserDto dto);
         Task<Result<User>> UpdateUserAsync(int id, UpdateUserDto dto);
         Task<Result<bool>> DeleteUserAsync(int id);
-        Task<Result<(string Token, string ResetLink)>> RequestPasswordResetAsync(string email, string baseUrl, IConfiguration configuration);
-        Task<Result<bool>> ConfirmPasswordResetAsync(string token, string newPassword, IConfiguration configuration);
-        Task<Result<(string Token, string VerificationLink)>> RequestEmailChangeAsync(int userId, string newEmail, string baseUrl, IConfiguration configuration);
-        Task<Result<bool>> ConfirmEmailChangeAsync(string token, IConfiguration configuration);
+        Task<Result<(string Token, string ResetLink)>> RequestPasswordResetAsync(string email, string baseUrl);
+        Task<Result<bool>> ConfirmPasswordResetAsync(string token, string newPassword);
+        Task<Result<(string Token, string VerificationLink)>> RequestEmailChangeAsync(int userId, string newEmail, string baseUrl);
+        Task<Result<bool>> ConfirmEmailChangeAsync(string token);
         Task<Result<bool>> SoftDeleteAccountAsync(int userId);
-        Task<Result<(string Token, string VerificationLink)>> ResendEmailVerificationAsync(int userId, string baseUrl, IConfiguration configuration);
+        Task<Result<(string Token, string VerificationLink)>> ResendEmailVerificationAsync(int userId, string baseUrl);
     }
 
     public class UserService : IUserService
@@ -128,7 +128,7 @@ namespace StressTracker5001Server.Services
             return Result<bool>.Success(true);
         }
 
-        public async Task<Result<(string Token, string ResetLink)>> RequestPasswordResetAsync(string email, string baseUrl, IConfiguration configuration)
+        public async Task<Result<(string Token, string ResetLink)>> RequestPasswordResetAsync(string email, string baseUrl)
         {
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == email.ToLower());
             if (user == null)
@@ -137,8 +137,8 @@ namespace StressTracker5001Server.Services
                 return Result<(string, string)>.Success(("", ""));
             }
 
-            var (token, tokenHash) = GenerateSecureToken(configuration);
-            var expiryMinutes = configuration.GetValue<int>("Auth:PasswordReset:TokenExpiryMinutes", 60);
+            var (token, tokenHash) = GenerateSecureToken();
+            var expiryMinutes = _configuration.GetValue<int>("Auth:PasswordReset:TokenExpiryMinutes", 60);
 
             var resetToken = new PasswordResetToken
             {
@@ -156,7 +156,7 @@ namespace StressTracker5001Server.Services
             return Result<(string, string)>.Success((token, resetLink));
         }
 
-        public async Task<Result<bool>> ConfirmPasswordResetAsync(string token, string newPassword, IConfiguration configuration)
+        public async Task<Result<bool>> ConfirmPasswordResetAsync(string token, string newPassword)
         {
             var tokenHash = HashToken(token);
             var resetToken = await _context.PasswordResetTokens
@@ -187,12 +187,17 @@ namespace StressTracker5001Server.Services
             return Result<bool>.Success(true);
         }
 
-        public async Task<Result<(string Token, string VerificationLink)>> RequestEmailChangeAsync(int userId, string newEmail, string baseUrl, IConfiguration configuration)
+        public async Task<Result<(string Token, string VerificationLink)>> RequestEmailChangeAsync(int userId, string newEmail, string baseUrl)
         {
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
             {
                 return Result<(string, string)>.NotFound("User not found");
+            }
+
+            if (user.Email.ToLower() == newEmail.ToLower())
+            {
+                return Result<(string, string)>.Failure("New email cannot be the same as the current email", 400);
             }
 
             // Check if new email is already in use
@@ -202,8 +207,8 @@ namespace StressTracker5001Server.Services
                 return Result<(string, string)>.Failure("Email already in use", 400);
             }
 
-            var (token, tokenHash) = GenerateSecureToken(configuration);
-            var expiryMinutes = configuration.GetValue<int>("Auth:EmailVerification:TokenExpiryMinutes", 1440);
+            var (token, tokenHash) = GenerateSecureToken();
+            var expiryMinutes = _configuration.GetValue<int>("Auth:EmailVerification:TokenExpiryMinutes", 1440);
 
             var verificationToken = new EmailVerificationToken
             {
@@ -225,7 +230,7 @@ namespace StressTracker5001Server.Services
             return Result<(string, string)>.Success((token, verificationLink));
         }
 
-        public async Task<Result<bool>> ConfirmEmailChangeAsync(string token, IConfiguration configuration)
+        public async Task<Result<bool>> ConfirmEmailChangeAsync(string token)
         {
             var tokenHash = HashToken(token);
             var verificationToken = await _context.EmailVerificationTokens
@@ -275,7 +280,7 @@ namespace StressTracker5001Server.Services
             return Result<bool>.Success(true);
         }
 
-        public async Task<Result<(string Token, string VerificationLink)>> ResendEmailVerificationAsync(int userId, string baseUrl, IConfiguration configuration)
+        public async Task<Result<(string Token, string VerificationLink)>> ResendEmailVerificationAsync(int userId, string baseUrl)
         {
             var user = await _context.Users.FindAsync(userId);
             if (user == null)
@@ -302,8 +307,8 @@ namespace StressTracker5001Server.Services
             _context.EmailVerificationTokens.UpdateRange(existingTokens);
 
             // Generate new token
-            var (newToken, tokenHash) = GenerateSecureToken(configuration);
-            var expiryMinutes = configuration.GetValue<int>("Auth:EmailVerification:TokenExpiryMinutes", 1440);
+            var (newToken, tokenHash) = GenerateSecureToken();
+            var expiryMinutes = _configuration.GetValue<int>("Auth:EmailVerification:TokenExpiryMinutes", 1440);
 
             var verificationToken = new EmailVerificationToken
             {
@@ -322,10 +327,10 @@ namespace StressTracker5001Server.Services
             return Result<(string, string)>.Success((newToken, verificationLink));
         }
 
-        private (string Token, string Hash) GenerateSecureToken(IConfiguration configuration)
+        private (string Token, string Hash) GenerateSecureToken()
         {
-            var tokenChars = configuration.GetValue<string>("Auth:TokenChars", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz");
-            var tokenLength = configuration.GetValue<int>("Auth:TokenLength", 32);
+            var tokenChars = _configuration.GetValue<string>("Auth:TokenChars", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz");
+            var tokenLength = _configuration.GetValue<int>("Auth:TokenLength", 32);
 
             var token = new char[tokenLength];
             var tokenBytes = new byte[tokenLength];

@@ -180,7 +180,7 @@ namespace StressTracker5001Server.Controllers
         public async Task<IActionResult> RequestPasswordReset([FromBody] RequestPasswordResetDto dto, [FromServices] IUserService userService, [FromServices] IConfiguration configuration, [FromServices] IEmailService emailService)
         {
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var result = await userService.RequestPasswordResetAsync(dto.Email, baseUrl, configuration);
+            var result = await userService.RequestPasswordResetAsync(dto.Email, baseUrl);
 
             if (result.IsSuccess && !string.IsNullOrEmpty(result.Value!.Token))
             {
@@ -200,7 +200,7 @@ namespace StressTracker5001Server.Controllers
                 return BadRequest(ResultDto.CreateFailureResult("Passwords do not match"));
             }
 
-            var result = await userService.ConfirmPasswordResetAsync(dto.Token, dto.NewPassword, configuration);
+            var result = await userService.ConfirmPasswordResetAsync(dto.Token, dto.NewPassword);
             return result.ToActionResult();
         }
 
@@ -228,7 +228,7 @@ namespace StressTracker5001Server.Controllers
             }
 
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var result = await userService.RequestEmailChangeAsync(userId, dto.NewEmail, baseUrl, configuration);
+            var result = await userService.RequestEmailChangeAsync(userId, dto.NewEmail, baseUrl);
 
             if (result.IsSuccess)
             {
@@ -242,7 +242,7 @@ namespace StressTracker5001Server.Controllers
         [HttpPost("confirm-email-change")]
         public async Task<IActionResult> ConfirmEmailChange([FromBody] ConfirmEmailChangeDto dto, [FromServices] IUserService userService, [FromServices] IConfiguration configuration)
         {
-            var result = await userService.ConfirmEmailChangeAsync(dto.Token, configuration);
+            var result = await userService.ConfirmEmailChangeAsync(dto.Token);
             return result.ToActionResult();
         }
 
@@ -304,7 +304,7 @@ namespace StressTracker5001Server.Controllers
             }
 
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var result = await userService.ResendEmailVerificationAsync(userId, baseUrl, configuration);
+            var result = await userService.ResendEmailVerificationAsync(userId, baseUrl);
 
             if (result.IsSuccess)
             {

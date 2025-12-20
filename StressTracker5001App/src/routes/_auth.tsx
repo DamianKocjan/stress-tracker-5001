@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_auth")({
     const { isAuthenticated } = useAuth();
     const redirect = useSearch({
       from: "/_auth",
+      // @ts-expect-error search type inference issue
       select: (s) => s.redirect,
     });
     const navigate = useNavigate();
