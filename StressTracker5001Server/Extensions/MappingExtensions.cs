@@ -2,6 +2,7 @@ using StressTracker5001Server.DTOs.Board;
 using StressTracker5001Server.DTOs.BoardInvite;
 using StressTracker5001Server.DTOs.BoardMember;
 using StressTracker5001Server.DTOs.Card;
+using StressTracker5001Server.DTOs.CardAssignment;
 using StressTracker5001Server.DTOs.Column;
 using StressTracker5001Server.DTOs.Comment;
 using StressTracker5001Server.DTOs.Tag;
@@ -109,7 +110,8 @@ namespace StressTracker5001Server.Extensions
                 CreatedById = card.CreatedById,
                 CreatedAt = card.CreatedAt,
                 UpdatedAt = card.UpdatedAt,
-                Tags = card.CardTags.Select(ct => ct.TagId).ToList()
+                Tags = card.CardTags.Select(ct => ct.TagId).ToList(),
+                Assignments = card.CardAssignments.Select(ca => ca.ToDto()).ToList()
             };
         }
 
@@ -133,7 +135,8 @@ namespace StressTracker5001Server.Extensions
                 },
                 CreatedAt = card.CreatedAt,
                 UpdatedAt = card.UpdatedAt,
-                Tags = card.CardTags.Select(ct => ct.TagId).ToList()
+                Tags = card.CardTags.Select(ct => ct.TagId).ToList(),
+                Assignments = card.CardAssignments.Select(ca => ca.ToDto()).ToList()
             };
         }
 
@@ -148,6 +151,24 @@ namespace StressTracker5001Server.Extensions
                 BoardId = tag.BoardId,
                 CreatedAt = tag.CreatedAt,
                 UpdatedAt = tag.UpdatedAt
+            };
+        }
+
+        // CardAssignment mappings
+        public static CardAssignmentDto ToDto(this CardAssignment assignment)
+        {
+            return new CardAssignmentDto
+            {
+                Id = assignment.Id,
+                UserId = assignment.UserId,
+                User = assignment.User?.ToDto() ?? new UserDto
+                {
+                    Id = assignment.UserId,
+                    Username = string.Empty,
+                    CreatedAt = DateTime.MinValue,
+                    UpdatedAt = DateTime.MinValue
+                },
+                AssignedAt = assignment.AssignedAt
             };
         }
 

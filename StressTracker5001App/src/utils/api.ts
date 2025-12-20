@@ -540,10 +540,40 @@ export async function revokeAllBoardInvites(boardId: number): Promise<void> {
   }
 }
 
+export async function assignUserToCard(
+  cardId: number,
+  userId: number
+): Promise<void> {
+  const response = await fetch(`/cards/${cardId}/assign-user`, {
+    method: "POST",
+    body: JSON.stringify({ userId }),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<void>;
+    throw new Error(result.errorMessage || "Failed to assign user to card");
+  }
+}
+
+export async function unassignUserFromCard(
+  cardId: number,
+  userId: number
+): Promise<void> {
+  const response = await fetch(`/cards/${cardId}/assign-user`, {
+    method: "DELETE",
+    body: JSON.stringify({ userId }),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<void>;
+    throw new Error(result.errorMessage || "Failed to unassign user from card");
+  }
+}
+
 export async function joinBoardWithInvite(
   token: string
 ): Promise<BoardDetailsDto> {
-  const response = await fetch(`/api/boardinvite/join`, {
+  const response = await fetch(`/boardinvite/join`, {
     method: "POST",
     body: JSON.stringify({ token }),
   });

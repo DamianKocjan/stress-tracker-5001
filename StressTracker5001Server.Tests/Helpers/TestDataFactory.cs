@@ -126,6 +126,18 @@ public static class TestDataFactory
         };
     }
 
+    public static CardAssignment CreateTestCardAssignment(
+        int cardId,
+        int userId)
+    {
+        return new CardAssignment
+        {
+            CardId = cardId,
+            UserId = userId,
+            AssignedAt = DateTime.UtcNow
+        };
+    }
+
     public static Tag CreateTestTag(
         int boardId,
         string name = "Test Tag",

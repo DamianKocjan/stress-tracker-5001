@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Text.Json.Serialization;
 
 namespace StressTracker5001Server.Models
 {
@@ -22,19 +21,11 @@ namespace StressTracker5001Server.Models
             ErrorMessage = "Username must be between 3 and 50 characters")]
         public required string Username { get; set; }
 
-        [JsonIgnore]
         public List<RefreshToken> RefreshTokens { get; set; } = new();
-
-        [JsonIgnore]
         public List<Card> CreatedCards { get; set; } = new();
-
-        [JsonIgnore]
+        public List<CardAssignment> CardAssignments { get; set; } = new();
         public List<Comment> Comments { get; set; } = new();
-
-        [JsonIgnore]
         public List<BoardMember> BoardMemberships { get; set; } = new();
-
-        [JsonIgnore]
         public List<BoardInvite> BoardInvites { get; set; } = new();
 
         public DateTime CreatedAt { get; set; }

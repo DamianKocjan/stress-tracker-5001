@@ -9,6 +9,8 @@ import { GripVertical } from "lucide-react";
 import { memo } from "react";
 import { RoleGuard } from "../role-guard";
 import { TagBadge } from "../tags/tag-badge";
+import { Avatar, AvatarFallback, AvatarGroup } from "../ui/avatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 type ColumnCardProps = {
   card: CardDto;
@@ -86,6 +88,7 @@ export function ColumnCard({ card }: ColumnCardProps) {
           )}
 
           <CardTags tags={card.tags} />
+          <CardAssignedUsers assignments={card.assignments} />
         </div>
       </CardContent>
     </Card>
@@ -117,5 +120,35 @@ const CardTags = memo(function CardTags({ tags }: { tags?: CardDto["tags"] }) {
         );
       })}
     </div>
+  );
+});
+
+const CardAssignedUsers = memo(function CardAssignedUsers({
+  assignments,
+}: {
+  assignments: CardDto["assignments"];
+}) {
+  if (assignments.length === 0) {
+    return null;
+  }
+
+  return (
+    <AvatarGroup>
+      {assignments.map((assignment) => (
+        <Tooltip key={assignment.id}>
+          <TooltipTrigger asChild>
+            <Avatar className="size-6">
+              <AvatarFallback>
+                {assignment.user.username.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </TooltipTrigger>
+
+          <TooltipContent>
+            <p>{assignment.user.username}</p>
+          </TooltipContent>
+        </Tooltip>
+      ))}
+    </AvatarGroup>
   );
 });

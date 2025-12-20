@@ -11,6 +11,7 @@ namespace StressTracker5001Server.Data
         public DbSet<Board> Boards { get; set; }
         public DbSet<Column> Columns { get; set; }
         public DbSet<Card> Cards { get; set; }
+        public DbSet<CardAssignment> CardAssignments { get; set; }
         public DbSet<Tag> Tags { get; set; }
         public DbSet<CardTag> CardTags { get; set; }
         public DbSet<Comment> Comments { get; set; }
@@ -50,6 +51,20 @@ namespace StressTracker5001Server.Data
                 .HasOne(c => c.CreatedBy)
                 .WithMany(u => u.CreatedCards)
                 .HasForeignKey(c => c.CreatedById);
+
+            modelBuilder.Entity<Card>()
+                .HasMany(c => c.CardAssignments)
+                .WithOne(ca => ca.Card)
+                .HasForeignKey(ca => ca.CardId);
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.CardAssignments)
+                .WithOne(ca => ca.User)
+                .HasForeignKey(ca => ca.UserId);
+
+            modelBuilder.Entity<CardAssignment>()
+                .HasIndex(ca => new { ca.CardId, ca.UserId })
+                .IsUnique();
 
             // Many-to-Many relationship between Card and Tag via CardTag
             modelBuilder.Entity<CardTag>()

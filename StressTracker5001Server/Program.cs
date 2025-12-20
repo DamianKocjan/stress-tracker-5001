@@ -14,6 +14,7 @@ builder.Services.AddProblemDetails();
 builder.Services.AddDbContext<AppDbContext>();
 builder.Services.AddScoped<IBoardService, BoardService>();
 builder.Services.AddScoped<ICardService, CardService>();
+builder.Services.AddScoped<ICardAssignmentService, CardAssignmentService>();
 builder.Services.AddScoped<IColumnService, ColumnService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserService, UserService>();

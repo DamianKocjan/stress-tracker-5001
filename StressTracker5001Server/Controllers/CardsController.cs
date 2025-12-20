@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Card;
+using StressTracker5001Server.DTOs.CardAssignment;
 using StressTracker5001Server.DTOs.Comment;
 using StressTracker5001Server.DTOs.Common;
 using StressTracker5001Server.Services;
@@ -67,6 +68,34 @@ namespace StressTracker5001Server.Controllers
 
             var result = await cardService.AssignTagsToCardAsync(id, dto.Tags, userId);
             return result.ToActionResult(c => c.ToDto());
+        }
+
+        [Authorize]
+        [HttpPost("{id}/assign-user")]
+        public async Task<IActionResult> AssignUserToCard(int id, [FromBody] CardAssignUserDto dto, [FromServices] ICardAssignmentService cardAssignmentService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var result = await cardAssignmentService.AssignCardToUserAsync(id, userId, dto.UserId);
+            return result.ToActionResult();
+        }
+
+        [Authorize]
+        [HttpDelete("{id}/assign-user")]
+        public async Task<IActionResult> UnassignUserFromCard(int id, [FromBody] CardAssignUserDto dto, [FromServices] ICardAssignmentService cardAssignmentService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var result = await cardAssignmentService.UnassignCardFromUserAsync(id, userId, dto.UserId);
+            return result.ToActionResult();
         }
 
         [Authorize]

@@ -1,3 +1,4 @@
+using StressTracker5001Server.DTOs.CardAssignment;
 using StressTracker5001Server.DTOs.User;
 
 namespace StressTracker5001Server.DTOs.Card
@@ -13,6 +14,7 @@ namespace StressTracker5001Server.DTOs.Card
         public required int CreatedById { get; set; }
         public required UserDto CreatedBy { get; set; }
         public List<int> Tags { get; set; } = new();
+        public List<CardAssignmentDto> Assignments { get; set; } = new();
         public required DateTime CreatedAt { get; set; }
         public required DateTime UpdatedAt { get; set; }
     }
