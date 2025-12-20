@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using StressTracker5001Server.Common;
 using StressTracker5001Server.Data;
+using StressTracker5001Server.DTOs.ActivityLog;
+using StressTracker5001Server.DTOs.Common;
 using StressTracker5001Server.Models;
 using System.Text.Json;
 
@@ -8,7 +11,6 @@ namespace StressTracker5001Server.Services
     public interface IActivityLogService
     {
         Task LogActivityAsync(ActivityLog log);
-        Task<List<ActivityLog>> GetBoardActivityLogsAsync(int boardId, DateTime from, DateTime to);
 
         // Board logging
         Task LogBoardCreatedAsync(int boardId, int userId, string boardName);
@@ -51,12 +53,10 @@ namespace StressTracker5001Server.Services
 
     public class ActivityLogService : IActivityLogService
     {
-        private readonly IConfiguration _configuration;
         private readonly AppDbContext _context;
 
-        public ActivityLogService(IConfiguration configuration, AppDbContext context)
+        public ActivityLogService(AppDbContext context)
         {
-            _configuration = configuration;
             _context = context;
         }
 
@@ -64,14 +64,6 @@ namespace StressTracker5001Server.Services
         {
             _context.ActivityLogs.Add(log);
             await _context.SaveChangesAsync();
-        }
-
-        public async Task<List<ActivityLog>> GetBoardActivityLogsAsync(int boardId, DateTime from, DateTime to)
-        {
-            return await _context.ActivityLogs
-                .Where(al => al.BoardId == boardId && al.CreatedAt >= from && al.CreatedAt <= to)
-                .OrderByDescending(al => al.CreatedAt)
-                .ToListAsync();
         }
 
         /// <summary>

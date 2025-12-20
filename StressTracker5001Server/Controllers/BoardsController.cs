@@ -64,6 +64,27 @@ namespace StressTracker5001Server.Controllers
         }
 
         [Authorize]
+        [HttpGet("{boardId}/activity-logs")]
+        public async Task<IActionResult> GetBoardActivityLogs(
+            [FromRoute] int boardId,
+            [FromServices] IBoardService boardService,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] int? entityType = null,
+            [FromQuery] int? actionType = null)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var result = await boardService.GetActivityLogsForBoardAsync(
+                boardId, userId, page, pageSize, entityType, actionType);
+            return result.ToActionResult();
+        }
+
+        [Authorize]
         [HttpGet("{boardId}/membership")]
         public async Task<IActionResult> GetBoardMembership([FromRoute] int boardId, [FromServices] IBoardAuthorizationService boardAuthorizationService)
         {

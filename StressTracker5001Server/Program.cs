@@ -12,6 +12,7 @@ builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
 builder.Services.AddDbContext<AppDbContext>();
+builder.Services.AddScoped<IBoardAuthorizationService, BoardAuthorizationService>();
 builder.Services.AddScoped<IActivityLogService, ActivityLogService>();
 builder.Services.AddScoped<IBoardService, BoardService>();
 builder.Services.AddScoped<ICardService, CardService>();
@@ -21,7 +22,6 @@ builder.Services.AddScoped<ITokenService, TokenService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
-builder.Services.AddScoped<IBoardAuthorizationService, BoardAuthorizationService>();
 builder.Services.AddScoped<IBoardInviteService, BoardInviteService>();
 
 // JWT Configuration
