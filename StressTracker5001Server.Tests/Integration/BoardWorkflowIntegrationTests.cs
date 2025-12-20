@@ -5,6 +5,7 @@ using StressTracker5001Server.Data;
 using StressTracker5001Server.Models;
 using StressTracker5001Server.DTOs.Board;
 using StressTracker5001Server.Tests.Helpers;
+using Microsoft.Extensions.Configuration;
 
 namespace StressTracker5001Server.Tests.Integration;
 
@@ -19,14 +20,28 @@ public class BoardWorkflowIntegrationTests : IDisposable
     private readonly BoardAuthorizationService _authService;
     private readonly UserService _userService;
     private readonly Mock<IActivityLogService> _mockActivityLogService;
+    private readonly IConfiguration _configuration;
 
     public BoardWorkflowIntegrationTests()
     {
         _context = TestDbContextFactory.CreateInMemoryDbContext();
         _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
+
+        // Create in-memory configuration
+        var configData = new Dictionary<string, string?>
+        {
+            {"Auth:TokenChars", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"},
+            {"Auth:TokenLength", "32"},
+            {"Auth:PasswordReset:TokenExpiryMinutes", "60"},
+            {"Auth:EmailVerification:TokenExpiryMinutes", "1440"}
+        };
+        _configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(configData)
+            .Build();
+
         _authService = new BoardAuthorizationService(_context, _mockActivityLogService.Object);
         _boardService = new BoardService(_context, _authService, _mockActivityLogService.Object);
-        _userService = new UserService(_context);
+        _userService = new UserService(_context, _configuration);
     }
 
     public void Dispose()

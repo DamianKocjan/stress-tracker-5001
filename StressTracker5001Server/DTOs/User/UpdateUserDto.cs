@@ -1,8 +1,12 @@
-﻿namespace StressTracker5001Server.DTOs.User
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace StressTracker5001Server.DTOs.User
 {
     public class UpdateUserDto
     {
-        public string Username { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
+        [Required(ErrorMessage = "Username is required")]
+        [StringLength(50, MinimumLength = 3,
+            ErrorMessage = "Username must be between 3 and 50 characters")]
+        public required string Username { get; set; }
     }
 }

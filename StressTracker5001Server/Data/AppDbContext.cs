@@ -8,6 +8,8 @@ namespace StressTracker5001Server.Data
     {
         public DbSet<User> Users { get; set; }
         public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+        public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
         public DbSet<Board> Boards { get; set; }
         public DbSet<Column> Columns { get; set; }
         public DbSet<Card> Cards { get; set; }
@@ -32,6 +34,16 @@ namespace StressTracker5001Server.Data
                 .HasMany(u => u.RefreshTokens)
                 .WithOne(rt => rt.User)
                 .HasForeignKey(rt => rt.UserId);
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.PasswordResetTokens)
+                .WithOne(prt => prt.User)
+                .HasForeignKey(prt => prt.UserId);
+
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.EmailVerificationTokens)
+                .WithOne(evt => evt.User)
+                .HasForeignKey(evt => evt.UserId);
 
             modelBuilder.Entity<Board>()
                 .HasMany(b => b.Columns)
@@ -128,6 +140,12 @@ namespace StressTracker5001Server.Data
                 .HasOne(al => al.User)
                 .WithMany(u => u.ActivityLogs)
                 .HasForeignKey(al => al.UserId);
+
+            modelBuilder.Entity<PasswordResetToken>()
+                .HasIndex(prt => prt.TokenHash);
+
+            modelBuilder.Entity<EmailVerificationToken>()
+                .HasIndex(evt => evt.TokenHash);
         }
     }
 }

@@ -4,3 +4,7 @@ export interface UserDto {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface UserUpdateDto {
+  username: string;
+}

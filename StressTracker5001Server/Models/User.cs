@@ -28,6 +28,13 @@ namespace StressTracker5001Server.Models
         public List<BoardMember> BoardMemberships { get; set; } = new();
         public List<BoardInvite> BoardInvites { get; set; } = new();
         public List<ActivityLog> ActivityLogs { get; set; } = new();
+        public List<PasswordResetToken> PasswordResetTokens { get; set; } = new();
+        public List<EmailVerificationToken> EmailVerificationTokens { get; set; } = new();
+
+        public bool EmailVerified { get; set; } = false;
+        public string? PendingEmail { get; set; }
+        public bool IsAccountActive { get; set; } = false;
+        public DateTime? DeletedAt { get; set; }
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

@@ -6,6 +6,7 @@ using StressTracker5001Server.Models;
 using StressTracker5001Server.DTOs.User;
 using StressTracker5001Server.Tests.Helpers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace StressTracker5001Server.Tests.Unit.Services;
 
@@ -13,11 +14,25 @@ public class UserServiceTests : IDisposable
 {
     private readonly AppDbContext _context;
     private readonly UserService _userService;
+    private readonly IConfiguration _configuration;
 
     public UserServiceTests()
     {
         _context = TestDbContextFactory.CreateInMemoryDbContext();
-        _userService = new UserService(_context);
+
+        // Create in-memory configuration
+        var configData = new Dictionary<string, string?>
+        {
+            {"Auth:TokenChars", "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyz"},
+            {"Auth:TokenLength", "32"},
+            {"Auth:PasswordReset:TokenExpiryMinutes", "60"},
+            {"Auth:EmailVerification:TokenExpiryMinutes", "1440"}
+        };
+        _configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(configData)
+            .Build();
+
+        _userService = new UserService(_context, _configuration);
     }
 
     public void Dispose()

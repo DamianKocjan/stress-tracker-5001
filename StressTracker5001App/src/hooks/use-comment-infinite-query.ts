@@ -6,7 +6,7 @@ export const COMMENTS_PAGE_SIZE = 10;
 
 export function useCardCommentsInfiniteQuery(cardId: number) {
   return useInfiniteQuery({
-    queryKey: cardCommentsQueryKey(cardId, COMMENTS_PAGE_SIZE),
+    queryKey: cardCommentsQueryKey(cardId),
     queryFn: ({ pageParam = 1 }) =>
       getCardCommentsPaged(cardId, pageParam, COMMENTS_PAGE_SIZE),
     initialPageParam: 1,

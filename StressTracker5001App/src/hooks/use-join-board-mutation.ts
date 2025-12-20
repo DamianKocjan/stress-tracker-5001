@@ -13,7 +13,7 @@ export function useJoinBoardMutation() {
         description: `You are now a member of ${board.name}`,
       });
       queryClient.invalidateQueries({
-        queryKey: boardsQueryKey(),
+        queryKey: boardsQueryKey,
       });
     },
     onError(error) {

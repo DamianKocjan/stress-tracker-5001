@@ -175,5 +175,149 @@ namespace StressTracker5001Server.Controllers
             var result = await userService.UpdateUserPasswordAsync(userId, dto.NewPassword);
             return result.ToActionResult();
         }
+
+        [HttpPost("request-password-reset")]
+        public async Task<IActionResult> RequestPasswordReset([FromBody] RequestPasswordResetDto dto, [FromServices] IUserService userService, [FromServices] IConfiguration configuration, [FromServices] IEmailService emailService)
+        {
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var result = await userService.RequestPasswordResetAsync(dto.Email, baseUrl);
+
+            if (result.IsSuccess && !string.IsNullOrEmpty(result.Value!.Token))
+            {
+                // Send email with reset link
+                await emailService.SendPasswordResetEmailAsync(dto.Email, result.Value.Token, result.Value.ResetLink);
+            }
+
+            // Always return success for security (prevent email enumeration)
+            return Ok(ResultDto<object>.CreateSuccessResult(new { message = "If an account with that email exists, a password reset link has been sent" }));
+        }
+
+        [HttpPost("confirm-password-reset")]
+        public async Task<IActionResult> ConfirmPasswordReset([FromBody] ConfirmPasswordResetDto dto, [FromServices] IUserService userService, [FromServices] IConfiguration configuration)
+        {
+            if (dto.NewPassword != dto.ConfirmPassword)
+            {
+                return BadRequest(ResultDto.CreateFailureResult("Passwords do not match"));
+            }
+
+            var result = await userService.ConfirmPasswordResetAsync(dto.Token, dto.NewPassword);
+            return result.ToActionResult();
+        }
+
+        [Authorize]
+        [HttpPost("request-email-change")]
+        public async Task<IActionResult> RequestEmailChange([FromBody] RequestEmailChangeDto dto, [FromServices] IUserService userService, [FromServices] IConfiguration configuration, [FromServices] IEmailService emailService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            // Verify current password
+            var userResult = await userService.GetUserByIdAsync(userId);
+            if (!userResult.IsSuccess)
+            {
+                return new ObjectResult(ResultDto.Unauthorized("User not found")) { StatusCode = 401 };
+            }
+
+            var user = userResult.Value!;
+            if (!userService.VerifyPassword(user, dto.Password))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Current password is incorrect")) { StatusCode = 401 };
+            }
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var result = await userService.RequestEmailChangeAsync(userId, dto.NewEmail, baseUrl);
+
+            if (result.IsSuccess)
+            {
+                // Send verification email to new email address
+                await emailService.SendEmailVerificationAsync(dto.NewEmail, result.Value!.Item1, result.Value.Item2);
+            }
+
+            return result.ToActionResult();
+        }
+
+        [HttpPost("confirm-email-change")]
+        public async Task<IActionResult> ConfirmEmailChange([FromBody] ConfirmEmailChangeDto dto, [FromServices] IUserService userService, [FromServices] IConfiguration configuration)
+        {
+            var result = await userService.ConfirmEmailChangeAsync(dto.Token);
+            return result.ToActionResult();
+        }
+
+        [Authorize]
+        [HttpPost("delete-account")]
+        public async Task<IActionResult> DeleteAccount([FromBody] DeleteAccountDto dto, [FromServices] IUserService userService, [FromServices] ITokenService tokenService, [FromServices] IEmailService emailService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            if (!dto.ConfirmDeletion)
+            {
+                return BadRequest(ResultDto.CreateFailureResult("Account deletion must be confirmed"));
+            }
+
+            // Verify password
+            var userResult = await userService.GetUserByIdAsync(userId);
+            if (!userResult.IsSuccess)
+            {
+                return new ObjectResult(ResultDto.Unauthorized("User not found")) { StatusCode = 401 };
+            }
+
+            var user = userResult.Value!;
+            if (!userService.VerifyPassword(user, dto.Password))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Password is incorrect")) { StatusCode = 401 };
+            }
+
+            // Soft delete account
+            var deleteResult = await userService.SoftDeleteAccountAsync(userId);
+            if (deleteResult.IsSuccess)
+            {
+                // Send account deletion notification
+                await emailService.SendAccountDeletionNotificationAsync(user.Email, user.Username);
+
+                // Logout user
+                var refreshTokenCookie = tokenService.GetRefreshTokenFromRequest(Request);
+                if (!string.IsNullOrEmpty(refreshTokenCookie))
+                {
+                    await tokenService.RevokeRefreshTokenAsync(refreshTokenCookie);
+                }
+                tokenService.RemoveTokensFromResponse(Response);
+            }
+
+            return deleteResult.ToActionResult();
+        }
+
+        [Authorize]
+        [HttpPost("resend-verification-email")]
+        public async Task<IActionResult> ResendVerificationEmail([FromServices] IUserService userService, [FromServices] IConfiguration configuration, [FromServices] IEmailService emailService)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdClaim?.Value, out var userId))
+            {
+                return new ObjectResult(ResultDto.Unauthorized("Invalid user token")) { StatusCode = 401 };
+            }
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var result = await userService.ResendEmailVerificationAsync(userId, baseUrl);
+
+            if (result.IsSuccess)
+            {
+                // Send verification email
+                var userResult = await userService.GetUserByIdAsync(userId);
+                if (userResult.IsSuccess)
+                {
+                    var user = userResult.Value!;
+                    await emailService.SendEmailVerificationAsync(user.Email, result.Value!.Item1, result.Value.Item2);
+                }
+            }
+
+            return result.ToActionResult();
+        }
     }
 }

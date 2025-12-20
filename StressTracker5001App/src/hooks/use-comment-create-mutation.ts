@@ -18,7 +18,7 @@ export function useCommentCreateMutation(cardId: number) {
     onSuccess(data) {
       // Update the comments in its card
       queryClient.setQueryData(
-        cardCommentsQueryKey(cardId, COMMENTS_PAGE_SIZE),
+        cardCommentsQueryKey(cardId),
         (
           oldData: InfiniteData<PagedResultDto<CommentDto>> | undefined
         ): InfiniteData<PagedResultDto<CommentDto>> => {
