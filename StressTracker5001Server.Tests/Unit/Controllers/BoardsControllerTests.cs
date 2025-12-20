@@ -19,12 +19,14 @@ namespace StressTracker5001Server.Tests.Unit.Controllers;
 public class BoardsControllerTests
 {
     private readonly Mock<IBoardService> _mockBoardService;
+    private readonly Mock<IActivityLogService> _mockActivityLogService;
     private readonly BoardsController _controller;
     private const int TestUserId = 1;
 
     public BoardsControllerTests()
     {
         _mockBoardService = new Mock<IBoardService>();
+        _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
         _controller = new BoardsController();
 
         // Setup user claims for authorization

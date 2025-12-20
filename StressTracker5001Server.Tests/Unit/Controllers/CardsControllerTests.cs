@@ -19,6 +19,7 @@ public class CardsControllerTests
     private readonly Mock<ICardService> _mockCardService;
     private readonly Mock<ICommentService> _mockCommentService;
     private readonly Mock<ICardAssignmentService> _mockCardAssignmentService;
+    private readonly Mock<IActivityLogService> _mockActivityLogService;
     private readonly CardsController _controller;
     private readonly ClaimsPrincipal _userPrincipal;
 
@@ -27,6 +28,7 @@ public class CardsControllerTests
         _mockCardService = new Mock<ICardService>();
         _mockCommentService = new Mock<ICommentService>();
         _mockCardAssignmentService = new Mock<ICardAssignmentService>();
+        _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
         _controller = new CardsController();
 
         var claims = new List<Claim>

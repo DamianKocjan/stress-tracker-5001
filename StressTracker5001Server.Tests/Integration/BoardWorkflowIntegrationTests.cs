@@ -1,4 +1,5 @@
 using Xunit;
+using Moq;
 using StressTracker5001Server.Services;
 using StressTracker5001Server.Data;
 using StressTracker5001Server.Models;
@@ -17,12 +18,14 @@ public class BoardWorkflowIntegrationTests : IDisposable
     private readonly BoardService _boardService;
     private readonly BoardAuthorizationService _authService;
     private readonly UserService _userService;
+    private readonly Mock<IActivityLogService> _mockActivityLogService;
 
     public BoardWorkflowIntegrationTests()
     {
         _context = TestDbContextFactory.CreateInMemoryDbContext();
-        _authService = new BoardAuthorizationService(_context);
-        _boardService = new BoardService(_context, _authService);
+        _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
+        _authService = new BoardAuthorizationService(_context, _mockActivityLogService.Object);
+        _boardService = new BoardService(_context, _authService, _mockActivityLogService.Object);
         _userService = new UserService(_context);
     }
 
@@ -71,6 +74,11 @@ public class BoardWorkflowIntegrationTests : IDisposable
         var board = createBoardResult.Value;
         var boardId = board!.Id;
 
+        // Verify board creation activity was logged
+        _mockActivityLogService.Verify(
+            s => s.LogBoardCreatedAsync(boardId, ownerId, createBoardDto.Name),
+            Times.Once);
+
         // Act 2 - Owner adds a member to the board
         // Owner is automatically created as a member with Owner role (which has Admin permissions)
         var addMemberResult = await _authService.AddMemberAsync(boardId, memberId, ownerId, BoardMemberRole.Member);
@@ -106,6 +114,11 @@ public class BoardWorkflowIntegrationTests : IDisposable
         Assert.True(updateResult.IsSuccess);
         Assert.Equal(updateDto.Name, updateResult.Value!.Name);
 
+        // Verify board update activity was logged with diff
+        _mockActivityLogService.Verify(
+            s => s.LogBoardUpdatedAsync(boardId, ownerId, It.IsAny<object>(), It.IsAny<object>()),
+            Times.Once);
+
         // Act 7 - Remove member
         var removeResult = await _authService.RemoveMemberAsync(boardId, memberId, ownerId);
         Assert.True(removeResult.IsSuccess);
@@ -114,6 +127,15 @@ public class BoardWorkflowIntegrationTests : IDisposable
         var noAccessResult = await _boardService.GetBoardByIdAsync(boardId, memberId);
         Assert.False(noAccessResult.IsSuccess);
         Assert.Equal(403, noAccessResult.StatusCode);
+
+        // Act 9 - Delete the board
+        var deleteResult = await _boardService.DeleteBoardAsync(boardId, ownerId);
+        Assert.True(deleteResult.IsSuccess);
+
+        // Verify board deletion activity was logged
+        _mockActivityLogService.Verify(
+            s => s.LogBoardDeletedAsync(boardId, ownerId, It.IsAny<string>()),
+            Times.Once);
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using StressTracker5001Server.DTOs.ActivityLog;
 using StressTracker5001Server.DTOs.Board;
 using StressTracker5001Server.DTOs.BoardInvite;
 using StressTracker5001Server.DTOs.BoardMember;
@@ -13,6 +14,28 @@ namespace StressTracker5001Server.Extensions
 {
     public static class MappingExtensions
     {
+        // ActivityLog mappings
+        public static ActivityLogDto ToDto(this ActivityLog log)
+        {
+            return new ActivityLogDto
+            {
+                Id = log.Id,
+                BoardId = log.BoardId,
+                EntityType = log.EntityType,
+                EntityId = log.EntityId,
+                ActionType = log.Action,
+                Description = log.Details,
+                CreatedBy = log.User?.ToDto() ?? new UserDto
+                {
+                    Id = log.UserId,
+                    Username = string.Empty,
+                    CreatedAt = DateTime.MinValue,
+                    UpdatedAt = DateTime.MinValue
+                },
+                CreatedAt = log.CreatedAt
+            };
+        }
+
         // User mappings
         public static UserDto ToDto(this User user)
         {
@@ -235,6 +258,11 @@ namespace StressTracker5001Server.Extensions
         }
 
         // List mappings
+        public static List<ActivityLogDto> ToDto(this IEnumerable<ActivityLog> activityLogs)
+        {
+            return activityLogs.Select(al => al.ToDto()).ToList();
+        }
+
         public static List<BoardDto> ToDto(this IEnumerable<Board> boards)
         {
             return boards.Select(b => b.ToDto()).ToList();

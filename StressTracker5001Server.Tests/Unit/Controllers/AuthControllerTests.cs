@@ -16,12 +16,14 @@ public class AuthControllerTests
 {
     private readonly Mock<IUserService> _mockUserService;
     private readonly Mock<ITokenService> _mockTokenService;
+    private readonly Mock<IActivityLogService> _mockActivityLogService;
     private readonly AuthController _controller;
 
     public AuthControllerTests()
     {
         _mockUserService = new Mock<IUserService>();
         _mockTokenService = new Mock<ITokenService>();
+        _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
         _controller = new AuthController();
 
         _controller.ControllerContext = new ControllerContext

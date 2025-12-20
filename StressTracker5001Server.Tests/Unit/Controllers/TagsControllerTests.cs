@@ -15,12 +15,14 @@ namespace StressTracker5001Server.Tests.Unit.Controllers;
 public class TagsControllerTests
 {
     private readonly Mock<ITagService> _mockTagService;
+    private readonly Mock<IActivityLogService> _mockActivityLogService;
     private readonly TagsController _controller;
     private readonly ClaimsPrincipal _userPrincipal;
 
     public TagsControllerTests()
     {
         _mockTagService = new Mock<ITagService>();
+        _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
         _controller = new TagsController();
 
         var claims = new List<Claim>

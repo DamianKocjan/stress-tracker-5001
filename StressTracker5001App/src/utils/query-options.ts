@@ -21,3 +21,11 @@ export const boardInvitesQueryKey = (boardId: number) => [
   "board-invites",
   boardId,
 ];
+
+export const boardActivityLogsQueryKey = (
+  boardId: number,
+  page: number = 1,
+  pageSize: number = 10,
+  entityType?: number,
+  actionType?: number
+) => ["board-activity-logs", boardId, page, pageSize, entityType, actionType];

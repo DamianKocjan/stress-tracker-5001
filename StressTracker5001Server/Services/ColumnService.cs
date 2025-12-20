@@ -19,11 +19,13 @@ namespace StressTracker5001Server.Services
     {
         private readonly AppDbContext _context;
         private readonly IBoardAuthorizationService _boardAuthorizationService;
+        private readonly IActivityLogService _activityLogService;
 
-        public ColumnService(AppDbContext context, IBoardAuthorizationService boardAuthorizationService)
+        public ColumnService(AppDbContext context, IBoardAuthorizationService boardAuthorizationService, IActivityLogService activityLogService)
         {
             _context = context;
             _boardAuthorizationService = boardAuthorizationService;
+            _activityLogService = activityLogService;
         }
 
         public async Task<Result<Column>> GetColumnByIdAsync(int columnId, int userId, BoardMemberRole requiredRole = BoardMemberRole.Viewer)
@@ -88,6 +90,9 @@ namespace StressTracker5001Server.Services
 
             _context.Columns.Add(column);
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogColumnCreatedAsync(boardId, userId, column.Id, column.Name);
+
             return Result<Column>.Success(column);
         }
 
@@ -110,11 +115,16 @@ namespace StressTracker5001Server.Services
             }
 
             var column = columnResult.Value!;
+            var oldColumn = new { column.Name, column.WipLimit };
+
             column.Name = dto.Name;
             column.WipLimit = dto.WipLimit;
             column.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogColumnUpdatedAsync(columnId, userId, columnId, oldColumn, new { Name = column.Name, WipLimit = column.WipLimit });
+
             return Result<Column>.Success(column);
         }
 
@@ -137,6 +147,7 @@ namespace StressTracker5001Server.Services
             }
 
             var column = columnResult.Value!;
+            int oldPosition = column.Position;
             column.Position = newPosition;
             column.UpdatedAt = DateTime.UtcNow;
 
@@ -160,6 +171,9 @@ namespace StressTracker5001Server.Services
             }
 
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogColumnMovedAsync(column.BoardId, userId, columnId, oldPosition, newPosition);
+
             return Result<Column>.Success(column);
         }
 
@@ -177,8 +191,12 @@ namespace StressTracker5001Server.Services
             }
 
             var column = columnResult.Value!;
+            var columnName = column.Name;
             _context.Columns.Remove(column);
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogColumnDeletedAsync(column.BoardId, userId, columnId, columnName);
+
             return Result<bool>.Success(true);
         }
     }

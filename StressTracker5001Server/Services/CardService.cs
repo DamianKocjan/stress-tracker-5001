@@ -27,15 +27,17 @@ namespace StressTracker5001Server.Services
         private readonly IConfiguration _configuration;
         private readonly IBoardAuthorizationService _boardAuthorizationService;
         private readonly IColumnService _columnService;
+        private readonly IActivityLogService _activityLogService;
 
         private readonly int _maxTagsPerCard;
 
-        public CardService(AppDbContext context, IConfiguration configuration, IBoardAuthorizationService boardAuthorizationService, IColumnService columnService)
+        public CardService(AppDbContext context, IConfiguration configuration, IBoardAuthorizationService boardAuthorizationService, IColumnService columnService, IActivityLogService activityLogService)
         {
             _context = context;
             _configuration = configuration;
             _boardAuthorizationService = boardAuthorizationService;
             _columnService = columnService;
+            _activityLogService = activityLogService;
 
             _maxTagsPerCard = _configuration.GetValue("Tags:MaxTagsPerCard", 5);
         }
@@ -123,6 +125,8 @@ namespace StressTracker5001Server.Services
             _context.Cards.Add(card);
             await _context.SaveChangesAsync();
 
+            await _activityLogService.LogCardCreatedAsync(column.BoardId, userId, card.Id, card.Title);
+
             return Result<Card>.Success(card);
         }
 
@@ -135,12 +139,17 @@ namespace StressTracker5001Server.Services
             }
 
             var card = cardResult.Value!;
+            var oldCard = new { card.Title, card.Description, card.DueDate };
+
             card.Title = dto.Title;
             card.Description = dto.Description ?? string.Empty;
             card.DueDate = dto.DueDate;
             card.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogCardUpdatedAsync(card.Column.BoardId, userId, cardId, oldCard, new { Title = card.Title, Description = card.Description, DueDate = card.DueDate });
+
             return Result<Card>.Success(card);
         }
 
@@ -182,6 +191,9 @@ namespace StressTracker5001Server.Services
                 }
 
                 await _context.SaveChangesAsync();
+
+                await _activityLogService.LogCardMovedAsync(card.Column.BoardId, userId, cardId, oldColumnId, dto.NewColumnId);
+
                 return Result<Card>.Success(card);
             }
 
@@ -236,6 +248,9 @@ namespace StressTracker5001Server.Services
             }
 
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogCardMovedAsync(card.Column.BoardId, userId, cardId, oldColumnId, dto.NewColumnId);
+
             return Result<Card>.Success(card);
         }
 
@@ -351,6 +366,8 @@ namespace StressTracker5001Server.Services
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
 
+            await _activityLogService.LogCommentCreatedAsync(cardResult.Value!.Column.BoardId, userId, comment.Id, cardId, comment.Content);
+
             return Result<Comment>.Success(comment);
         }
 
@@ -368,8 +385,11 @@ namespace StressTracker5001Server.Services
             }
 
             var card = cardResult.Value!;
+            var cardTitle = card.Title;
             _context.Cards.Remove(card);
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogCardDeletedAsync(card.Column.BoardId, userId, cardId, cardTitle);
 
             return Result<bool>.Success(true);
         }

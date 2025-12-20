@@ -27,6 +27,7 @@ namespace StressTracker5001Server.Models
         public List<Comment> Comments { get; set; } = new();
         public List<BoardMember> BoardMemberships { get; set; } = new();
         public List<BoardInvite> BoardInvites { get; set; } = new();
+        public List<ActivityLog> ActivityLogs { get; set; } = new();
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

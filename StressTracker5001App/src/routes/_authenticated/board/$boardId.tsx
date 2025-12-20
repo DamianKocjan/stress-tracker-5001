@@ -1,3 +1,4 @@
+import { ActivityLogDrawer } from "@/components/activity-log/activity-log-drawer";
 import {
   BoardKanban,
   BoardKanbanSkeleton,
@@ -9,11 +10,14 @@ import { FetchingErrorAlert } from "@/components/fetching-error-alert";
 import { MembersDialog } from "@/components/member/members-dialog";
 import { RoleGuard } from "@/components/role-guard";
 import { TagManagementDialog } from "@/components/tags/tag-management-dialog";
+import { Button } from "@/components/ui/button";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BoardDetailsDto } from "@/dto/board.dto";
 import { useBoardQuery } from "@/hooks/use-board-query";
 import { createFileRoute } from "@tanstack/react-router";
+import { ActivityIcon } from "lucide-react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/_authenticated/board/$boardId")({
   component: RouteComponent,
@@ -56,6 +60,8 @@ interface BoardDetailsProps {
 }
 
 function BoardDetails({ board }: BoardDetailsProps) {
+  const [isActivityDrawerOpen, setIsActivityDrawerOpen] = useState(false);
+
   return (
     <div className="space-y-4">
       <Card className="mx-6 mt-6">
@@ -66,6 +72,14 @@ function BoardDetails({ board }: BoardDetailsProps) {
               <RoleGuard minRole="Admin">
                 <MembersDialog boardId={board.id} />
                 <TagManagementDialog boardId={board.id} tags={board.tags} />
+                <Button
+                  onClick={() => setIsActivityDrawerOpen(true)}
+                  variant="outline"
+                  size="sm"
+                >
+                  <ActivityIcon className="mr-2 size-4" />
+                  Activity
+                </Button>
                 <BoardUpdateDialog
                   defaultValues={{
                     name: board.name,
@@ -90,6 +104,12 @@ function BoardDetails({ board }: BoardDetailsProps) {
           />
         ))}
       </RoleGuard>
+
+      <ActivityLogDrawer
+        isOpen={isActivityDrawerOpen}
+        boardId={board.id}
+        onClose={() => setIsActivityDrawerOpen(false)}
+      />
     </div>
   );
 }

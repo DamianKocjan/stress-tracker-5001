@@ -4,6 +4,8 @@ using StressTracker5001Server.DTOs.Board;
 using StressTracker5001Server.Models;
 using StressTracker5001Server.Common;
 using StressTracker5001Server.Extensions;
+using StressTracker5001Server.DTOs.ActivityLog;
+using StressTracker5001Server.DTOs.Common;
 
 namespace StressTracker5001Server.Services
 {
@@ -11,6 +13,8 @@ namespace StressTracker5001Server.Services
     {
         Task<Result<Board>> GetBoardByIdAsync(int boardId, int userId);
         Task<Result<BoardDetailsDto>> GetBoardWithColumnsAndCardsAsync(int boardId, int userId);
+        Task<Result<PagedResultDto<ActivityLogDto>>> GetActivityLogsForBoardAsync(
+            int boardId, int userId, int page = 1, int pageSize = 10, int? entityType = null, int? actionType = null);
         Task<Result<List<Board>>> GetOwnedBoardsAsync(int userId);
         Task<Result<List<Board>>> GetUserMembershipBoardsAsync(int userId);
         Task<Result<Board>> CreateBoardAsync(CreateBoardDto dto, int userId);
@@ -22,11 +26,13 @@ namespace StressTracker5001Server.Services
     {
         private readonly AppDbContext _context;
         private readonly IBoardAuthorizationService _boardAuthorizationService;
+        private readonly IActivityLogService _activityLogService;
 
-        public BoardService(AppDbContext context, IBoardAuthorizationService boardAuthorizationService)
+        public BoardService(AppDbContext context, IBoardAuthorizationService boardAuthorizationService, IActivityLogService activityLogService)
         {
             _context = context;
             _boardAuthorizationService = boardAuthorizationService;
+            _activityLogService = activityLogService;
         }
 
         public async Task<Result<Board>> GetBoardByIdAsync(int boardId, int userId)
@@ -80,6 +86,75 @@ namespace StressTracker5001Server.Services
             return Result<BoardDetailsDto>.Success(boardDetailsDto);
         }
 
+        public async Task<Result<PagedResultDto<ActivityLogDto>>> GetActivityLogsForBoardAsync(
+            int boardId, int userId, int page = 1, int pageSize = 10, int? entityType = null, int? actionType = null)
+        {
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(boardId, userId, BoardMemberRole.Admin))
+            {
+                return Result<PagedResultDto<ActivityLogDto>>.Forbidden("You do not have permission to access this board's activity logs");
+            }
+
+            IQueryable<ActivityLog> query = _context.ActivityLogs
+                .Where(al => al.BoardId == boardId)
+                .Include(al => al.User);
+
+            // Apply entity type filter
+            if (entityType.HasValue)
+            {
+                query = query.Where(al => al.EntityType == (ActivityLogEntityType)entityType.Value);
+            }
+
+            // Apply action type filter
+            if (actionType.HasValue)
+            {
+                query = query.Where(al => al.Action == (ActivityLogActionType)actionType.Value);
+            }
+
+            var totalCount = await query.CountAsync();
+            var skip = (page - 1) * pageSize;
+
+            var logs = await query
+                .OrderByDescending(al => al.CreatedAt)
+                .Skip(skip)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var dtos = logs.Select(log => new ActivityLogDto
+            {
+                Id = log.Id,
+                BoardId = log.BoardId,
+                EntityType = log.EntityType,
+                EntityId = log.EntityId,
+                ActionType = log.Action,
+                Description = log.Details,
+                CreatedBy = new DTOs.User.UserDto
+                {
+                    Id = log.User!.Id,
+                    Username = log.User.Username,
+                    CreatedAt = log.User.CreatedAt,
+                    UpdatedAt = log.User.UpdatedAt,
+                },
+                CreatedAt = log.CreatedAt,
+            }).ToList();
+
+            var hasMore = skip + pageSize < totalCount;
+            var nextPage = page + 1;
+            var previousPage = page > 1 ? page - 1 : 0;
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            var result = new PagedResultDto<ActivityLogDto>
+            {
+                Items = dtos,
+                HasMore = hasMore,
+                Page = page,
+                NextPage = nextPage,
+                PreviousPage = previousPage,
+                PageSize = totalPages,
+            };
+
+            return Result<PagedResultDto<ActivityLogDto>>.Success(result);
+        }
+
         public async Task<Result<List<Board>>> GetOwnedBoardsAsync(int userId)
         {
             var boards = await _context.Boards
@@ -127,6 +202,8 @@ namespace StressTracker5001Server.Services
             _context.Boards.Add(board);
             await _context.SaveChangesAsync();
 
+            await _activityLogService.LogBoardCreatedAsync(board.Id, userId, board.Name);
+
             return Result<Board>.Success(board);
         }
 
@@ -145,6 +222,12 @@ namespace StressTracker5001Server.Services
                 return Result<Board>.Forbidden("You do not have permission to update this board");
             }
 
+            var copyOfOldBoard = new
+            {
+                board.Name,
+                board.Description
+            };
+
             if (!string.IsNullOrWhiteSpace(dto.Name))
             {
                 board.Name = dto.Name;
@@ -156,6 +239,8 @@ namespace StressTracker5001Server.Services
             }
 
             board.UpdatedAt = DateTime.UtcNow;
+
+            await _activityLogService.LogBoardUpdatedAsync(board.Id, userId, copyOfOldBoard, board);
 
             await _context.SaveChangesAsync();
 
@@ -182,6 +267,8 @@ namespace StressTracker5001Server.Services
 
             _context.Boards.Remove(board);
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogBoardDeletedAsync(board.Id, userId, board.Name);
 
             return Result<bool>.Success(true);
         }

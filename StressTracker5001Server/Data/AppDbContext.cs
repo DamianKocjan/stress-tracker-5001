@@ -17,6 +17,7 @@ namespace StressTracker5001Server.Data
         public DbSet<Comment> Comments { get; set; }
         public DbSet<BoardMember> BoardMembers { get; set; }
         public DbSet<BoardInvite> BoardInvites { get; set; }
+        public DbSet<ActivityLog> ActivityLogs { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
             => options.UseSqlite("Data Source=db.sqlite");
@@ -117,6 +118,16 @@ namespace StressTracker5001Server.Data
                 .HasOne(bi => bi.GeneratedByUser)
                 .WithMany(u => u.BoardInvites)
                 .HasForeignKey(bi => bi.GeneratedByUserId);
+
+            modelBuilder.Entity<ActivityLog>()
+                .HasOne(al => al.Board)
+                .WithMany(b => b.ActivityLogs)
+                .HasForeignKey(al => al.BoardId);
+
+            modelBuilder.Entity<ActivityLog>()
+                .HasOne(al => al.User)
+                .WithMany(u => u.ActivityLogs)
+                .HasForeignKey(al => al.UserId);
         }
     }
 }

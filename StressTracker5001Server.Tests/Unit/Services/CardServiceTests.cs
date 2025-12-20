@@ -1,4 +1,5 @@
 using Xunit;
+using Moq;
 using Microsoft.Extensions.Configuration;
 using StressTracker5001Server.Services;
 using StressTracker5001Server.Data;
@@ -15,12 +16,14 @@ public class CardServiceTests : IDisposable
     private readonly ColumnService _columnService;
     private readonly CardService _cardService;
     private readonly IConfiguration _configuration;
+    private readonly Mock<IActivityLogService> _mockActivityLogService;
 
     public CardServiceTests()
     {
         _context = TestDbContextFactory.CreateInMemoryDbContext();
-        _authService = new BoardAuthorizationService(_context);
-        _columnService = new ColumnService(_context, _authService);
+        _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
+        _authService = new BoardAuthorizationService(_context, _mockActivityLogService.Object);
+        _columnService = new ColumnService(_context, _authService, _mockActivityLogService.Object);
 
         // Create in-memory configuration
         var configData = new Dictionary<string, string?>
@@ -31,7 +34,7 @@ public class CardServiceTests : IDisposable
           .AddInMemoryCollection(configData)
           .Build();
 
-        _cardService = new CardService(_context, _configuration, _authService, _columnService);
+        _cardService = new CardService(_context, _configuration, _authService, _columnService, _mockActivityLogService.Object);
     }
 
     public void Dispose()
@@ -138,6 +141,11 @@ public class CardServiceTests : IDisposable
         Assert.Equal("New Card", result.Value.Title);
         Assert.Equal("New card description", result.Value.Description);
         Assert.Equal(column.Id, result.Value.ColumnId);
+
+        // Verify activity logging was called
+        _mockActivityLogService.Verify(
+            s => s.LogCardCreatedAsync(result.Value.Id, board.Id, user.Id, It.IsAny<string>()),
+            Times.Once);
     }
 
     [Fact]
@@ -216,6 +224,11 @@ public class CardServiceTests : IDisposable
         Assert.NotNull(result.Value);
         Assert.Equal("Updated Title", result.Value.Title);
         Assert.Equal("Updated Description", result.Value.Description);
+
+        // Verify activity logging was called with diff
+        _mockActivityLogService.Verify(
+            s => s.LogCardUpdatedAsync(card.Id, board.Id, user.Id, It.IsAny<object>(), It.IsAny<object>()),
+            Times.Once);
     }
 
     [Fact]
@@ -252,6 +265,11 @@ public class CardServiceTests : IDisposable
         // Verify card was deleted
         var deletedCard = await _context.Cards.FindAsync(card.Id);
         Assert.Null(deletedCard);
+
+        // Verify activity logging was called
+        _mockActivityLogService.Verify(
+            s => s.LogCardDeletedAsync(card.Id, board.Id, user.Id, It.IsAny<string>()),
+            Times.Once);
     }
 
     [Fact]

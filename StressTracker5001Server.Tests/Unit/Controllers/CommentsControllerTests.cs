@@ -15,12 +15,14 @@ namespace StressTracker5001Server.Tests.Unit.Controllers;
 public class CommentsControllerTests
 {
     private readonly Mock<ICommentService> _mockCommentService;
+    private readonly Mock<IActivityLogService> _mockActivityLogService;
     private readonly CommentsController _controller;
     private readonly ClaimsPrincipal _userPrincipal;
 
     public CommentsControllerTests()
     {
         _mockCommentService = new Mock<ICommentService>();
+        _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
         _controller = new CommentsController();
 
         var claims = new List<Claim>

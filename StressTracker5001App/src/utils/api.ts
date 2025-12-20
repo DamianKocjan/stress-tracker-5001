@@ -1,3 +1,4 @@
+import type { ActivityLogDto } from "@/dto/activity-log.dto";
 import type {
   BoardInviteCreateDto,
   BoardInviteDto,
@@ -584,5 +585,43 @@ export async function joinBoardWithInvite(
   }
 
   const result = (await response.json()) as ResultDto<BoardDetailsDto>;
+  return unwrapResult(result);
+}
+
+export async function getBoardActivityLogs(
+  boardId: number,
+  params?: {
+    page?: number;
+    pageSize?: number;
+    entityType?: number;
+    actionType?: number;
+  }
+): Promise<PagedResultDto<ActivityLogDto>> {
+  const searchParams = new URLSearchParams();
+  if (params?.page) searchParams.append("page", params.page.toString());
+  if (params?.pageSize)
+    searchParams.append("pageSize", params.pageSize.toString());
+  if (params?.entityType !== undefined)
+    searchParams.append("entityType", params.entityType.toString());
+  if (params?.actionType !== undefined)
+    searchParams.append("actionType", params.actionType.toString());
+
+  const queryString = searchParams.toString();
+  const url = `/boards/${boardId}/activity-logs${queryString ? `?${queryString}` : ""}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<
+      PagedResultDto<ActivityLogDto>
+    >;
+    throw new Error(result.errorMessage || "Failed to fetch activity logs");
+  }
+
+  const result = (await response.json()) as ResultDto<
+    PagedResultDto<ActivityLogDto>
+  >;
   return unwrapResult(result);
 }

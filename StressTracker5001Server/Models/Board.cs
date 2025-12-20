@@ -13,17 +13,11 @@ namespace StressTracker5001Server.Models
         [StringLength(500, ErrorMessage = "Description cannot exceed 500 characters")]
         public string Description { get; set; } = string.Empty;
 
-        [JsonIgnore]
         public List<Column> Columns { get; set; } = new();
-
-        [JsonIgnore]
         public List<Tag> Tags { get; set; } = new();
-
-        [JsonIgnore]
         public List<BoardMember> Members { get; set; } = new();
-
-        [JsonIgnore]
         public List<BoardInvite> Invites { get; set; } = new();
+        public List<ActivityLog> ActivityLogs { get; set; } = new();
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }

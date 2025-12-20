@@ -1,4 +1,5 @@
 using Xunit;
+using Moq;
 using StressTracker5001Server.Services;
 using StressTracker5001Server.Data;
 using StressTracker5001Server.Models;
@@ -12,12 +13,14 @@ public class ColumnServiceTests : IDisposable
     private readonly AppDbContext _context;
     private readonly BoardAuthorizationService _authService;
     private readonly ColumnService _columnService;
+    private readonly Mock<IActivityLogService> _mockActivityLogService;
 
     public ColumnServiceTests()
     {
         _context = TestDbContextFactory.CreateInMemoryDbContext();
-        _authService = new BoardAuthorizationService(_context);
-        _columnService = new ColumnService(_context, _authService);
+        _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
+        _authService = new BoardAuthorizationService(_context, _mockActivityLogService.Object);
+        _columnService = new ColumnService(_context, _authService, _mockActivityLogService.Object);
     }
 
     public void Dispose()
