@@ -1,6 +1,6 @@
 using StressTracker5001Server.DTOs.User;
 
-namespace StressTracker5001Server.DTOs.Card
+namespace StressTracker5001Server.DTOs.CardAssignment
 {
     public class CardAssignmentDto
     {

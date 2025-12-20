@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import type { CardDto } from "@/dto/card.dto";
 import { useTagsQuery } from "@/hooks/use-tags-query";
 import { useKanbanStore } from "@/stores/kanban-store";
@@ -88,10 +88,9 @@ export function ColumnCard({ card }: ColumnCardProps) {
           )}
 
           <CardTags tags={card.tags} />
+          <CardAssignedUsers assignments={card.assignments} />
         </div>
       </CardContent>
-
-      <CardAssignedUsers assignments={card.assignments} />
     </Card>
   );
 }
@@ -134,24 +133,22 @@ const CardAssignedUsers = memo(function CardAssignedUsers({
   }
 
   return (
-    <CardFooter>
-      <AvatarGroup>
-        {assignments.map((assignment) => (
-          <Tooltip key={assignment.id}>
-            <TooltipTrigger>
-              <Avatar>
-                <AvatarFallback>
-                  {assignment.user.username.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </TooltipTrigger>
+    <AvatarGroup>
+      {assignments.map((assignment) => (
+        <Tooltip key={assignment.id}>
+          <TooltipTrigger asChild>
+            <Avatar className="size-6">
+              <AvatarFallback>
+                {assignment.user.username.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          </TooltipTrigger>
 
-            <TooltipContent>
-              <p>{assignment.user.username}</p>
-            </TooltipContent>
-          </Tooltip>
-        ))}
-      </AvatarGroup>
-    </CardFooter>
+          <TooltipContent>
+            <p>{assignment.user.username}</p>
+          </TooltipContent>
+        </Tooltip>
+      ))}
+    </AvatarGroup>
   );
 });

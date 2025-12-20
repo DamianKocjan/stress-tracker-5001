@@ -1,3 +1,5 @@
+using StressTracker5001Server.DTOs.CardAssignment;
+
 namespace StressTracker5001Server.DTOs.Card
 {
     public class CardDto

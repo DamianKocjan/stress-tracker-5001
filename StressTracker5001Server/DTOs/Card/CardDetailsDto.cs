@@ -1,3 +1,4 @@
+using StressTracker5001Server.DTOs.CardAssignment;
 using StressTracker5001Server.DTOs.User;
 
 namespace StressTracker5001Server.DTOs.Card

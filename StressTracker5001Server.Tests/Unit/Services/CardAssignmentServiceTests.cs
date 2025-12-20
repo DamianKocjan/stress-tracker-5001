@@ -137,7 +137,7 @@ public class CardAssignmentServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task AssignCardToUserAsync_WithNonExistentUser_ReturnsNotFound()
+    public async Task AssignCardToUserAsync_WithNonExistentUser_ReturnsUnauthorized()
     {
         // Arrange
         var user = TestDataFactory.CreateTestUser();
@@ -165,8 +165,7 @@ public class CardAssignmentServiceTests : IDisposable
 
         // Assert
         Assert.False(result.IsSuccess);
-        Assert.Equal(404, result.StatusCode);
-        Assert.Contains("not found", result.Error ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(403, result.StatusCode);
     }
 
     [Fact]
@@ -398,7 +397,6 @@ public class CardAssignmentServiceTests : IDisposable
         _context.CardAssignments.AddRange(assignment1, assignment2);
         await _context.SaveChangesAsync();
 
-        // Act
         // Act
         var result = await _assignmentService.GetCardsAssignedToUserAsync(board.Id, currentUser.Id, assignedUser.Id);
 

@@ -2,6 +2,7 @@ using StressTracker5001Server.DTOs.Board;
 using StressTracker5001Server.DTOs.BoardInvite;
 using StressTracker5001Server.DTOs.BoardMember;
 using StressTracker5001Server.DTOs.Card;
+using StressTracker5001Server.DTOs.CardAssignment;
 using StressTracker5001Server.DTOs.Column;
 using StressTracker5001Server.DTOs.Comment;
 using StressTracker5001Server.DTOs.Tag;

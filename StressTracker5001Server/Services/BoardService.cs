@@ -58,6 +58,10 @@ namespace StressTracker5001Server.Services
                 .Include(b => b.Tags)
                 .Include(b => b.Columns)
                 .ThenInclude(c => c.Cards)
+                .ThenInclude(c => c.CardAssignments)
+                .ThenInclude(ca => ca.User)
+                .Include(b => b.Columns)
+                .ThenInclude(c => c.Cards)
                 .ThenInclude(c => c.CardTags)
                 .ThenInclude(ct => ct.Tag)
                 .FirstOrDefaultAsync();

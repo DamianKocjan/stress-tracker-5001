@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace StressTracker5001Server.DTOs.Card
+namespace StressTracker5001Server.DTOs.CardAssignment
 {
     public class CardAssignUserDto
     {

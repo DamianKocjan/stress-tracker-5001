@@ -151,7 +151,7 @@ function AssignedUsers({ assignments }: { assignments: CardAssignmentDto[] }) {
         <Tooltip key={assignment.id}>
           <TooltipTrigger asChild>
             <Avatar className="size-6">
-              <AvatarFallback className="text-xs">
+              <AvatarFallback>
                 {assignment.user.username.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>

@@ -35,14 +35,7 @@ namespace StressTracker5001Server.Services
 
             var card = cardResult.Value;
 
-            // Check if the assigned user exists
-            var userExists = await _context.Users.AnyAsync(u => u.Id == assignedUserId);
-            if (!userExists)
-            {
-                return Result<bool>.NotFound("User to assign the card to was not found");
-            }
-
-            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(cardId, assignedUserId, BoardMemberRole.Member))
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(card!.Column!.BoardId, assignedUserId))
             {
                 return Result<bool>.Forbidden("User you are trying to assign the card to is not authorized to access this board");
             }
@@ -56,7 +49,8 @@ namespace StressTracker5001Server.Services
             var cardAssignment = new CardAssignment
             {
                 CardId = cardId,
-                UserId = assignedUserId
+                UserId = assignedUserId,
+                AssignedAt = DateTime.UtcNow
             };
             _context.CardAssignments.Add(cardAssignment);
             await _context.SaveChangesAsync();
@@ -74,14 +68,7 @@ namespace StressTracker5001Server.Services
 
             var card = cardResult.Value;
 
-            // Check if the assigned user exists
-            var userExists = await _context.Users.AnyAsync(u => u.Id == assignedUserId);
-            if (!userExists)
-            {
-                return Result<bool>.NotFound("User to unassign the card from was not found");
-            }
-
-            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(cardId, assignedUserId, BoardMemberRole.Member))
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(card!.Column!.BoardId, assignedUserId))
             {
                 return Result<bool>.Forbidden("User you are trying to unassign the card from is not authorized to access this board");
             }
@@ -112,9 +99,16 @@ namespace StressTracker5001Server.Services
             }
 
             var assignedCards = await _context.CardAssignments
-                .Where(ca => ca.UserId == assignedUserId)
+                .Where(ca => ca.UserId == assignedUserId && ca.Card.Column.Board.Id == boardId)
                 .Include(ca => ca.Card)
-                .Where(ca => ca.Card != null && ca.Card.Column != null && ca.Card.Column.Board != null && ca.Card.Column.Board.Id == boardId)
+                .ThenInclude(c => c.Column)
+                .ThenInclude(c => c.Board)
+                .Include(ca => ca.Card)
+                .ThenInclude(c => c.CardTags)
+                .ThenInclude(ct => ct.Tag)
+                .Include(ca => ca.Card)
+                .ThenInclude(c => c.CardAssignments)
+                .ThenInclude(ca => ca.User)
                 .Select(ca => ca.Card!)
                 .ToListAsync();
 

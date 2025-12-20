@@ -55,7 +55,7 @@ function AvatarGroup({
   return (
     <div
       className={cn(
-        "*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:size-12 *:data-[slot=avatar]:ring-2 *:data-[slot=avatar]:grayscale",
+        "*:data-[slot=avatar]:ring-background flex -space-x-2 *:data-[slot=avatar]:size-12 *:data-[slot=avatar]:ring-2",
         className
       )}
       {...props}

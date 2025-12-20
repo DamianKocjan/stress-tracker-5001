@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StressTracker5001Server.DTOs.Card;
+using StressTracker5001Server.DTOs.CardAssignment;
 using StressTracker5001Server.DTOs.Comment;
 using StressTracker5001Server.DTOs.Common;
 using StressTracker5001Server.Services;
