@@ -1,11 +1,19 @@
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/providers/auth";
-import { Link } from "@tanstack/react-router";
-import { LayoutDashboard } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { LayoutDashboard, MenuIcon } from "lucide-react";
 import { ThemeSwitcher } from "./theme-switcher";
 import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 export function AppNav() {
+  const navigate = useNavigate();
   const { isAuthenticated, logout } = useAuth();
 
   return (
@@ -57,13 +65,35 @@ export function AppNav() {
                 <Button variant="ghost" size="sm" asChild>
                   <Link to="/dashboard">Dashboard</Link>
                 </Button>
-                <Button
-                  size="sm"
-                  disabled={logout.isPending}
-                  onClick={() => logout.mutateAsync()}
-                >
-                  Logout
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <span className="sr-only">Open user menu</span>
+                      <MenuIcon className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <Link to="/settings">Settings</Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      disabled={logout.isPending}
+                      onClick={() =>
+                        logout.mutateAsync(undefined, {
+                          onSuccess() {
+                            navigate({
+                              to: "/login",
+                              search: { redirect: "/" },
+                            });
+                          },
+                        })
+                      }
+                    >
+                      Logout
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </>
             ) : (
               <>

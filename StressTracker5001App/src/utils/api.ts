@@ -1,5 +1,14 @@
 import type { ActivityLogDto } from "@/dto/activity-log.dto";
 import type {
+  ConfirmEmailChangeDto,
+  ConfirmPasswordResetDto,
+  DeleteAccountDto,
+  RequestEmailChangeDto,
+  RequestPasswordResetDto,
+  ResendVerificationEmailDto,
+  UpdatePasswordDto,
+} from "@/dto/auth.dto";
+import type {
   BoardInviteCreateDto,
   BoardInviteDto,
 } from "@/dto/board-invite.dto";
@@ -30,6 +39,7 @@ import type {
 import type { CommentDto } from "@/dto/comment.dto";
 import type { PagedResultDto, ResultDto } from "@/dto/common.dto";
 import type { TagCreateDto, TagDto, TagUpdateDto } from "@/dto/tag.dto";
+import type { UserUpdateDto } from "@/dto/user.dto";
 import { fetch } from "./fetch";
 
 function unwrapResult<T>(result: ResultDto<T>): T {
@@ -624,4 +634,121 @@ export async function getBoardActivityLogs(
     PagedResultDto<ActivityLogDto>
   >;
   return unwrapResult(result);
+}
+
+// Auth API Functions
+export async function requestPasswordReset(
+  data: RequestPasswordResetDto
+): Promise<void> {
+  const response = await fetch("/auth/request-password-reset", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<void>;
+    throw new Error(result.errorMessage || "Failed to request password reset");
+  }
+}
+
+export async function confirmPasswordReset(
+  data: ConfirmPasswordResetDto
+): Promise<void> {
+  const response = await fetch("/auth/confirm-password-reset", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<void>;
+    throw new Error(result.errorMessage || "Failed to reset password");
+  }
+}
+
+export async function requestEmailChange(
+  data: RequestEmailChangeDto
+): Promise<void> {
+  const response = await fetch("/auth/request-email-change", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<void>;
+    throw new Error(result.errorMessage || "Failed to request email change");
+  }
+}
+
+export async function confirmEmailChange(
+  data: ConfirmEmailChangeDto
+): Promise<void> {
+  const response = await fetch("/auth/confirm-email-change", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<void>;
+    throw new Error(result.errorMessage || "Failed to verify email");
+  }
+}
+
+export async function updateProfile(
+  data: UserUpdateDto
+): Promise<{ message: string }> {
+  const response = await fetch("/auth/profile/update", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<{ message: string }>;
+    throw new Error(result.errorMessage || "Failed to update profile");
+  }
+
+  const result = (await response.json()) as ResultDto<{ message: string }>;
+  return unwrapResult(result);
+}
+
+export async function updatePassword(
+  data: UpdatePasswordDto
+): Promise<{ message: string }> {
+  const response = await fetch("/auth/profile/update-password", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<{ message: string }>;
+    throw new Error(result.errorMessage || "Failed to update password");
+  }
+
+  const result = (await response.json()) as ResultDto<{ message: string }>;
+  return unwrapResult(result);
+}
+
+export async function deleteAccount(data: DeleteAccountDto): Promise<void> {
+  const response = await fetch("/auth/delete-account", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<void>;
+    throw new Error(result.errorMessage || "Failed to delete account");
+  }
+}
+
+export async function resendVerificationEmail(
+  data: ResendVerificationEmailDto
+): Promise<void> {
+  const response = await fetch("/auth/resend-verification-email", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+
+  if (!response.ok) {
+    const result = (await response.json()) as ResultDto<void>;
+    throw new Error(result.errorMessage || "Failed to resend email");
+  }
 }

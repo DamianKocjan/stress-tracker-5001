@@ -24,6 +24,18 @@ builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IBoardInviteService, BoardInviteService>();
 
+// Email Service Configuration - Use Mock by default for development
+var emailServiceType = builder.Configuration.GetValue<string>("EmailService:Type", "Mock");
+if (emailServiceType == "Mock")
+{
+    builder.Services.AddScoped<IEmailService, MockEmailService>();
+}
+else
+{
+    // Future: Add real SMTP service here
+    builder.Services.AddScoped<IEmailService, MockEmailService>();
+}
+
 // JWT Configuration
 var key = Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Secret"]!);
 builder.Services
