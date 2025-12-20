@@ -21,10 +21,12 @@ namespace StressTracker5001Server.Services
     public class BoardAuthorizationService : IBoardAuthorizationService
     {
         private readonly AppDbContext _context;
+        private readonly IActivityLogService _activityLogService;
 
-        public BoardAuthorizationService(AppDbContext context)
+        public BoardAuthorizationService(AppDbContext context, IActivityLogService activityLogService)
         {
             _context = context;
+            _activityLogService = activityLogService;
         }
 
         public async Task<Result<BoardMember>> AddMemberAsync(int boardId, int userMemberId, int userId, BoardMemberRole role)
@@ -60,6 +62,10 @@ namespace StressTracker5001Server.Services
 
             _context.BoardMembers.Add(boardMember);
             await _context.SaveChangesAsync();
+
+            var memberUser = await _context.Users.FindAsync(userMemberId);
+            await _activityLogService.LogBoardMemberAddedAsync(boardId, userId, userMemberId, memberUser?.Username ?? "Unknown", role.ToString());
+
             return Result<BoardMember>.Success(boardMember);
         }
 
@@ -77,8 +83,12 @@ namespace StressTracker5001Server.Services
             }
 
             var member = memberResult.Value!;
+            var memberName = member.User?.Username ?? "Unknown";
             _context.BoardMembers.Remove(member);
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogBoardMemberRemovedAsync(boardId, userId, userMemberId, memberName);
+
             return Result<bool>.Success(true);
         }
 
@@ -144,10 +154,14 @@ namespace StressTracker5001Server.Services
             }
 
             var member = memberResult.Value!;
+            var oldRole = member.Role.ToString();
             member.Role = newRole;
             member.UpdatedAt = DateTime.UtcNow;
             _context.BoardMembers.Update(member);
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogBoardMemberRoleChangedAsync(boardId, userId, userMemberId, member.User?.Username ?? "Unknown", oldRole, newRole.ToString());
+
             return Result<BoardMember>.Success(member);
         }
 

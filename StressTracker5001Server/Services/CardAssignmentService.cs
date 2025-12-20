@@ -17,12 +17,14 @@ namespace StressTracker5001Server.Services
         private readonly AppDbContext _context;
         private readonly IBoardAuthorizationService _boardAuthorizationService;
         private readonly ICardService _cardService;
+        private readonly IActivityLogService _activityLogService;
 
-        public CardAssignmentService(AppDbContext context, IBoardAuthorizationService boardAuthorizationService, ICardService cardService)
+        public CardAssignmentService(AppDbContext context, IBoardAuthorizationService boardAuthorizationService, ICardService cardService, IActivityLogService activityLogService)
         {
             _context = context;
             _boardAuthorizationService = boardAuthorizationService;
             _cardService = cardService;
+            _activityLogService = activityLogService;
         }
 
         public async Task<Result<bool>> AssignCardToUserAsync(int cardId, int userId, int assignedUserId)
@@ -55,6 +57,9 @@ namespace StressTracker5001Server.Services
             _context.CardAssignments.Add(cardAssignment);
             await _context.SaveChangesAsync();
 
+            var assignedUser = await _context.Users.FindAsync(assignedUserId);
+            await _activityLogService.LogCardAssignedAsync(card!.Column!.BoardId, userId, cardId, assignedUserId, assignedUser?.Username ?? "Unknown");
+
             return Result<bool>.Success(true);
         }
 
@@ -82,6 +87,9 @@ namespace StressTracker5001Server.Services
 
             _context.CardAssignments.Remove(assignment);
             await _context.SaveChangesAsync();
+
+            var unassignedUser = await _context.Users.FindAsync(assignedUserId);
+            await _activityLogService.LogCardUnassignedAsync(card!.Column!.BoardId, userId, cardId, assignedUserId, unassignedUser?.Username ?? "Unknown");
 
             return Result<bool>.Success(true);
         }

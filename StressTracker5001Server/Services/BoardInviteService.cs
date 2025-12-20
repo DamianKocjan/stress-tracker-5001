@@ -23,6 +23,7 @@ namespace StressTracker5001Server.Services
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly IBoardAuthorizationService _boardAuthorizationService;
+        private readonly IActivityLogService _activityLogService;
 
         private readonly int MaxActiveInvitesPerBoard;
         private readonly int DefaultInviteExpiryHours;
@@ -30,11 +31,12 @@ namespace StressTracker5001Server.Services
         private readonly int InviteTokenLength;
         private readonly RandomNumberGenerator random;
 
-        public BoardInviteService(AppDbContext context, IConfiguration configuration, IBoardAuthorizationService boardAuthorizationService)
+        public BoardInviteService(AppDbContext context, IConfiguration configuration, IBoardAuthorizationService boardAuthorizationService, IActivityLogService activityLogService)
         {
             _context = context;
             _configuration = configuration;
             _boardAuthorizationService = boardAuthorizationService;
+            _activityLogService = activityLogService;
 
             MaxActiveInvitesPerBoard = _configuration.GetValue<int>("BoardInvites:MaxActiveInvitesPerBoard");
             DefaultInviteExpiryHours = _configuration.GetValue<int>("BoardInvites:DefaultInviteExpiryHours");

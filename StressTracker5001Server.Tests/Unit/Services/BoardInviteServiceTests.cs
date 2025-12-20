@@ -1,4 +1,5 @@
 using Xunit;
+using Moq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using StressTracker5001Server.Services;
@@ -14,11 +15,13 @@ public class BoardInviteServiceTests : IDisposable
     private readonly BoardAuthorizationService _authService;
     private readonly BoardInviteService _inviteService;
     private readonly IConfiguration _configuration;
+    private readonly Mock<IActivityLogService> _mockActivityLogService;
 
     public BoardInviteServiceTests()
     {
         _context = TestDbContextFactory.CreateInMemoryDbContext();
-        _authService = new BoardAuthorizationService(_context);
+        _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
+        _authService = new BoardAuthorizationService(_context, _mockActivityLogService.Object);
 
         // Create in-memory configuration
         var configData = new Dictionary<string, string?>
@@ -32,7 +35,7 @@ public class BoardInviteServiceTests : IDisposable
             .AddInMemoryCollection(configData)
             .Build();
 
-        _inviteService = new BoardInviteService(_context, _configuration, _authService);
+        _inviteService = new BoardInviteService(_context, _configuration, _authService, _mockActivityLogService.Object);
     }
 
     public void Dispose()

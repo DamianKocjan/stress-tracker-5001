@@ -22,11 +22,13 @@ namespace StressTracker5001Server.Services
     {
         private readonly AppDbContext _context;
         private readonly IBoardAuthorizationService _boardAuthorizationService;
+        private readonly IActivityLogService _activityLogService;
 
-        public BoardService(AppDbContext context, IBoardAuthorizationService boardAuthorizationService)
+        public BoardService(AppDbContext context, IBoardAuthorizationService boardAuthorizationService, IActivityLogService activityLogService)
         {
             _context = context;
             _boardAuthorizationService = boardAuthorizationService;
+            _activityLogService = activityLogService;
         }
 
         public async Task<Result<Board>> GetBoardByIdAsync(int boardId, int userId)
@@ -127,6 +129,8 @@ namespace StressTracker5001Server.Services
             _context.Boards.Add(board);
             await _context.SaveChangesAsync();
 
+            await _activityLogService.LogBoardCreatedAsync(board.Id, userId, board.Name);
+
             return Result<Board>.Success(board);
         }
 
@@ -145,6 +149,12 @@ namespace StressTracker5001Server.Services
                 return Result<Board>.Forbidden("You do not have permission to update this board");
             }
 
+            var copyOfOldBoard = new
+            {
+                board.Name,
+                board.Description
+            };
+
             if (!string.IsNullOrWhiteSpace(dto.Name))
             {
                 board.Name = dto.Name;
@@ -156,6 +166,8 @@ namespace StressTracker5001Server.Services
             }
 
             board.UpdatedAt = DateTime.UtcNow;
+
+            await _activityLogService.LogBoardUpdatedAsync(board.Id, userId, copyOfOldBoard, board);
 
             await _context.SaveChangesAsync();
 
@@ -182,6 +194,8 @@ namespace StressTracker5001Server.Services
 
             _context.Boards.Remove(board);
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogBoardDeletedAsync(board.Id, userId, board.Name);
 
             return Result<bool>.Success(true);
         }

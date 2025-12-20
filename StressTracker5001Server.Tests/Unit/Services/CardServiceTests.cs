@@ -1,4 +1,5 @@
 using Xunit;
+using Moq;
 using Microsoft.Extensions.Configuration;
 using StressTracker5001Server.Services;
 using StressTracker5001Server.Data;
@@ -15,12 +16,14 @@ public class CardServiceTests : IDisposable
     private readonly ColumnService _columnService;
     private readonly CardService _cardService;
     private readonly IConfiguration _configuration;
+    private readonly Mock<IActivityLogService> _mockActivityLogService;
 
     public CardServiceTests()
     {
         _context = TestDbContextFactory.CreateInMemoryDbContext();
-        _authService = new BoardAuthorizationService(_context);
-        _columnService = new ColumnService(_context, _authService);
+        _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
+        _authService = new BoardAuthorizationService(_context, _mockActivityLogService.Object);
+        _columnService = new ColumnService(_context, _authService, _mockActivityLogService.Object);
 
         // Create in-memory configuration
         var configData = new Dictionary<string, string?>
@@ -31,7 +34,7 @@ public class CardServiceTests : IDisposable
           .AddInMemoryCollection(configData)
           .Build();
 
-        _cardService = new CardService(_context, _configuration, _authService, _columnService);
+        _cardService = new CardService(_context, _configuration, _authService, _columnService, _mockActivityLogService.Object);
     }
 
     public void Dispose()

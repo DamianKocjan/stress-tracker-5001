@@ -1,4 +1,5 @@
 using Xunit;
+using Moq;
 using StressTracker5001Server.Services;
 using StressTracker5001Server.Data;
 using StressTracker5001Server.Models;
@@ -17,12 +18,14 @@ public class BoardWorkflowIntegrationTests : IDisposable
     private readonly BoardService _boardService;
     private readonly BoardAuthorizationService _authService;
     private readonly UserService _userService;
+    private readonly Mock<IActivityLogService> _mockActivityLogService;
 
     public BoardWorkflowIntegrationTests()
     {
         _context = TestDbContextFactory.CreateInMemoryDbContext();
-        _authService = new BoardAuthorizationService(_context);
-        _boardService = new BoardService(_context, _authService);
+        _mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
+        _authService = new BoardAuthorizationService(_context, _mockActivityLogService.Object);
+        _boardService = new BoardService(_context, _authService, _mockActivityLogService.Object);
         _userService = new UserService(_context);
     }
 

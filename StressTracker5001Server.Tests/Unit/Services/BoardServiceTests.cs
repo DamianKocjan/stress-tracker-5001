@@ -1,4 +1,5 @@
 using Xunit;
+using Moq;
 using Microsoft.EntityFrameworkCore;
 using StressTracker5001Server.Services;
 using StressTracker5001Server.Data;
@@ -13,12 +14,14 @@ public class BoardServiceTests : IDisposable
 	private readonly AppDbContext _context;
 	private readonly BoardAuthorizationService _authService;
 	private readonly BoardService _boardService;
+	private readonly Mock<IActivityLogService> _mockActivityLogService;
 
 	public BoardServiceTests()
 	{
 		_context = TestDbContextFactory.CreateInMemoryDbContext();
-		_authService = new BoardAuthorizationService(_context);
-		_boardService = new BoardService(_context, _authService);
+		_mockActivityLogService = MockServiceFactory.CreateMockActivityLogService();
+		_authService = new BoardAuthorizationService(_context, _mockActivityLogService.Object);
+		_boardService = new BoardService(_context, _authService, _mockActivityLogService.Object);
 	}
 
 	public void Dispose()

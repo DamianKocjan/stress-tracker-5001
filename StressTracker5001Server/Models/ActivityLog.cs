@@ -1,11 +1,13 @@
-using System.ComponentModel.DataAnnotations;
-
 namespace StressTracker5001Server.Models
 {
     public enum ActivityLogEntityType
     {
-        Card,
+        Comment,
+        UserAssignment,
         Tag,
+        Card,
+        Column,
+        BoardMember,
         Board
     }
 

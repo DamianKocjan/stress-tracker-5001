@@ -17,11 +17,13 @@ namespace StressTracker5001Server.Services
     {
         private readonly AppDbContext _context;
         private readonly IBoardAuthorizationService _boardAuthorizationService;
+        private readonly IActivityLogService _activityLogService;
 
-        public CommentService(AppDbContext context, IBoardAuthorizationService boardAuthorizationService)
+        public CommentService(AppDbContext context, IBoardAuthorizationService boardAuthorizationService, IActivityLogService activityLogService)
         {
             _context = context;
             _boardAuthorizationService = boardAuthorizationService;
+            _activityLogService = activityLogService;
         }
 
         public async Task<Result<Comment>> GetCommentByIdAsync(int commentId, int userId, BoardMemberRole requiredRole = BoardMemberRole.Viewer)
@@ -62,10 +64,14 @@ namespace StressTracker5001Server.Services
             }
 
             var comment = commentResult.Value!;
+            var oldContent = comment.Content;
             comment.Content = dto.Content;
             comment.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogCommentUpdatedAsync(comment.Card!.Column!.BoardId, userId, commentId, comment.CardId, oldContent, comment.Content);
+
             return Result<Comment>.Success(comment);
         }
 
@@ -85,8 +91,13 @@ namespace StressTracker5001Server.Services
             }
 
             var comment = commentResult.Value!;
+            var content = comment.Content;
+            var boardId = comment.Card!.Column!.BoardId;
             _context.Comments.Remove(comment);
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogCommentDeletedAsync(boardId, userId, commentId, comment.CardId, content);
+
             return Result<bool>.Success(true);
         }
     }

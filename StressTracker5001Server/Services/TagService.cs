@@ -19,14 +19,16 @@ namespace StressTracker5001Server.Services
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly IBoardAuthorizationService _boardAuthorizationService;
+        private readonly IActivityLogService _activityLogService;
 
         private readonly int _maxTagsPerBoard;
 
-        public TagService(AppDbContext context, IConfiguration configuration, IBoardAuthorizationService boardAuthorizationService)
+        public TagService(AppDbContext context, IConfiguration configuration, IBoardAuthorizationService boardAuthorizationService, IActivityLogService activityLogService)
         {
             _context = context;
             _configuration = configuration;
             _boardAuthorizationService = boardAuthorizationService;
+            _activityLogService = activityLogService;
 
             _maxTagsPerBoard = _configuration.GetValue("Tags:MaxTagsPerBoard", 20);
         }
@@ -95,6 +97,8 @@ namespace StressTracker5001Server.Services
             _context.Tags.Add(tag);
             await _context.SaveChangesAsync();
 
+            await _activityLogService.LogTagCreatedAsync(dto.BoardId, userId, tag.Id, tag.Name);
+
             return Result<Tag>.Success(tag);
         }
 
@@ -120,11 +124,15 @@ namespace StressTracker5001Server.Services
                 return Result<Tag>.Failure($"Tag with name '{dto.Name}' already exists in this board", 400);
             }
 
+            var oldTag = new { tag.Name, tag.Color };
+
             tag.Name = dto.Name;
             tag.Color = dto.Color;
             tag.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogTagUpdatedAsync(tag.BoardId, userId, tagId, oldTag, new { Name = tag.Name, Color = tag.Color });
 
             return Result<Tag>.Success(tag);
         }
@@ -142,8 +150,11 @@ namespace StressTracker5001Server.Services
                 return Result<bool>.Forbidden("You do not have permission to delete this tag");
             }
 
+            var tagName = tag.Name;
             _context.Tags.Remove(tag);
             await _context.SaveChangesAsync();
+
+            await _activityLogService.LogTagDeletedAsync(tag.BoardId, userId, tagId, tagName);
 
             return Result<bool>.Success(true);
         }
