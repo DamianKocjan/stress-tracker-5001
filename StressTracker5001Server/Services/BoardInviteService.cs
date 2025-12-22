@@ -40,7 +40,7 @@ namespace StressTracker5001Server.Services
 
             MaxActiveInvitesPerBoard = _configuration.GetValue<int>("BoardInvites:MaxActiveInvitesPerBoard");
             DefaultInviteExpiryHours = _configuration.GetValue<int>("BoardInvites:DefaultInviteExpiryHours");
-            InviteChars = _configuration.GetValue<string>("BoardInvites:InviteChars");
+            InviteChars = _configuration.GetValue<string>("BoardInvites:InviteChars")!;
             InviteTokenLength = _configuration.GetValue<int>("BoardInvites:InviteTokenLength");
 
             random = RandomNumberGenerator.Create();

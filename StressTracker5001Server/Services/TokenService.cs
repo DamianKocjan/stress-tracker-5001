@@ -16,7 +16,7 @@ namespace StressTracker5001Server.Services
         string? GetTokenFromRequest(HttpRequest request);
         string? GetRefreshTokenFromRequest(HttpRequest request);
         void RemoveTokensFromResponse(HttpResponse response);
-        Task<bool> ValidateTokenAsync(string token);
+        bool ValidateToken(string token);
         Task<Result<RefreshToken>> GetRefreshTokenAsync(string refreshToken);
         Task<Result<bool>> RevokeRefreshTokenAsync(string refreshToken);
         Task<Result<bool>> SaveRefreshTokenAsync(int userId, RefreshToken refreshToken);
@@ -106,7 +106,7 @@ namespace StressTracker5001Server.Services
             response.Cookies.Delete(refreshTokenCookieName);
         }
 
-        public async Task<bool> ValidateTokenAsync(string token)
+        public bool ValidateToken(string token)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Secret"]!);

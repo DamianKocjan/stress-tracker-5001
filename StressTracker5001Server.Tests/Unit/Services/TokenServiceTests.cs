@@ -80,7 +80,7 @@ public class TokenServiceTests : IDisposable
         var token = _tokenService.GenerateToken(1, "test@example.com", "testuser");
 
         // Act
-        var isValid = await _tokenService.ValidateTokenAsync(token);
+        var isValid = _tokenService.ValidateToken(token);
 
         // Assert
         Assert.True(isValid);
@@ -93,7 +93,7 @@ public class TokenServiceTests : IDisposable
         var invalidToken = "invalid.token.here";
 
         // Act
-        var isValid = await _tokenService.ValidateTokenAsync(invalidToken);
+        var isValid = _tokenService.ValidateToken(invalidToken);
 
         // Assert
         Assert.False(isValid);

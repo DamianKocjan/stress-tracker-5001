@@ -31,8 +31,8 @@ namespace StressTracker5001Server.Services
             var comment = await _context.Comments
                 .Include(c => c.User)
                 .Include(c => c.Card)
-                .ThenInclude(card => card.Column)
-                .ThenInclude(column => column.Board)
+                .ThenInclude(card => card!.Column)
+                .ThenInclude(column => column!.Board)
                 .FirstOrDefaultAsync(c => c.Id == commentId);
 
             if (comment == null)

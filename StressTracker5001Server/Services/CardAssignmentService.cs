@@ -107,15 +107,15 @@ namespace StressTracker5001Server.Services
             }
 
             var assignedCards = await _context.CardAssignments
-                .Where(ca => ca.UserId == assignedUserId && ca.Card.Column.Board.Id == boardId)
+                .Where(ca => ca.UserId == assignedUserId && ca.Card!.Column!.Board!.Id == boardId)
                 .Include(ca => ca.Card)
-                .ThenInclude(c => c.Column)
-                .ThenInclude(c => c.Board)
+                .ThenInclude(c => c!.Column)
+                .ThenInclude(c => c!.Board)
                 .Include(ca => ca.Card)
-                .ThenInclude(c => c.CardTags)
+                .ThenInclude(c => c!.CardTags)
                 .ThenInclude(ct => ct.Tag)
                 .Include(ca => ca.Card)
-                .ThenInclude(c => c.CardAssignments)
+                .ThenInclude(c => c!.CardAssignments)
                 .ThenInclude(ca => ca.User)
                 .Select(ca => ca.Card!)
                 .ToListAsync();
