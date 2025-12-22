@@ -134,7 +134,8 @@ namespace StressTracker5001Server.Extensions
                 CreatedAt = card.CreatedAt,
                 UpdatedAt = card.UpdatedAt,
                 Tags = card.CardTags.Select(ct => ct.TagId).ToList(),
-                Assignments = card.CardAssignments.Select(ca => ca.ToDto()).ToList()
+                Assignments = card.CardAssignments.Select(ca => ca.ToDto()).ToList(),
+                AttachmentCount = card.Attachments.Count()
             };
         }
 

@@ -72,6 +72,8 @@ namespace StressTracker5001Server.Services
                 .ThenInclude(c => c!.Board)
                 .Include(c => c.CreatedBy)
                 .Include(c => c.CardTags)
+                .Include(c => c.Attachments)
+                .ThenInclude(a => a.UploadedBy)
                 .Include(c => c.CardAssignments)
                 .ThenInclude(ca => ca.User)
                 .FirstOrDefaultAsync(c => c.Id == cardId);
