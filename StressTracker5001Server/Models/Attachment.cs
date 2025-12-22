@@ -4,15 +4,17 @@ namespace StressTracker5001Server.Models
 {
     public class Attachment
     {
-        public int Id { get; set; }
+        // Id is a new file name generated when the file is uploaded to storage
+        // This helps avoid filename conflicts
+        public Guid Id { get; set; }
         public required int CardId { get; set; }
         public Card? Card { get; set; }
 
-        [Required(ErrorMessage = "FileName is required")]
+        // Original file name
         public required string FileName { get; set; }
-        [Required(ErrorMessage = "FilePath is required")]
-        public required string FilePath { get; set; }
-        [Required(ErrorMessage = "FileSize is required")]
+        // MIME type of the file
+        // e.g., "image/png", "application/pdf"
+        public required string ContentType { get; set; }
         public required long FileSize { get; set; }
         public required int UploadedById { get; set; }
         public User? UploadedBy { get; set; }
