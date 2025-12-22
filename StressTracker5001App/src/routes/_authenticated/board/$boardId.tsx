@@ -32,11 +32,13 @@ function RouteComponent() {
   }
   if (status === "error") {
     return (
-      <FetchingErrorAlert
-        title="Failed to load board"
-        error={error}
-        refetch={refetch}
-      />
+      <div className="container mx-auto">
+        <FetchingErrorAlert
+          title="Failed to load board"
+          error={error}
+          refetch={refetch}
+        />
+      </div>
     );
   }
 
