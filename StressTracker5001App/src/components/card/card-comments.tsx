@@ -50,23 +50,6 @@ export function CardComments({ cardId }: CardCommentsProps) {
           <RoleGuard minRole="Member">
             <CommentForm cardId={cardId} currentUser={user!} />
           </RoleGuard>
-          {/* {hasAnyComments ? (
-            comments.map((comment) => (
-              <CommentCard
-                key={`comment-${comment.id}`}
-                cardId={cardId}
-                onDelete={deleteCommentMutation.mutate}
-                currentUser={user!}
-                comment={comment}
-              />
-            ))
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground text-sm">
-                No comments yet. Start the conversation!
-              </p>
-            </div>
-          )} */}
 
           {data.pages.map((page, pageIndex) => (
             <Fragment key={`card-${cardId}-comments-page-${pageIndex}`}>
@@ -110,7 +93,7 @@ function CardCommentsSkeleton() {
         <div className="space-y-3">
           {/* Comment form skeleton */}
           <div className="my-5 flex w-full gap-x-3">
-            <Skeleton className="h-9 w-9 rounded-full flex-shrink-0" />
+            <Skeleton className="size-9 rounded-full shrink-0" />
             <div className="flex-1">
               <Skeleton className="h-20 w-full rounded-lg" />
             </div>

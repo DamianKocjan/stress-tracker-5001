@@ -87,3 +87,29 @@ jobs:
 
       - name: Build Release
         run: dotnet build --configuration Release --no-restore
+
+  build-app:
+    name: Run app build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Check TypeScript types
+        run: pnpm type-check
+
+      - name: Build the application
+        run: pnpm build
