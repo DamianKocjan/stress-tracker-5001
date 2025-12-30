@@ -48,6 +48,7 @@ import { ScrollArea } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
 import { Skeleton } from "../ui/skeleton";
 import { AssignedUsersDisplay } from "./card-assigned-users-display";
+import { CardAttachments } from "./card-attachments";
 import { CardComments } from "./card-comments";
 
 interface CardDetailsDialogProps {
@@ -174,6 +175,7 @@ function CardDetailsView({
   createdBy,
   tags: cardTags,
   assignments,
+  attachments,
   createdAt,
   updatedAt,
   onEdit,
@@ -313,6 +315,10 @@ function CardDetailsView({
           <span>{formatDateTime(updatedAt)}</span>
         </div>
       </div>
+
+      <Separator />
+
+      <CardAttachments cardId={id} attachments={attachments} />
 
       <Separator />
 

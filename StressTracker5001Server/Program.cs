@@ -23,6 +23,19 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IBoardInviteService, BoardInviteService>();
+builder.Services.AddScoped<IAttachmentService, AttachmentService>();
+
+// File Storage Service Configuration
+// Use Cloudflare R2 for production
+// Use LocalFileStorageService for development/testing
+if (builder.Environment.IsProduction())
+{
+    builder.Services.AddScoped<IFileStorageService, CloudflareFileStorageService>();
+}
+else
+{
+    builder.Services.AddScoped<IFileStorageService, LocalFileStorageService>();
+}
 
 // Email Service Configuration - Use Mock by default for development
 var emailServiceType = builder.Configuration.GetValue<string>("EmailService:Type", "Mock");
@@ -85,6 +98,12 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 
 var app = builder.Build();
+
+// Use static files only in non-development environments for file uploads
+if (!app.Environment.IsDevelopment())
+{
+    app.UseStaticFiles();
+}
 
 // Use exception handler middleware
 app.UseExceptionHandler();

@@ -1,3 +1,4 @@
+import type { AttachmentDto } from "./attachment.dto";
 import type { CardAssignmentDto } from "./card-assignment.dto";
 import type { UserDto } from "./user.dto";
 
@@ -12,6 +13,7 @@ export interface CardDetailsDto {
   tags: number[];
   assignments: CardAssignmentDto[];
   createdBy: UserDto;
+  attachments: AttachmentDto[];
   createdAt: string;
   updatedAt: string;
 }

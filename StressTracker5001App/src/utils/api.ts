@@ -728,3 +728,37 @@ export async function resendVerificationEmail(
     throw await handleResponseError(response, "Failed to resend email");
   }
 }
+
+// Attachment APIs
+export async function uploadAttachment(
+  cardId: number,
+  file: File
+): Promise<AttachmentDto> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`/attachments/cards/${cardId}`, {
+    method: "POST",
+    body: formData,
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+
+  if (!response.ok) {
+    throw await handleResponseError(response, "Failed to upload attachment");
+  }
+
+  const result = (await response.json()) as ResultDto<AttachmentDto>;
+  return unwrapResult(result);
+}
+
+export async function deleteAttachment(attachmentId: string): Promise<void> {
+  const response = await fetch(`/attachments/${attachmentId}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw await handleResponseError(response, "Failed to delete attachment");
+  }
+}
