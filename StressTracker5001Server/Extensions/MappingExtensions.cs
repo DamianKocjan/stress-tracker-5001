@@ -1,4 +1,5 @@
 using StressTracker5001Server.DTOs.ActivityLog;
+using StressTracker5001Server.DTOs.Attachment;
 using StressTracker5001Server.DTOs.Board;
 using StressTracker5001Server.DTOs.BoardInvite;
 using StressTracker5001Server.DTOs.BoardMember;
@@ -9,6 +10,7 @@ using StressTracker5001Server.DTOs.Comment;
 using StressTracker5001Server.DTOs.Tag;
 using StressTracker5001Server.DTOs.User;
 using StressTracker5001Server.Models;
+using StressTracker5001Server.Services;
 
 namespace StressTracker5001Server.Extensions
 {
@@ -135,11 +137,12 @@ namespace StressTracker5001Server.Extensions
                 UpdatedAt = card.UpdatedAt,
                 Tags = card.CardTags.Select(ct => ct.TagId).ToList(),
                 Assignments = card.CardAssignments.Select(ca => ca.ToDto()).ToList(),
-                AttachmentCount = card.Attachments.Count()
+                AttachmentCount = card.Attachments.Count(),
+                CommentCount = card.Comments.Count()
             };
         }
 
-        public static CardDetailsDto ToDetailsDto(this Card card)
+        public static CardDetailsDto ToDetailsDto(this Card card, List<AttachmentDto> attachments)
         {
             return new CardDetailsDto
             {
@@ -160,7 +163,8 @@ namespace StressTracker5001Server.Extensions
                 CreatedAt = card.CreatedAt,
                 UpdatedAt = card.UpdatedAt,
                 Tags = card.CardTags.Select(ct => ct.TagId).ToList(),
-                Assignments = card.CardAssignments.Select(ca => ca.ToDto()).ToList()
+                Assignments = card.CardAssignments.Select(ca => ca.ToDto()).ToList(),
+                Attachments = attachments,
             };
         }
 
@@ -258,6 +262,29 @@ namespace StressTracker5001Server.Extensions
             };
         }
 
+        // Attachment mappings
+        public static AttachmentDto ToDto(this Attachment attachment, string fileUrl)
+        {
+            return new AttachmentDto
+            {
+                Id = attachment.Id,
+                CardId = attachment.CardId,
+                FileName = attachment.FileName,
+                ContentType = attachment.ContentType,
+                FileSize = attachment.FileSize,
+                UploadedById = attachment.UploadedById,
+                UploadedBy = attachment.UploadedBy?.ToDto() ?? new UserDto
+                {
+                    Id = attachment.UploadedById,
+                    Username = string.Empty,
+                    CreatedAt = DateTime.MinValue,
+                    UpdatedAt = DateTime.MinValue
+                },
+                UploadedAt = attachment.UploadedAt,
+                FileUrl = fileUrl
+            };
+        }
+
         // List mappings
         public static List<ActivityLogDto> ToDto(this IEnumerable<ActivityLog> activityLogs)
         {
@@ -297,6 +324,11 @@ namespace StressTracker5001Server.Extensions
         public static List<BoardInviteDto> ToDto(this IEnumerable<BoardInvite> boardInvites)
         {
             return boardInvites.Select(bi => bi.ToDto()).ToList();
+        }
+
+        public static List<AttachmentDto> ToDto(this IEnumerable<Attachment> attachments, IFileStorageService fileStorageService)
+        {
+            return attachments.Select(a => a.ToDto(fileStorageService.GetFileUrl(a.Id))).ToList();
         }
     }
 }

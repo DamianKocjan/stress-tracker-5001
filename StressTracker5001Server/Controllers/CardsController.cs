@@ -16,7 +16,7 @@ namespace StressTracker5001Server.Controllers
     {
         [Authorize]
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetCard(int id, [FromServices] ICardService cardService)
+        public async Task<IActionResult> GetCard(int id, [FromServices] ICardService cardService, [FromServices] IFileStorageService fileStorageService)
         {
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
             if (!int.TryParse(userIdClaim?.Value, out var userId))
@@ -25,7 +25,7 @@ namespace StressTracker5001Server.Controllers
             }
 
             var result = await cardService.GetCardDetailsByIdAsync(id, userId);
-            return result.ToActionResult(c => c.ToDetailsDto());
+            return result.ToActionResult(c => c.ToDetailsDto(c.Attachments.ToDto(fileStorageService)));
         }
 
         [Authorize]

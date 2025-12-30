@@ -5,7 +5,7 @@ import { useTagsQuery } from "@/hooks/use-tags-query";
 import { useKanbanStore } from "@/stores/kanban-store";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical } from "lucide-react";
+import { GripVertical, MessageCircleIcon, PaperclipIcon } from "lucide-react";
 import { memo } from "react";
 import { RoleGuard } from "../role-guard";
 import { TagBadge } from "../tags/tag-badge";
@@ -88,7 +88,15 @@ export function ColumnCard({ card }: ColumnCardProps) {
           )}
 
           <CardTags tags={card.tags} />
-          <CardAssignedUsers assignments={card.assignments} />
+
+          <div className="flex gap-2 justify-between items-center">
+            <CardAssignedUsers assignments={card.assignments} />
+
+            <div className="flex gap-2">
+              <CardAttachmentCount count={card.attachmentCount} />
+              <CardCommentCount count={card.commentCount} />
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
@@ -152,3 +160,27 @@ const CardAssignedUsers = memo(function CardAssignedUsers({
     </AvatarGroup>
   );
 });
+
+function CardAttachmentCount({ count }: { count: number }) {
+  if (count === 0) {
+    return null;
+  }
+
+  return (
+    <div className="text-sm text-secondary-foreground/80 flex items-center">
+      {count} <PaperclipIcon className="inline size-3.5 ml-0.5" />
+    </div>
+  );
+}
+
+function CardCommentCount({ count }: { count: number }) {
+  if (count === 0) {
+    return null;
+  }
+
+  return (
+    <div className="text-sm text-secondary-foreground/80 flex items-center">
+      {count} <MessageCircleIcon className="inline size-3.5 ml-0.5" />
+    </div>
+  );
+}

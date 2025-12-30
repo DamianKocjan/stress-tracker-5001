@@ -740,9 +740,6 @@ export async function uploadAttachment(
   const response = await fetch(`/attachments/cards/${cardId}`, {
     method: "POST",
     body: formData,
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
   });
 
   if (!response.ok) {

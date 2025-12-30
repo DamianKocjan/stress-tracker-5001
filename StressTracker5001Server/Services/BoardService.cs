@@ -73,6 +73,9 @@ namespace StressTracker5001Server.Services
                 .Include(b => b.Columns)
                 .ThenInclude(c => c.Cards)
                 .ThenInclude(c => c.Attachments)
+                .Include(b => b.Columns)
+                .ThenInclude(c => c.Cards)
+                .ThenInclude(c => c.Comments)
                 .FirstOrDefaultAsync();
 
             if (board == null)

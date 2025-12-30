@@ -67,8 +67,9 @@ export function CardAttachments({ cardId, attachments }: CardAttachmentsProps) {
   };
 
   const handleDownload = (attachment: AttachmentDto) => {
+    const fileUrl = attachment.fileUrl;
     const link = document.createElement("a");
-    link.href = attachment.fileUrl;
+    link.href = fileUrl;
     link.download = attachment.fileName;
     document.body.appendChild(link);
     link.click();
@@ -76,7 +77,8 @@ export function CardAttachments({ cardId, attachments }: CardAttachmentsProps) {
   };
 
   const handleImagePreview = (attachment: AttachmentDto) => {
-    setPreviewImage(attachment.fileUrl);
+    const fileUrl = attachment.fileUrl;
+    setPreviewImage(fileUrl);
     setPreviewFileName(attachment.fileName);
   };
 
@@ -144,17 +146,17 @@ export function CardAttachments({ cardId, attachments }: CardAttachmentsProps) {
                     <img
                       src={attachment.fileUrl}
                       alt={attachment.fileName}
-                      className="w-full h-full object-cover group-hover/image:opacity-75 transition-opacity"
+                      className="size-full object-cover group-hover/image:opacity-75 transition-opacity"
                       loading="lazy"
                       onClick={() => handleImagePreview(attachment)}
                     />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/image:opacity-100 transition-opacity bg-black/50">
-                      <Download className="h-5 w-5 text-white" />
+                      <Download className="size-5 text-white" />
                     </div>
                   </div>
                 ) : (
                   <div className="h-24 bg-gray-100 rounded-md flex items-center justify-center mb-2 border border-gray-200">
-                    <FileIcon className="h-8 w-8 text-gray-400" />
+                    <FileIcon className="size-8 text-gray-400" />
                   </div>
                 )}
 
@@ -182,7 +184,7 @@ export function CardAttachments({ cardId, attachments }: CardAttachmentsProps) {
                       size="sm"
                       variant="ghost"
                       onClick={() => handleDownload(attachment)}
-                      className="h-8 w-8 p-0"
+                      className="size-8 p-0"
                       title="Download"
                     >
                       <Download className="size-4" />
@@ -195,7 +197,7 @@ export function CardAttachments({ cardId, attachments }: CardAttachmentsProps) {
                       variant="ghost"
                       onClick={() => handleDeleteAttachment(attachment)}
                       disabled={deleteMutation.isPending}
-                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      className="size-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                       title="Delete"
                     >
                       {deleteMutation.isPending ? (
@@ -228,7 +230,7 @@ export function CardAttachments({ cardId, attachments }: CardAttachmentsProps) {
             <img
               src={previewImage}
               alt={previewFileName}
-              className="w-full h-full object-contain"
+              className="size-full object-contain"
             />
             <button
               onClick={() => {

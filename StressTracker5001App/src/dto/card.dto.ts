@@ -30,6 +30,8 @@ export interface CardDto {
   updatedAt: string;
   tags: number[];
   assignments: CardAssignmentDto[];
+  attachmentCount: number;
+  commentCount: number;
 }
 
 export interface CardCreateDto {

@@ -12,5 +12,6 @@ namespace StressTracker5001Server.DTOs.Attachment
         public required int UploadedById { get; set; }
         public required UserDto UploadedBy { get; set; }
         public required DateTime UploadedAt { get; set; }
+        public required string FileUrl { get; set; }
     }
 }
