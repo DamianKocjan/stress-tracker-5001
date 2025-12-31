@@ -7,7 +7,12 @@ import {
 import { useConfirm } from "@/hooks/use-confirm";
 import { useUserBoardRole } from "@/hooks/use-user-board-role";
 import { useAuth } from "@/providers/auth";
-import { formatFileSize, getFileIcon, isImageFile } from "@/utils/file-icons";
+import {
+  formatFileSize,
+  getFileIcon,
+  isImageFile,
+  SupportedFileExtensions,
+} from "@/utils/file-icons";
 import { Download, Loader2, Plus, Trash2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { RoleGuard } from "../role-guard";
@@ -118,7 +123,7 @@ export function CardAttachments({ cardId, attachments }: CardAttachmentsProps) {
         type="file"
         onChange={handleFileChange}
         className="hidden"
-        accept=".pdf,.doc,.docx,.txt,.zip,.xlsx,.pptx,.jpg,.jpeg,.png,.gif"
+        accept={SupportedFileExtensions}
       />
 
       {attachments.length === 0 ? (

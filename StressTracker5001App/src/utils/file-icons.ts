@@ -14,7 +14,7 @@ import {
 
 type FileExtension = string;
 
-const fileIconMap: Record<FileExtension, LucideIcon> = {
+const FileIconMap: Record<FileExtension, LucideIcon> = {
   // Documents
   ".pdf": FileTextIcon,
   ".doc": FileStackIcon,
@@ -79,9 +79,11 @@ const fileIconMap: Record<FileExtension, LucideIcon> = {
   ".flv": VideoIcon,
 };
 
+export const SupportedFileExtensions = Object.keys(FileIconMap).join(",");
+
 export function getFileIcon(fileName: string): LucideIcon {
   const extension = fileName.slice(fileName.lastIndexOf(".")).toLowerCase();
-  return fileIconMap[extension] ?? FileIcon;
+  return FileIconMap[extension] ?? FileIcon;
 }
 
 export function getFileExtension(fileName: string): string {
