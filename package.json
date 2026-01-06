@@ -1,0 +1,11 @@
+{
+  "name": "stress-tracker-5001",
+  "version": "1.0.0",
+  "description": "Stress Tracker Application",
+  "scripts": {
+    "s3": "s3rver --port 4569 --directory ./s3-local-data --configure-bucket stress-tracker-uploads"
+  },
+  "devDependencies": {
+    "s3rver": "^3.7.1"
+  }
+}

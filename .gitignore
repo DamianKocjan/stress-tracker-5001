@@ -290,3 +290,10 @@ __pycache__/
 
 # Sqlite database files
 StressTracker5001Server/db.sqlite*
+# s3rver local data directory
+s3-local-data/
+
+# Local file storage
+wwwroot/uploads/
+
+node_modules/
