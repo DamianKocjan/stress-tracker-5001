@@ -90,13 +90,16 @@ namespace StressTracker5001Server.Services
 
             try
             {
+                // Sanitize filename to keep only the name with extension
+                var sanitizedFileName = Path.GetFileName(file.FileName);
+
                 // Create attachment record first
                 var attachment = new Attachment
                 {
                     Id = Guid.NewGuid(),
                     CardId = cardId,
-                    FileName = file.FileName,
-                    ContentType = file.ContentType,
+                    FileName = sanitizedFileName,
+                    ContentType = file.ContentType ?? "application/octet-stream",
                     FileSize = file.Length,
                     UploadedById = userId,
                     UploadedAt = DateTime.UtcNow
@@ -106,8 +109,8 @@ namespace StressTracker5001Server.Services
                 var uploadSuccess = await _fileStorageService.UploadFileAsync(
                     attachment.Id,
                     stream,
-                    file.FileName,
-                    file.ContentType);
+                    sanitizedFileName,
+                    file.ContentType ?? "application/octet-stream");
 
                 if (!uploadSuccess)
                 {
