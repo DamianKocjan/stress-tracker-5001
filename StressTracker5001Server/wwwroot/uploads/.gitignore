@@ -1,3 +1,0 @@
-# Ignore all uploaded files but keep the directory
-*
-!.gitignore
