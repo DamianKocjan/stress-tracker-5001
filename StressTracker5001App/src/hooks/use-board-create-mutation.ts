@@ -13,16 +13,13 @@ export function useBoardCreateMutation() {
       toast.success("Board created successfully!", {
         description: `Board "${variables.name}" has been created.`,
       });
-      queryClient.setQueryData(
-        boardsQueryKey,
-        (oldData: BoardDto[] | undefined) => {
-          if (!oldData) {
-            return [data];
-          }
-          return [...oldData, data];
+      queryClient.setQueryData<BoardDto[]>(boardsQueryKey, (oldData) => {
+        if (!oldData) {
+          return [data];
         }
-      );
-      queryClient.setQueryData(boardQueryKey(data.id), data);
+        return [...oldData, data];
+      });
+      queryClient.setQueryData<BoardDto>(boardQueryKey(data.id), data);
     },
   });
 }

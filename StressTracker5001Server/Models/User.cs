@@ -30,6 +30,7 @@ namespace StressTracker5001Server.Models
         public List<ActivityLog> ActivityLogs { get; set; } = new();
         public List<PasswordResetToken> PasswordResetTokens { get; set; } = new();
         public List<EmailVerificationToken> EmailVerificationTokens { get; set; } = new();
+        public List<Attachment> UserAttachments { get; set; } = new();
 
         public bool EmailVerified { get; set; } = false;
         public string? PendingEmail { get; set; }

@@ -46,7 +46,7 @@ namespace StressTracker5001Server.Services
         {
             var card = await _context.Cards
                 .Include(c => c.Column)
-                .ThenInclude(c => c.Board)
+                .ThenInclude(c => c!.Board)
                 .Include(c => c.CardTags)
                 .Include(c => c.CardAssignments)
                 .ThenInclude(ca => ca.User)
@@ -57,7 +57,7 @@ namespace StressTracker5001Server.Services
                 return Result<Card>.NotFound($"Card with ID {cardId} not found");
             }
 
-            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(card.Column.BoardId, userId, requiredRole))
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(card.Column!.BoardId, userId, requiredRole))
             {
                 return Result<Card>.Forbidden("You do not have permission to access this card");
             }
@@ -69,9 +69,11 @@ namespace StressTracker5001Server.Services
         {
             var card = await _context.Cards
                 .Include(c => c.Column)
-                .ThenInclude(c => c.Board)
+                .ThenInclude(c => c!.Board)
                 .Include(c => c.CreatedBy)
                 .Include(c => c.CardTags)
+                .Include(c => c.Attachments)
+                .ThenInclude(a => a.UploadedBy)
                 .Include(c => c.CardAssignments)
                 .ThenInclude(ca => ca.User)
                 .FirstOrDefaultAsync(c => c.Id == cardId);
@@ -81,7 +83,7 @@ namespace StressTracker5001Server.Services
                 return Result<Card>.NotFound($"Card with ID {cardId} not found");
             }
 
-            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(card.Column.BoardId, userId))
+            if (!await _boardAuthorizationService.UserCanAccessBoardAsync(card.Column!.BoardId, userId))
             {
                 return Result<Card>.Forbidden("You do not have permission to access this card");
             }
@@ -148,7 +150,7 @@ namespace StressTracker5001Server.Services
 
             await _context.SaveChangesAsync();
 
-            await _activityLogService.LogCardUpdatedAsync(card.Column.BoardId, userId, cardId, oldCard, new { Title = card.Title, Description = card.Description, DueDate = card.DueDate });
+            await _activityLogService.LogCardUpdatedAsync(card.Column!.BoardId, userId, cardId, oldCard, new { Title = card.Title, Description = card.Description, DueDate = card.DueDate });
 
             return Result<Card>.Success(card);
         }
@@ -192,7 +194,7 @@ namespace StressTracker5001Server.Services
 
                 await _context.SaveChangesAsync();
 
-                await _activityLogService.LogCardMovedAsync(card.Column.BoardId, userId, cardId, oldColumnId, dto.NewColumnId);
+                await _activityLogService.LogCardMovedAsync(card.Column!.BoardId, userId, cardId, oldColumnId, dto.NewColumnId);
 
                 return Result<Card>.Success(card);
             }
@@ -249,7 +251,7 @@ namespace StressTracker5001Server.Services
 
             await _context.SaveChangesAsync();
 
-            await _activityLogService.LogCardMovedAsync(card.Column.BoardId, userId, cardId, oldColumnId, dto.NewColumnId);
+            await _activityLogService.LogCardMovedAsync(card.Column!.BoardId, userId, cardId, oldColumnId, dto.NewColumnId);
 
             return Result<Card>.Success(card);
         }
@@ -366,7 +368,7 @@ namespace StressTracker5001Server.Services
             _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
 
-            await _activityLogService.LogCommentCreatedAsync(cardResult.Value!.Column.BoardId, userId, comment.Id, cardId, comment.Content);
+            await _activityLogService.LogCommentCreatedAsync(cardResult.Value!.Column!.BoardId, userId, comment.Id, cardId, comment.Content);
 
             return Result<Comment>.Success(comment);
         }
@@ -389,7 +391,7 @@ namespace StressTracker5001Server.Services
             _context.Cards.Remove(card);
             await _context.SaveChangesAsync();
 
-            await _activityLogService.LogCardDeletedAsync(card.Column.BoardId, userId, cardId, cardTitle);
+            await _activityLogService.LogCardDeletedAsync(card.Column!.BoardId, userId, cardId, cardTitle);
 
             return Result<bool>.Success(true);
         }

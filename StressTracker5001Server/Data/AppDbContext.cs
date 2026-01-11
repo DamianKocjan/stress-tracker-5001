@@ -20,6 +20,7 @@ namespace StressTracker5001Server.Data
         public DbSet<BoardMember> BoardMembers { get; set; }
         public DbSet<BoardInvite> BoardInvites { get; set; }
         public DbSet<ActivityLog> ActivityLogs { get; set; }
+        public DbSet<Attachment> Attachments { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder options)
             => options.UseSqlite("Data Source=db.sqlite");
@@ -78,6 +79,17 @@ namespace StressTracker5001Server.Data
             modelBuilder.Entity<CardAssignment>()
                 .HasIndex(ca => new { ca.CardId, ca.UserId })
                 .IsUnique();
+
+            // Attachments relationships
+            modelBuilder.Entity<Attachment>()
+                .HasOne(a => a.Card)
+                .WithMany(c => c.Attachments)
+                .HasForeignKey(a => a.CardId);
+
+            modelBuilder.Entity<Attachment>()
+                .HasOne(a => a.UploadedBy)
+                .WithMany(u => u.UserAttachments)
+                .HasForeignKey(a => a.UploadedById);
 
             // Many-to-Many relationship between Card and Tag via CardTag
             modelBuilder.Entity<CardTag>()

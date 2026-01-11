@@ -233,8 +233,8 @@ public class AuthControllerTests
             .Returns(token);
 
         _mockTokenService
-            .Setup(s => s.ValidateTokenAsync(token))
-            .ReturnsAsync(true);
+            .Setup(s => s.ValidateToken(token))
+            .Returns(true);
 
         // Act
         var result = await _controller.ValidateToken(_mockTokenService.Object);
@@ -255,8 +255,8 @@ public class AuthControllerTests
             .Returns(token);
 
         _mockTokenService
-            .Setup(s => s.ValidateTokenAsync(token))
-            .ReturnsAsync(false);
+            .Setup(s => s.ValidateToken(token))
+            .Returns(false);
 
         // Act
         var result = await _controller.ValidateToken(_mockTokenService.Object);

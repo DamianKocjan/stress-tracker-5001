@@ -1,4 +1,5 @@
 import type { ActivityLogDto } from "@/dto/activity-log.dto";
+import type { AttachmentDto } from "@/dto/attachment.dto";
 import type {
   ConfirmEmailChangeDto,
   ConfirmPasswordResetDto,
@@ -42,6 +43,16 @@ import type { TagCreateDto, TagDto, TagUpdateDto } from "@/dto/tag.dto";
 import type { UserUpdateDto } from "@/dto/user.dto";
 import { fetch } from "./fetch";
 
+async function handleResponseError(response: Response, genericMessage: string) {
+  try {
+    const result = (await response.json()) as ResultDto<unknown>;
+    const errorMessage = result.errorMessage || genericMessage;
+    return new Error(errorMessage);
+  } catch {
+    return new Error(genericMessage);
+  }
+}
+
 function unwrapResult<T>(result: ResultDto<T>): T {
   if (!result.success) {
     throw new Error(result.errorMessage || "An error occurred");
@@ -56,8 +67,7 @@ export async function createBoard(data: BoardCreateDto): Promise<BoardDto> {
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<BoardDto>;
-    throw new Error(result.errorMessage || "Failed to create board");
+    throw await handleResponseError(response, "Failed to create board");
   }
 
   const result = (await response.json()) as ResultDto<BoardDto>;
@@ -70,8 +80,7 @@ export async function getBoards(): Promise<BoardDto[]> {
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<BoardDto[]>;
-    throw new Error(result.errorMessage || "Failed to fetch boards");
+    throw await handleResponseError(response, "Failed to fetch boards");
   }
 
   const result = (await response.json()) as ResultDto<BoardDto[]>;
@@ -84,8 +93,7 @@ export async function getBoard(boardId: number): Promise<BoardDetailsDto> {
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<BoardDetailsDto>;
-    throw new Error(result.errorMessage || "Failed to fetch board");
+    throw await handleResponseError(response, "Failed to fetch board");
   }
 
   const result = (await response.json()) as ResultDto<BoardDetailsDto>;
@@ -100,8 +108,10 @@ export async function getBoardMembership(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<BoardMemberDto>;
-    throw new Error(result.errorMessage || "Failed to fetch board membership");
+    throw await handleResponseError(
+      response,
+      "Failed to fetch board membership"
+    );
   }
 
   const result = (await response.json()) as ResultDto<BoardMemberDto>;
@@ -118,8 +128,7 @@ export async function updateBoard(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<BoardDto>;
-    throw new Error(result.errorMessage || "Failed to update board");
+    throw await handleResponseError(response, "Failed to update board");
   }
 
   const result = (await response.json()) as ResultDto<BoardDto>;
@@ -132,8 +141,7 @@ export async function deleteBoard(boardId: number): Promise<void> {
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to delete board");
+    throw await handleResponseError(response, "Failed to delete board");
   }
 }
 
@@ -147,8 +155,7 @@ export async function createColumn(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<ColumnDto>;
-    throw new Error(result.errorMessage || "Failed to create column");
+    throw await handleResponseError(response, "Failed to create column");
   }
 
   const result = (await response.json()) as ResultDto<ColumnDto>;
@@ -165,8 +172,7 @@ export async function updateColumn(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<ColumnDto>;
-    throw new Error(result.errorMessage || "Failed to update column");
+    throw await handleResponseError(response, "Failed to update column");
   }
 
   const result = (await response.json()) as ResultDto<ColumnDto>;
@@ -183,8 +189,7 @@ export async function moveColumn(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<ColumnDto>;
-    throw new Error(result.errorMessage || "Failed to move column");
+    throw await handleResponseError(response, "Failed to move column");
   }
 
   const result = (await response.json()) as ResultDto<ColumnDto>;
@@ -197,8 +202,7 @@ export async function deleteColumn(columnId: number): Promise<void> {
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to delete column");
+    throw await handleResponseError(response, "Failed to delete column");
   }
 }
 
@@ -212,8 +216,7 @@ export async function createCard(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<CardDto>;
-    throw new Error(result.errorMessage || "Failed to create card");
+    throw await handleResponseError(response, "Failed to create card");
   }
 
   const result = (await response.json()) as ResultDto<CardDto>;
@@ -226,8 +229,7 @@ export async function getCardDetails(cardId: number): Promise<CardDetailsDto> {
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<CardDetailsDto>;
-    throw new Error(result.errorMessage || "Failed to fetch card details");
+    throw await handleResponseError(response, "Failed to fetch card details");
   }
 
   const result = (await response.json()) as ResultDto<CardDetailsDto>;
@@ -240,8 +242,7 @@ export async function getCardComments(cardId: number): Promise<CommentDto[]> {
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<CommentDto[]>;
-    throw new Error(result.errorMessage || "Failed to fetch card comments");
+    throw await handleResponseError(response, "Failed to fetch card comments");
   }
 
   const result = (await response.json()) as ResultDto<CommentDto[]>;
@@ -258,10 +259,7 @@ export async function getCardCommentsPaged(
   );
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<
-      PagedResultDto<CommentDto>
-    >;
-    throw new Error(result.errorMessage || "Failed to fetch card comments");
+    throw await handleResponseError(response, "Failed to fetch card comments");
   }
 
   const result = (await response.json()) as ResultDto<
@@ -280,8 +278,7 @@ export async function updateCard(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<CardDetailsDto>;
-    throw new Error(result.errorMessage || "Failed to update card");
+    throw await handleResponseError(response, "Failed to update card");
   }
 
   const result = (await response.json()) as ResultDto<CardDetailsDto>;
@@ -298,8 +295,7 @@ export async function moveCard(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<CardDto>;
-    throw new Error(result.errorMessage || "Failed to move card");
+    throw await handleResponseError(response, "Failed to move card");
   }
 
   const result = (await response.json()) as ResultDto<CardDto>;
@@ -316,8 +312,7 @@ export async function assignTagsToCard(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to assign tags to card");
+    throw await handleResponseError(response, "Failed to assign tags to card");
   }
 }
 
@@ -342,8 +337,7 @@ export async function createTag(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<TagDto>;
-    throw new Error(result.errorMessage || "Failed to create tag");
+    throw await handleResponseError(response, "Failed to create tag");
   }
 
   const result = (await response.json()) as ResultDto<TagDto>;
@@ -360,8 +354,7 @@ export async function updateTag(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<TagDto>;
-    throw new Error(result.errorMessage || "Failed to update tag");
+    throw await handleResponseError(response, "Failed to update tag");
   }
 
   const result = (await response.json()) as ResultDto<TagDto>;
@@ -374,8 +367,7 @@ export async function deleteTag(tagId: number): Promise<void> {
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to delete tag");
+    throw await handleResponseError(response, "Failed to delete tag");
   }
 }
 
@@ -389,8 +381,7 @@ export async function createComment(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<CommentDto>;
-    throw new Error(result.errorMessage || "Failed to create comment");
+    throw await handleResponseError(response, "Failed to create comment");
   }
 
   const result = (await response.json()) as ResultDto<CommentDto>;
@@ -407,8 +398,7 @@ export async function updateComment(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<CommentDto>;
-    throw new Error(result.errorMessage || "Failed to update comment");
+    throw await handleResponseError(response, "Failed to update comment");
   }
 
   const result = (await response.json()) as ResultDto<CommentDto>;
@@ -421,8 +411,7 @@ export async function deleteComment(commentId: number): Promise<void> {
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to delete comment");
+    throw await handleResponseError(response, "Failed to delete comment");
   }
 }
 
@@ -435,8 +424,7 @@ export async function getBoardMembers(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<BoardMemberDto[]>;
-    throw new Error(result.errorMessage || "Failed to fetch board members");
+    throw await handleResponseError(response, "Failed to fetch board members");
   }
 
   const result = (await response.json()) as ResultDto<BoardMemberDto[]>;
@@ -453,8 +441,7 @@ export async function addBoardMember(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<BoardMemberDto>;
-    throw new Error(result.errorMessage || "Failed to add board member");
+    throw await handleResponseError(response, "Failed to add board member");
   }
 
   const result = (await response.json()) as ResultDto<BoardMemberDto>;
@@ -472,8 +459,7 @@ export async function updateMemberRole(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<BoardMemberDto>;
-    throw new Error(result.errorMessage || "Failed to update member role");
+    throw await handleResponseError(response, "Failed to update member role");
   }
 
   const result = (await response.json()) as ResultDto<BoardMemberDto>;
@@ -489,8 +475,7 @@ export async function removeBoardMember(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to remove board member");
+    throw await handleResponseError(response, "Failed to remove board member");
   }
 }
 
@@ -503,8 +488,7 @@ export async function getBoardInvites(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<BoardInviteDto[]>;
-    throw new Error(result.errorMessage || "Failed to fetch board invites");
+    throw await handleResponseError(response, "Failed to fetch board invites");
   }
 
   const result = (await response.json()) as ResultDto<BoardInviteDto[]>;
@@ -521,8 +505,10 @@ export async function generateBoardInvite(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<BoardInviteDto>;
-    throw new Error(result.errorMessage || "Failed to generate board invite");
+    throw await handleResponseError(
+      response,
+      "Failed to generate board invite"
+    );
   }
 
   const result = (await response.json()) as ResultDto<BoardInviteDto>;
@@ -535,8 +521,7 @@ export async function revokeInvite(inviteId: number): Promise<void> {
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to revoke invite");
+    throw await handleResponseError(response, "Failed to revoke invite");
   }
 }
 
@@ -546,8 +531,7 @@ export async function revokeAllBoardInvites(boardId: number): Promise<void> {
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to revoke all invites");
+    throw await handleResponseError(response, "Failed to revoke all invites");
   }
 }
 
@@ -561,8 +545,7 @@ export async function assignUserToCard(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to assign user to card");
+    throw await handleResponseError(response, "Failed to assign user to card");
   }
 }
 
@@ -576,8 +559,10 @@ export async function unassignUserFromCard(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to unassign user from card");
+    throw await handleResponseError(
+      response,
+      "Failed to unassign user from card"
+    );
   }
 }
 
@@ -590,8 +575,7 @@ export async function joinBoardWithInvite(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<BoardDetailsDto>;
-    throw new Error(result.errorMessage || "Failed to join board");
+    throw await handleResponseError(response, "Failed to join board");
   }
 
   const result = (await response.json()) as ResultDto<BoardDetailsDto>;
@@ -624,10 +608,7 @@ export async function getBoardActivityLogs(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<
-      PagedResultDto<ActivityLogDto>
-    >;
-    throw new Error(result.errorMessage || "Failed to fetch activity logs");
+    throw await handleResponseError(response, "Failed to fetch activity logs");
   }
 
   const result = (await response.json()) as ResultDto<
@@ -646,8 +627,10 @@ export async function requestPasswordReset(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to request password reset");
+    throw await handleResponseError(
+      response,
+      "Failed to request password reset"
+    );
   }
 }
 
@@ -660,8 +643,7 @@ export async function confirmPasswordReset(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to reset password");
+    throw await handleResponseError(response, "Failed to reset password");
   }
 }
 
@@ -674,8 +656,7 @@ export async function requestEmailChange(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to request email change");
+    throw await handleResponseError(response, "Failed to request email change");
   }
 }
 
@@ -688,8 +669,7 @@ export async function confirmEmailChange(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to verify email");
+    throw await handleResponseError(response, "Failed to verify email");
   }
 }
 
@@ -702,8 +682,7 @@ export async function updateProfile(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<{ message: string }>;
-    throw new Error(result.errorMessage || "Failed to update profile");
+    throw await handleResponseError(response, "Failed to update profile");
   }
 
   const result = (await response.json()) as ResultDto<{ message: string }>;
@@ -719,8 +698,7 @@ export async function updatePassword(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<{ message: string }>;
-    throw new Error(result.errorMessage || "Failed to update password");
+    throw await handleResponseError(response, "Failed to update password");
   }
 
   const result = (await response.json()) as ResultDto<{ message: string }>;
@@ -734,8 +712,7 @@ export async function deleteAccount(data: DeleteAccountDto): Promise<void> {
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to delete account");
+    throw await handleResponseError(response, "Failed to delete account");
   }
 }
 
@@ -748,7 +725,37 @@ export async function resendVerificationEmail(
   });
 
   if (!response.ok) {
-    const result = (await response.json()) as ResultDto<void>;
-    throw new Error(result.errorMessage || "Failed to resend email");
+    throw await handleResponseError(response, "Failed to resend email");
+  }
+}
+
+// Attachment APIs
+export async function uploadAttachment(
+  cardId: number,
+  file: File
+): Promise<AttachmentDto> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`/attachments/cards/${cardId}`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw await handleResponseError(response, "Failed to upload attachment");
+  }
+
+  const result = (await response.json()) as ResultDto<AttachmentDto>;
+  return unwrapResult(result);
+}
+
+export async function deleteAttachment(attachmentId: string): Promise<void> {
+  const response = await fetch(`/attachments/${attachmentId}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw await handleResponseError(response, "Failed to delete attachment");
   }
 }

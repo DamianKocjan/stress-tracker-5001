@@ -23,6 +23,8 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITagService, TagService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IBoardInviteService, BoardInviteService>();
+builder.Services.AddScoped<IAttachmentService, AttachmentService>();
+builder.Services.AddScoped<IFileStorageService, CloudflareFileStorageService>();
 
 // Email Service Configuration - Use Mock by default for development
 var emailServiceType = builder.Configuration.GetValue<string>("EmailService:Type", "Mock");
